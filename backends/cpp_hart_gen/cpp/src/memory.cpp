@@ -1,8 +1,7 @@
 
 #include "udb/memory.hpp"
 
-void udb::Memory::memcpy_from_host(uint64_t guest_paddr, const void* host_ptr,
-                                   size_t size) {
+void udb::Memory::memcpy_from_host(uint64_t guest_paddr, const void* host_ptr, size_t size) {
   const size_t SZ_64 = sizeof(uint64_t);
   auto host_ptr64 = (const uint64_t*)host_ptr;  // NOLINT
   while (size >= SZ_64) {
@@ -17,8 +16,7 @@ void udb::Memory::memcpy_from_host(uint64_t guest_paddr, const void* host_ptr,
   }
 }
 
-void udb::Memory::memcpy_to_host(void* host_ptr, uint64_t guest_paddr,
-                                 size_t size) {
+void udb::Memory::memcpy_to_host(void* host_ptr, uint64_t guest_paddr, size_t size) {
   const size_t SZ_64 = sizeof(uint64_t);
   auto host_ptr64 = (uint64_t*)host_ptr;  // NOLINT
   while (size >= SZ_64) {

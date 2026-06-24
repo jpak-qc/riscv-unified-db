@@ -50,8 +50,10 @@ consteval __uint128_t operator""_u128(const char *x) {
       if (x[i] == '\'') {
         continue;
       }
-      if ('0' <= x[i] && x[i] <= '9') y += ((unsigned __int128)(x[i] - '0')) * pow;
-      else throw std::runtime_error("bad literal");
+      if ('0' <= x[i] && x[i] <= '9')
+        y += ((unsigned __int128)(x[i] - '0')) * pow;
+      else
+        throw std::runtime_error("bad literal");
       pow *= 10;
     }
   }
@@ -69,8 +71,7 @@ std::ostream &operator<<(std::ostream &stream, const __int128_t &val) {
 }
 
 using namespace udb;
-TEST_CASE("bits_1")
-{
+TEST_CASE("bits_1") {
   // 1'1 + 1'1 = 1'0
   {
     _Bits<1, false> lhs{1u};
@@ -129,8 +130,7 @@ TEST_CASE("bits_1")
     REQUIRE(result < rhs);
   }
 }
-TEST_CASE("bits_2")
-{
+TEST_CASE("bits_2") {
   // 1'1 + 1'0 = 1'1
   {
     _Bits<1, false> lhs{1u};
@@ -189,8 +189,7 @@ TEST_CASE("bits_2")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_3")
-{
+TEST_CASE("bits_3") {
   // 1'1 `+ 1'1 = 2'2
   {
     _Bits<1, false> lhs{1u};
@@ -249,8 +248,7 @@ TEST_CASE("bits_3")
     REQUIRE(result >= rhs);
   }
 }
-TEST_CASE("bits_4")
-{
+TEST_CASE("bits_4") {
   // 1'0 `+ 1'1 = 2'1
   {
     _Bits<1, false> lhs{0u};
@@ -309,8 +307,7 @@ TEST_CASE("bits_4")
     REQUIRE(result <= rhs);
   }
 }
-TEST_CASE("bits_5")
-{
+TEST_CASE("bits_5") {
   // 1'0 - 1'1 = 1'1
   {
     _Bits<1, false> lhs{0u};
@@ -369,8 +366,7 @@ TEST_CASE("bits_5")
     REQUIRE(result == rhs);
   }
 }
-TEST_CASE("bits_6")
-{
+TEST_CASE("bits_6") {
   // 1'0 - 1'0 = 1'0
   {
     _Bits<1, false> lhs{0u};
@@ -429,8 +425,7 @@ TEST_CASE("bits_6")
     REQUIRE(result >= rhs);
   }
 }
-TEST_CASE("bits_7")
-{
+TEST_CASE("bits_7") {
   // 1'0 `- 1'1 = 2'3
   {
     _Bits<1, false> lhs{0u};
@@ -489,8 +484,7 @@ TEST_CASE("bits_7")
     REQUIRE(result >= rhs);
   }
 }
-TEST_CASE("bits_8")
-{
+TEST_CASE("bits_8") {
   // 1'1 `- 1'0 = 2'1
   {
     _Bits<1, false> lhs{1u};
@@ -549,8 +543,7 @@ TEST_CASE("bits_8")
     REQUIRE(result > rhs);
   }
 }
-TEST_CASE("bits_9")
-{
+TEST_CASE("bits_9") {
   // 1'1 * 1'1 = 1'1
   {
     _Bits<1, false> lhs{1u};
@@ -609,8 +602,7 @@ TEST_CASE("bits_9")
     REQUIRE(result == rhs);
   }
 }
-TEST_CASE("bits_10")
-{
+TEST_CASE("bits_10") {
   // 1'1 * 1'1 = 1'1
   {
     _Bits<1, false> lhs{1u};
@@ -669,8 +661,7 @@ TEST_CASE("bits_10")
     REQUIRE(result == rhs);
   }
 }
-TEST_CASE("bits_11")
-{
+TEST_CASE("bits_11") {
   // 1'1 `* 1'1 = 2'1
   {
     _Bits<1, false> lhs{1u};
@@ -729,8 +720,7 @@ TEST_CASE("bits_11")
     REQUIRE(result >= rhs);
   }
 }
-TEST_CASE("bits_12")
-{
+TEST_CASE("bits_12") {
   // 1'1 `* 1'1 = 2'1
   {
     _Bits<1, false> lhs{1u};
@@ -789,8 +779,7 @@ TEST_CASE("bits_12")
     REQUIRE(result == rhs);
   }
 }
-TEST_CASE("bits_13")
-{
+TEST_CASE("bits_13") {
   // 1'0 % 1'1 = 1'0
   {
     _Bits<1, false> lhs{0u};
@@ -849,8 +838,7 @@ TEST_CASE("bits_13")
     REQUIRE(result < rhs);
   }
 }
-TEST_CASE("bits_14")
-{
+TEST_CASE("bits_14") {
   // 1'0 >> 1'1 = 1'0
   {
     _Bits<1, false> lhs{0u};
@@ -909,8 +897,7 @@ TEST_CASE("bits_14")
     REQUIRE(result <= rhs);
   }
 }
-TEST_CASE("bits_15")
-{
+TEST_CASE("bits_15") {
   // 1'0 >> 1'1 = 1'0
   {
     _Bits<1, false> lhs{0u};
@@ -969,8 +956,7 @@ TEST_CASE("bits_15")
     REQUIRE(result < rhs);
   }
 }
-TEST_CASE("bits_16")
-{
+TEST_CASE("bits_16") {
   // 1'0 >>> 1'0 = 1'0
   {
     _Bits<1, false> lhs{0u};
@@ -1029,8 +1015,7 @@ TEST_CASE("bits_16")
     REQUIRE(result <= rhs);
   }
 }
-TEST_CASE("bits_17")
-{
+TEST_CASE("bits_17") {
   // 1'0 >>> 1'1 = 1'0
   {
     _Bits<1, false> lhs{0u};
@@ -1089,8 +1074,7 @@ TEST_CASE("bits_17")
     REQUIRE(result < rhs);
   }
 }
-TEST_CASE("bits_18")
-{
+TEST_CASE("bits_18") {
   // 1'1 << 1'0 = 1'1
   {
     _Bits<1, false> lhs{1u};
@@ -1149,8 +1133,7 @@ TEST_CASE("bits_18")
     REQUIRE(result > rhs);
   }
 }
-TEST_CASE("bits_19")
-{
+TEST_CASE("bits_19") {
   // 1'0 << 1'1 = 1'0
   {
     _Bits<1, false> lhs{0u};
@@ -1209,8 +1192,7 @@ TEST_CASE("bits_19")
     REQUIRE(result <= rhs);
   }
 }
-TEST_CASE("bits_20")
-{
+TEST_CASE("bits_20") {
   // 1'1 `<< 1'1 = 2'2
   {
     _Bits<1, false> lhs{1u};
@@ -1269,8 +1251,7 @@ TEST_CASE("bits_20")
     REQUIRE(result >= rhs);
   }
 }
-TEST_CASE("bits_21")
-{
+TEST_CASE("bits_21") {
   // 1'1 `<< 1'1 = 2'2
   {
     _Bits<1, false> lhs{1u};

@@ -4,9 +4,9 @@
 // Tests for register file storage and accessor generation (Layer 4a–4c).
 
 #include <catch2/catch_test_macros.hpp>
+#include <stdexcept>
 #include <udb/hart_factory.hxx>
 #include <udb/iss_soc_model.hpp>
-#include <stdexcept>
 
 // Use the rv64-riscv-tests config (known-working fully-configured rv64 with F extension).
 static const std::string cfg_yaml = R"(

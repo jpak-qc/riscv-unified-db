@@ -50,8 +50,10 @@ consteval __uint128_t operator""_u128(const char *x) {
       if (x[i] == '\'') {
         continue;
       }
-      if ('0' <= x[i] && x[i] <= '9') y += ((unsigned __int128)(x[i] - '0')) * pow;
-      else throw std::runtime_error("bad literal");
+      if ('0' <= x[i] && x[i] <= '9')
+        y += ((unsigned __int128)(x[i] - '0')) * pow;
+      else
+        throw std::runtime_error("bad literal");
       pow *= 10;
     }
   }
@@ -69,8 +71,7 @@ std::ostream &operator<<(std::ostream &stream, const __int128_t &val) {
 }
 
 using namespace udb;
-TEST_CASE("bits_262")
-{
+TEST_CASE("bits_262") {
   // 32'15505179 + 32'2060580523 = 32'2076085702
   {
     _Bits<32, false> lhs{15505179u};
@@ -129,8 +130,7 @@ TEST_CASE("bits_262")
     REQUIRE(result >= rhs);
   }
 }
-TEST_CASE("bits_263")
-{
+TEST_CASE("bits_263") {
   // 32'3237427776 + 32'2320471351 = 32'1262931831
   {
     _Bits<32, false> lhs{3237427776u};
@@ -189,8 +189,7 @@ TEST_CASE("bits_263")
     REQUIRE(result < rhs);
   }
 }
-TEST_CASE("bits_264")
-{
+TEST_CASE("bits_264") {
   // 32'2708051004 + 32'1198992487 = 32'3907043491
   {
     _Bits<32, false> lhs{2708051004u};
@@ -249,8 +248,7 @@ TEST_CASE("bits_264")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_265")
-{
+TEST_CASE("bits_265") {
   // 32'1152439379 + 32'2325325327 = 32'3477764706
   {
     _Bits<32, false> lhs{1152439379u};
@@ -309,8 +307,7 @@ TEST_CASE("bits_265")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_266")
-{
+TEST_CASE("bits_266") {
   // 32'3786086356 + 32'166095605 = 32'3952181961
   {
     _Bits<32, false> lhs{3786086356u};
@@ -369,8 +366,7 @@ TEST_CASE("bits_266")
     REQUIRE(result > rhs);
   }
 }
-TEST_CASE("bits_267")
-{
+TEST_CASE("bits_267") {
   // 32'668925259 + 32'774241103 = 32'1443166362
   {
     _Bits<32, false> lhs{668925259u};
@@ -429,8 +425,7 @@ TEST_CASE("bits_267")
     REQUIRE(result >= rhs);
   }
 }
-TEST_CASE("bits_268")
-{
+TEST_CASE("bits_268") {
   // 32'3919310471 + 32'2071512427 = 32'1695855602
   {
     _Bits<32, false> lhs{3919310471u};
@@ -489,8 +484,7 @@ TEST_CASE("bits_268")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_269")
-{
+TEST_CASE("bits_269") {
   // 32'2028660634 + 32'555291553 = 32'2583952187
   {
     _Bits<32, false> lhs{2028660634u};
@@ -549,8 +543,7 @@ TEST_CASE("bits_269")
     REQUIRE(result >= rhs);
   }
 }
-TEST_CASE("bits_270")
-{
+TEST_CASE("bits_270") {
   // 32'2164588921 + 32'2716383617 = 32'586005242
   {
     _Bits<32, false> lhs{2164588921u};
@@ -609,8 +602,7 @@ TEST_CASE("bits_270")
     REQUIRE(result <= rhs);
   }
 }
-TEST_CASE("bits_271")
-{
+TEST_CASE("bits_271") {
   // 32'1677043988 + 32'3314596334 = 32'696673026
   {
     _Bits<32, false> lhs{1677043988u};
@@ -669,8 +661,7 @@ TEST_CASE("bits_271")
     REQUIRE(result < rhs);
   }
 }
-TEST_CASE("bits_272")
-{
+TEST_CASE("bits_272") {
   // 32'1530421073 `+ 32'1242320895 = 33'2772741968
   {
     _Bits<32, false> lhs{1530421073u};
@@ -729,8 +720,7 @@ TEST_CASE("bits_272")
     REQUIRE(result > rhs);
   }
 }
-TEST_CASE("bits_273")
-{
+TEST_CASE("bits_273") {
   // 32'2632926592 `+ 32'3149811600 = 33'5782738192
   {
     _Bits<32, false> lhs{2632926592u};
@@ -789,8 +779,7 @@ TEST_CASE("bits_273")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_274")
-{
+TEST_CASE("bits_274") {
   // 32'388210825 `+ 32'266173578 = 33'654384403
   {
     _Bits<32, false> lhs{388210825u};
@@ -849,8 +838,7 @@ TEST_CASE("bits_274")
     REQUIRE(result >= rhs);
   }
 }
-TEST_CASE("bits_275")
-{
+TEST_CASE("bits_275") {
   // 32'2203727966 `+ 32'722322947 = 33'2926050913
   {
     _Bits<32, false> lhs{2203727966u};
@@ -909,8 +897,7 @@ TEST_CASE("bits_275")
     REQUIRE(result >= rhs);
   }
 }
-TEST_CASE("bits_276")
-{
+TEST_CASE("bits_276") {
   // 32'1071439548 `+ 32'1643581474 = 33'2715021022
   {
     _Bits<32, false> lhs{1071439548u};
@@ -969,8 +956,7 @@ TEST_CASE("bits_276")
     REQUIRE(result > rhs);
   }
 }
-TEST_CASE("bits_277")
-{
+TEST_CASE("bits_277") {
   // 32'3764554486 `+ 32'4185339171 = 33'7949893657
   {
     _Bits<32, false> lhs{3764554486u};
@@ -1029,8 +1015,7 @@ TEST_CASE("bits_277")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_278")
-{
+TEST_CASE("bits_278") {
   // 32'183707538 `+ 32'3269110430 = 33'3452817968
   {
     _Bits<32, false> lhs{183707538u};
@@ -1089,8 +1074,7 @@ TEST_CASE("bits_278")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_279")
-{
+TEST_CASE("bits_279") {
   // 32'120149597 `+ 32'528987934 = 33'649137531
   {
     _Bits<32, false> lhs{120149597u};
@@ -1149,8 +1133,7 @@ TEST_CASE("bits_279")
     REQUIRE(result > rhs);
   }
 }
-TEST_CASE("bits_280")
-{
+TEST_CASE("bits_280") {
   // 32'321656817 `+ 32'2142535278 = 33'2464192095
   {
     _Bits<32, false> lhs{321656817u};
@@ -1209,8 +1192,7 @@ TEST_CASE("bits_280")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_281")
-{
+TEST_CASE("bits_281") {
   // 32'1067138776 `+ 32'2638417972 = 33'3705556748
   {
     _Bits<32, false> lhs{1067138776u};
@@ -1269,8 +1251,7 @@ TEST_CASE("bits_281")
     REQUIRE(result > rhs);
   }
 }
-TEST_CASE("bits_282")
-{
+TEST_CASE("bits_282") {
   // 32'3543976557 - 32'1928809017 = 32'1615167540
   {
     _Bits<32, false> lhs{3543976557u};
@@ -1329,8 +1310,7 @@ TEST_CASE("bits_282")
     REQUIRE(result <= rhs);
   }
 }
-TEST_CASE("bits_283")
-{
+TEST_CASE("bits_283") {
   // 32'1608822943 - 32'4164289558 = 32'1739500681
   {
     _Bits<32, false> lhs{1608822943u};
@@ -1389,8 +1369,7 @@ TEST_CASE("bits_283")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_284")
-{
+TEST_CASE("bits_284") {
   // 32'549307455 - 32'2450044380 = 32'2394230371
   {
     _Bits<32, false> lhs{549307455u};
@@ -1449,8 +1428,7 @@ TEST_CASE("bits_284")
     REQUIRE(result <= rhs);
   }
 }
-TEST_CASE("bits_285")
-{
+TEST_CASE("bits_285") {
   // 32'2390923536 - 32'710304300 = 32'1680619236
   {
     _Bits<32, false> lhs{2390923536u};
@@ -1509,8 +1487,7 @@ TEST_CASE("bits_285")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_286")
-{
+TEST_CASE("bits_286") {
   // 32'3598345194 - 32'2610269435 = 32'988075759
   {
     _Bits<32, false> lhs{3598345194u};
@@ -1569,8 +1546,7 @@ TEST_CASE("bits_286")
     REQUIRE(result < rhs);
   }
 }
-TEST_CASE("bits_287")
-{
+TEST_CASE("bits_287") {
   // 32'2919859465 - 32'11861498 = 32'2907997967
   {
     _Bits<32, false> lhs{2919859465u};
@@ -1629,8 +1605,7 @@ TEST_CASE("bits_287")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_288")
-{
+TEST_CASE("bits_288") {
   // 32'1909536744 - 32'1152849104 = 32'756687640
   {
     _Bits<32, false> lhs{1909536744u};
@@ -1689,8 +1664,7 @@ TEST_CASE("bits_288")
     REQUIRE(result <= rhs);
   }
 }
-TEST_CASE("bits_289")
-{
+TEST_CASE("bits_289") {
   // 32'3626576993 - 32'2399374254 = 32'1227202739
   {
     _Bits<32, false> lhs{3626576993u};
@@ -1749,8 +1723,7 @@ TEST_CASE("bits_289")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_290")
-{
+TEST_CASE("bits_290") {
   // 32'3971928229 - 32'3141727316 = 32'830200913
   {
     _Bits<32, false> lhs{3971928229u};
@@ -1809,8 +1782,7 @@ TEST_CASE("bits_290")
     REQUIRE(result <= rhs);
   }
 }
-TEST_CASE("bits_291")
-{
+TEST_CASE("bits_291") {
   // 32'2614968480 - 32'3475834303 = 32'3434101473
   {
     _Bits<32, false> lhs{2614968480u};
@@ -1869,8 +1841,7 @@ TEST_CASE("bits_291")
     REQUIRE(result < rhs);
   }
 }
-TEST_CASE("bits_292")
-{
+TEST_CASE("bits_292") {
   // 32'3305975884 `- 32'3272881378 = 33'33094506
   {
     _Bits<32, false> lhs{3305975884u};
@@ -1929,8 +1900,7 @@ TEST_CASE("bits_292")
     REQUIRE(result < rhs);
   }
 }
-TEST_CASE("bits_293")
-{
+TEST_CASE("bits_293") {
   // 32'2849756442 `- 32'1060389036 = 33'1789367406
   {
     _Bits<32, false> lhs{2849756442u};
@@ -1989,8 +1959,7 @@ TEST_CASE("bits_293")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_294")
-{
+TEST_CASE("bits_294") {
   // 32'2050705470 `- 32'3263172718 = 33'7377467344
   {
     _Bits<32, false> lhs{2050705470u};
@@ -2049,8 +2018,7 @@ TEST_CASE("bits_294")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_295")
-{
+TEST_CASE("bits_295") {
   // 32'1142560804 `- 32'1277327692 = 33'8455167704
   {
     _Bits<32, false> lhs{1142560804u};
@@ -2109,8 +2077,7 @@ TEST_CASE("bits_295")
     REQUIRE(result >= rhs);
   }
 }
-TEST_CASE("bits_296")
-{
+TEST_CASE("bits_296") {
   // 32'1401625149 `- 32'731125167 = 33'670499982
   {
     _Bits<32, false> lhs{1401625149u};
@@ -2169,8 +2136,7 @@ TEST_CASE("bits_296")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_297")
-{
+TEST_CASE("bits_297") {
   // 32'1876742525 `- 32'1716109740 = 33'160632785
   {
     _Bits<32, false> lhs{1876742525u};
@@ -2229,8 +2195,7 @@ TEST_CASE("bits_297")
     REQUIRE(result <= rhs);
   }
 }
-TEST_CASE("bits_298")
-{
+TEST_CASE("bits_298") {
   // 32'2167129851 `- 32'530867176 = 33'1636262675
   {
     _Bits<32, false> lhs{2167129851u};
@@ -2289,8 +2254,7 @@ TEST_CASE("bits_298")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_299")
-{
+TEST_CASE("bits_299") {
   // 32'1690180378 `- 32'1715487929 = 33'8564627041
   {
     _Bits<32, false> lhs{1690180378u};
@@ -2349,8 +2313,7 @@ TEST_CASE("bits_299")
     REQUIRE(result >= rhs);
   }
 }
-TEST_CASE("bits_300")
-{
+TEST_CASE("bits_300") {
   // 32'694869272 `- 32'3600139474 = 33'5684664390
   {
     _Bits<32, false> lhs{694869272u};
@@ -2409,8 +2372,7 @@ TEST_CASE("bits_300")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_301")
-{
+TEST_CASE("bits_301") {
   // 32'479265627 `- 32'789266075 = 33'8279934144
   {
     _Bits<32, false> lhs{479265627u};
@@ -2469,8 +2431,7 @@ TEST_CASE("bits_301")
     REQUIRE(result > rhs);
   }
 }
-TEST_CASE("bits_302")
-{
+TEST_CASE("bits_302") {
   // 32'1141174635 * 32'2214866455 = 32'4051626653
   {
     _Bits<32, false> lhs{1141174635u};
@@ -2529,8 +2490,7 @@ TEST_CASE("bits_302")
     REQUIRE(result > rhs);
   }
 }
-TEST_CASE("bits_303")
-{
+TEST_CASE("bits_303") {
   // 32'3406659428 * 32'3959722014 = 32'2429365688
   {
     _Bits<32, false> lhs{3406659428u};
@@ -2589,8 +2549,7 @@ TEST_CASE("bits_303")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_304")
-{
+TEST_CASE("bits_304") {
   // 32'3664757876 * 32'1415933884 = 32'1913033008
   {
     _Bits<32, false> lhs{3664757876u};
@@ -2649,8 +2608,7 @@ TEST_CASE("bits_304")
     REQUIRE(result >= rhs);
   }
 }
-TEST_CASE("bits_305")
-{
+TEST_CASE("bits_305") {
   // 32'870017034 * 32'2845499405 = 32'3442542722
   {
     _Bits<32, false> lhs{870017034u};
@@ -2709,8 +2667,7 @@ TEST_CASE("bits_305")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_306")
-{
+TEST_CASE("bits_306") {
   // 32'1105117824 * 32'37759251 = 32'816770944
   {
     _Bits<32, false> lhs{1105117824u};
@@ -2769,8 +2726,7 @@ TEST_CASE("bits_306")
     REQUIRE(result > rhs);
   }
 }
-TEST_CASE("bits_307")
-{
+TEST_CASE("bits_307") {
   // 32'2468466040 * 32'1780598894 = 32'3447982480
   {
     _Bits<32, false> lhs{2468466040u};
@@ -2829,8 +2785,7 @@ TEST_CASE("bits_307")
     REQUIRE(result >= rhs);
   }
 }
-TEST_CASE("bits_308")
-{
+TEST_CASE("bits_308") {
   // 32'3582256185 * 32'1445993116 = 32'2363022524
   {
     _Bits<32, false> lhs{3582256185u};
@@ -2889,8 +2844,7 @@ TEST_CASE("bits_308")
     REQUIRE(result > rhs);
   }
 }
-TEST_CASE("bits_309")
-{
+TEST_CASE("bits_309") {
   // 32'824929206 * 32'1995747726 = 32'3641087220
   {
     _Bits<32, false> lhs{824929206u};
@@ -2949,8 +2903,7 @@ TEST_CASE("bits_309")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_310")
-{
+TEST_CASE("bits_310") {
   // 32'2001972145 * 32'216170535 = 32'3789137911
   {
     _Bits<32, false> lhs{2001972145u};
@@ -3009,8 +2962,7 @@ TEST_CASE("bits_310")
     REQUIRE(result >= rhs);
   }
 }
-TEST_CASE("bits_311")
-{
+TEST_CASE("bits_311") {
   // 32'3714408263 * 32'889738777 = 32'1512056815
   {
     _Bits<32, false> lhs{3714408263u};
@@ -3069,8 +3021,7 @@ TEST_CASE("bits_311")
     REQUIRE(result >= rhs);
   }
 }
-TEST_CASE("bits_312")
-{
+TEST_CASE("bits_312") {
   // 32'2050104542 `* 32'2926211160 = 64'5999038789967088720
   {
     _Bits<32, false> lhs{2050104542u};
@@ -3129,8 +3080,7 @@ TEST_CASE("bits_312")
     REQUIRE(result >= rhs);
   }
 }
-TEST_CASE("bits_313")
-{
+TEST_CASE("bits_313") {
   // 32'1664713874 `* 32'816917747 = 64'1359934307347721878
   {
     _Bits<32, false> lhs{1664713874u};
@@ -3189,8 +3139,7 @@ TEST_CASE("bits_313")
     REQUIRE(result >= rhs);
   }
 }
-TEST_CASE("bits_314")
-{
+TEST_CASE("bits_314") {
   // 32'3083641596 `* 32'941100375 = 64'2902016262361198500
   {
     _Bits<32, false> lhs{3083641596u};
@@ -3249,8 +3198,7 @@ TEST_CASE("bits_314")
     REQUIRE(result >= rhs);
   }
 }
-TEST_CASE("bits_315")
-{
+TEST_CASE("bits_315") {
   // 32'1133104141 `* 32'1112333331 = 64'1260389503528423671
   {
     _Bits<32, false> lhs{1133104141u};
@@ -3309,8 +3257,7 @@ TEST_CASE("bits_315")
     REQUIRE(result > rhs);
   }
 }
-TEST_CASE("bits_316")
-{
+TEST_CASE("bits_316") {
   // 32'1917458460 `* 32'1645200602 = 64'3154603812701992920
   {
     _Bits<32, false> lhs{1917458460u};
@@ -3369,8 +3316,7 @@ TEST_CASE("bits_316")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_317")
-{
+TEST_CASE("bits_317") {
   // 32'2621173667 `* 32'373728442 = 64'979607150779336814
   {
     _Bits<32, false> lhs{2621173667u};
@@ -3429,8 +3375,7 @@ TEST_CASE("bits_317")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_318")
-{
+TEST_CASE("bits_318") {
   // 32'1530634355 `* 32'3033453139 = 64'4643107588835990345
   {
     _Bits<32, false> lhs{1530634355u};
@@ -3489,8 +3434,7 @@ TEST_CASE("bits_318")
     REQUIRE(result > rhs);
   }
 }
-TEST_CASE("bits_319")
-{
+TEST_CASE("bits_319") {
   // 32'1505017786 `* 32'1523867825 = 64'2293448180138135450
   {
     _Bits<32, false> lhs{1505017786u};
@@ -3549,8 +3493,7 @@ TEST_CASE("bits_319")
     REQUIRE(result >= rhs);
   }
 }
-TEST_CASE("bits_320")
-{
+TEST_CASE("bits_320") {
   // 32'2394604471 `* 32'1421596989 = 64'3404162505819537819
   {
     _Bits<32, false> lhs{2394604471u};
@@ -3609,8 +3552,7 @@ TEST_CASE("bits_320")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_321")
-{
+TEST_CASE("bits_321") {
   // 32'868415739 `* 32'2563207556 = 64'2225929783954123884
   {
     _Bits<32, false> lhs{868415739u};
@@ -3669,8 +3611,7 @@ TEST_CASE("bits_321")
     REQUIRE(result >= rhs);
   }
 }
-TEST_CASE("bits_322")
-{
+TEST_CASE("bits_322") {
   // 32'3793175627 / 32'3625580422 = 32'1
   {
     _Bits<32, false> lhs{3793175627u};
@@ -3729,8 +3670,7 @@ TEST_CASE("bits_322")
     REQUIRE(result < rhs);
   }
 }
-TEST_CASE("bits_323")
-{
+TEST_CASE("bits_323") {
   // 32'257731836 / 32'1358049250 = 32'0
   {
     _Bits<32, false> lhs{257731836u};
@@ -3789,8 +3729,7 @@ TEST_CASE("bits_323")
     REQUIRE(result < rhs);
   }
 }
-TEST_CASE("bits_324")
-{
+TEST_CASE("bits_324") {
   // 32'1938385201 / 32'1592232864 = 32'1
   {
     _Bits<32, false> lhs{1938385201u};
@@ -3849,8 +3788,7 @@ TEST_CASE("bits_324")
     REQUIRE(result <= rhs);
   }
 }
-TEST_CASE("bits_325")
-{
+TEST_CASE("bits_325") {
   // 32'4051802147 / 32'829043697 = 32'4
   {
     _Bits<32, false> lhs{4051802147u};
@@ -3909,8 +3847,7 @@ TEST_CASE("bits_325")
     REQUIRE(result <= rhs);
   }
 }
-TEST_CASE("bits_326")
-{
+TEST_CASE("bits_326") {
   // 32'2635224314 / 32'3124069601 = 32'0
   {
     _Bits<32, false> lhs{2635224314u};
@@ -3969,8 +3906,7 @@ TEST_CASE("bits_326")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_327")
-{
+TEST_CASE("bits_327") {
   // 32'169387905 / 32'2392152391 = 32'0
   {
     _Bits<32, false> lhs{169387905u};
@@ -4029,8 +3965,7 @@ TEST_CASE("bits_327")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_328")
-{
+TEST_CASE("bits_328") {
   // 32'1502610949 / 32'3626733684 = 32'0
   {
     _Bits<32, false> lhs{1502610949u};
@@ -4089,8 +4024,7 @@ TEST_CASE("bits_328")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_329")
-{
+TEST_CASE("bits_329") {
   // 32'3147652082 / 32'2120631692 = 32'1
   {
     _Bits<32, false> lhs{3147652082u};
@@ -4149,8 +4083,7 @@ TEST_CASE("bits_329")
     REQUIRE(result < rhs);
   }
 }
-TEST_CASE("bits_330")
-{
+TEST_CASE("bits_330") {
   // 32'916704336 / 32'3388233424 = 32'0
   {
     _Bits<32, false> lhs{916704336u};
@@ -4209,8 +4142,7 @@ TEST_CASE("bits_330")
     REQUIRE(result < rhs);
   }
 }
-TEST_CASE("bits_331")
-{
+TEST_CASE("bits_331") {
   // 32'4268691947 / 32'1321783452 = 32'3
   {
     _Bits<32, false> lhs{4268691947u};
@@ -4269,8 +4201,7 @@ TEST_CASE("bits_331")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_332")
-{
+TEST_CASE("bits_332") {
   // 32'4092746861 % 32'3135712435 = 32'957034426
   {
     _Bits<32, false> lhs{4092746861u};
@@ -4329,8 +4260,7 @@ TEST_CASE("bits_332")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_333")
-{
+TEST_CASE("bits_333") {
   // 32'724403340 % 32'1324191225 = 32'724403340
   {
     _Bits<32, false> lhs{724403340u};
@@ -4389,8 +4319,7 @@ TEST_CASE("bits_333")
     REQUIRE(result <= rhs);
   }
 }
-TEST_CASE("bits_334")
-{
+TEST_CASE("bits_334") {
   // 32'1007123404 % 32'651652038 = 32'355471366
   {
     _Bits<32, false> lhs{1007123404u};
@@ -4449,8 +4378,7 @@ TEST_CASE("bits_334")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_335")
-{
+TEST_CASE("bits_335") {
   // 32'2642785701 % 32'3378542451 = 32'2642785701
   {
     _Bits<32, false> lhs{2642785701u};
@@ -4509,8 +4437,7 @@ TEST_CASE("bits_335")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_336")
-{
+TEST_CASE("bits_336") {
   // 32'2851970496 % 32'974456832 = 32'903056832
   {
     _Bits<32, false> lhs{2851970496u};
@@ -4569,8 +4496,7 @@ TEST_CASE("bits_336")
     REQUIRE(result <= rhs);
   }
 }
-TEST_CASE("bits_337")
-{
+TEST_CASE("bits_337") {
   // 32'2835203497 % 32'1014521171 = 32'806161155
   {
     _Bits<32, false> lhs{2835203497u};
@@ -4629,8 +4555,7 @@ TEST_CASE("bits_337")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_338")
-{
+TEST_CASE("bits_338") {
   // 32'1506277497 % 32'2208800804 = 32'1506277497
   {
     _Bits<32, false> lhs{1506277497u};
@@ -4689,8 +4614,7 @@ TEST_CASE("bits_338")
     REQUIRE(result <= rhs);
   }
 }
-TEST_CASE("bits_339")
-{
+TEST_CASE("bits_339") {
   // 32'403133445 % 32'3228906311 = 32'403133445
   {
     _Bits<32, false> lhs{403133445u};
@@ -4749,8 +4673,7 @@ TEST_CASE("bits_339")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_340")
-{
+TEST_CASE("bits_340") {
   // 32'1557755999 % 32'3760747218 = 32'1557755999
   {
     _Bits<32, false> lhs{1557755999u};
@@ -4809,8 +4732,7 @@ TEST_CASE("bits_340")
     REQUIRE(result < rhs);
   }
 }
-TEST_CASE("bits_341")
-{
+TEST_CASE("bits_341") {
   // 32'2400814282 % 32'1686265450 = 32'714548832
   {
     _Bits<32, false> lhs{2400814282u};
@@ -4869,8 +4791,7 @@ TEST_CASE("bits_341")
     REQUIRE(result < rhs);
   }
 }
-TEST_CASE("bits_342")
-{
+TEST_CASE("bits_342") {
   // 32'3246142841 >> 32'23 = 32'386
   {
     _Bits<32, false> lhs{3246142841u};
@@ -4929,8 +4850,7 @@ TEST_CASE("bits_342")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_343")
-{
+TEST_CASE("bits_343") {
   // 32'1622802957 >> 32'16 = 32'24762
   {
     _Bits<32, false> lhs{1622802957u};
@@ -4989,8 +4909,7 @@ TEST_CASE("bits_343")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_344")
-{
+TEST_CASE("bits_344") {
   // 32'629570702 >> 32'38 = 32'0
   {
     _Bits<32, false> lhs{629570702u};
@@ -5049,8 +4968,7 @@ TEST_CASE("bits_344")
     REQUIRE(result <= rhs);
   }
 }
-TEST_CASE("bits_345")
-{
+TEST_CASE("bits_345") {
   // 32'2722354100 >> 32'26 = 32'40
   {
     _Bits<32, false> lhs{2722354100u};
@@ -5109,8 +5027,7 @@ TEST_CASE("bits_345")
     REQUIRE(result >= rhs);
   }
 }
-TEST_CASE("bits_346")
-{
+TEST_CASE("bits_346") {
   // 32'4064453220 >> 32'31 = 32'1
   {
     _Bits<32, false> lhs{4064453220u};
@@ -5169,8 +5086,7 @@ TEST_CASE("bits_346")
     REQUIRE(result < rhs);
   }
 }
-TEST_CASE("bits_347")
-{
+TEST_CASE("bits_347") {
   // 32'3239698225 >> 32'47 = 32'0
   {
     _Bits<32, false> lhs{3239698225u};
@@ -5229,8 +5145,7 @@ TEST_CASE("bits_347")
     REQUIRE(result <= rhs);
   }
 }
-TEST_CASE("bits_348")
-{
+TEST_CASE("bits_348") {
   // 32'1370896347 >> 32'51 = 32'0
   {
     _Bits<32, false> lhs{1370896347u};
@@ -5289,8 +5204,7 @@ TEST_CASE("bits_348")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_349")
-{
+TEST_CASE("bits_349") {
   // 32'3174196360 >> 32'11 = 32'1549900
   {
     _Bits<32, false> lhs{3174196360u};
@@ -5349,8 +5263,7 @@ TEST_CASE("bits_349")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_350")
-{
+TEST_CASE("bits_350") {
   // 32'797536812 >> 32'46 = 32'0
   {
     _Bits<32, false> lhs{797536812u};
@@ -5409,8 +5322,7 @@ TEST_CASE("bits_350")
     REQUIRE(result <= rhs);
   }
 }
-TEST_CASE("bits_351")
-{
+TEST_CASE("bits_351") {
   // 32'1673097720 >> 32'12 = 32'408471
   {
     _Bits<32, false> lhs{1673097720u};
@@ -5469,8 +5381,7 @@ TEST_CASE("bits_351")
     REQUIRE(result > rhs);
   }
 }
-TEST_CASE("bits_352")
-{
+TEST_CASE("bits_352") {
   // 32'722967589 >>> 32'57 = 32'0
   {
     _Bits<32, false> lhs{722967589u};
@@ -5529,8 +5440,7 @@ TEST_CASE("bits_352")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_353")
-{
+TEST_CASE("bits_353") {
   // 32'3098937476 >>> 32'27 = 32'4294967287
   {
     _Bits<32, false> lhs{3098937476u};
@@ -5589,8 +5499,7 @@ TEST_CASE("bits_353")
     REQUIRE(result >= rhs);
   }
 }
-TEST_CASE("bits_354")
-{
+TEST_CASE("bits_354") {
   // 32'3325948111 >>> 32'54 = 32'4294967295
   {
     _Bits<32, false> lhs{3325948111u};
@@ -5649,8 +5558,7 @@ TEST_CASE("bits_354")
     REQUIRE(result > rhs);
   }
 }
-TEST_CASE("bits_355")
-{
+TEST_CASE("bits_355") {
   // 32'3891195042 >>> 32'22 = 32'4294967199
   {
     _Bits<32, false> lhs{3891195042u};
@@ -5709,8 +5617,7 @@ TEST_CASE("bits_355")
     REQUIRE(result > rhs);
   }
 }
-TEST_CASE("bits_356")
-{
+TEST_CASE("bits_356") {
   // 32'4256702670 >>> 32'61 = 32'4294967295
   {
     _Bits<32, false> lhs{4256702670u};
@@ -5769,8 +5676,7 @@ TEST_CASE("bits_356")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_357")
-{
+TEST_CASE("bits_357") {
   // 32'2785633523 >>> 32'14 = 32'4294875173
   {
     _Bits<32, false> lhs{2785633523u};
@@ -5829,8 +5735,7 @@ TEST_CASE("bits_357")
     REQUIRE(result > rhs);
   }
 }
-TEST_CASE("bits_358")
-{
+TEST_CASE("bits_358") {
   // 32'3385418562 >>> 32'60 = 32'4294967295
   {
     _Bits<32, false> lhs{3385418562u};
@@ -5889,8 +5794,7 @@ TEST_CASE("bits_358")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_359")
-{
+TEST_CASE("bits_359") {
   // 32'680781567 >>> 32'35 = 32'0
   {
     _Bits<32, false> lhs{680781567u};
@@ -5949,8 +5853,7 @@ TEST_CASE("bits_359")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_360")
-{
+TEST_CASE("bits_360") {
   // 32'4206039718 >>> 32'58 = 32'4294967295
   {
     _Bits<32, false> lhs{4206039718u};
@@ -6009,8 +5912,7 @@ TEST_CASE("bits_360")
     REQUIRE(result >= rhs);
   }
 }
-TEST_CASE("bits_361")
-{
+TEST_CASE("bits_361") {
   // 32'457030338 >>> 32'1 = 32'228515169
   {
     _Bits<32, false> lhs{457030338u};
@@ -6069,8 +5971,7 @@ TEST_CASE("bits_361")
     REQUIRE(result >= rhs);
   }
 }
-TEST_CASE("bits_362")
-{
+TEST_CASE("bits_362") {
   // 32'1755715678 << 32'45 = 32'0
   {
     _Bits<32, false> lhs{1755715678u};
@@ -6129,8 +6030,7 @@ TEST_CASE("bits_362")
     REQUIRE(result <= rhs);
   }
 }
-TEST_CASE("bits_363")
-{
+TEST_CASE("bits_363") {
   // 32'4205852410 << 32'13 = 32'115294208
   {
     _Bits<32, false> lhs{4205852410u};
@@ -6189,8 +6089,7 @@ TEST_CASE("bits_363")
     REQUIRE(result >= rhs);
   }
 }
-TEST_CASE("bits_364")
-{
+TEST_CASE("bits_364") {
   // 32'3408375481 << 32'57 = 32'0
   {
     _Bits<32, false> lhs{3408375481u};
@@ -6249,8 +6148,7 @@ TEST_CASE("bits_364")
     REQUIRE(result < rhs);
   }
 }
-TEST_CASE("bits_365")
-{
+TEST_CASE("bits_365") {
   // 32'1118603074 << 32'3 = 32'358890000
   {
     _Bits<32, false> lhs{1118603074u};
@@ -6309,8 +6207,7 @@ TEST_CASE("bits_365")
     REQUIRE(result > rhs);
   }
 }
-TEST_CASE("bits_366")
-{
+TEST_CASE("bits_366") {
   // 32'84032623 << 32'22 = 32'465567744
   {
     _Bits<32, false> lhs{84032623u};
@@ -6369,8 +6266,7 @@ TEST_CASE("bits_366")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_367")
-{
+TEST_CASE("bits_367") {
   // 32'2565577851 << 32'6 = 32'988225216
   {
     _Bits<32, false> lhs{2565577851u};
@@ -6429,8 +6325,7 @@ TEST_CASE("bits_367")
     REQUIRE(result > rhs);
   }
 }
-TEST_CASE("bits_368")
-{
+TEST_CASE("bits_368") {
   // 32'932558944 << 32'56 = 32'0
   {
     _Bits<32, false> lhs{932558944u};
@@ -6489,8 +6384,7 @@ TEST_CASE("bits_368")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_369")
-{
+TEST_CASE("bits_369") {
   // 32'4026776162 << 32'53 = 32'0
   {
     _Bits<32, false> lhs{4026776162u};
@@ -6549,8 +6443,7 @@ TEST_CASE("bits_369")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_370")
-{
+TEST_CASE("bits_370") {
   // 32'191599167 << 32'35 = 32'0
   {
     _Bits<32, false> lhs{191599167u};
@@ -6609,8 +6502,7 @@ TEST_CASE("bits_370")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_371")
-{
+TEST_CASE("bits_371") {
   // 32'4080875970 << 32'11 = 32'3922595840
   {
     _Bits<32, false> lhs{4080875970u};
@@ -6669,8 +6561,7 @@ TEST_CASE("bits_371")
     REQUIRE(result >= rhs);
   }
 }
-TEST_CASE("bits_372")
-{
+TEST_CASE("bits_372") {
   // 32'1977553905 `<< 32'22 = 54'8294462253957120
   {
     _Bits<32, false> lhs{1977553905u};
@@ -6729,8 +6620,7 @@ TEST_CASE("bits_372")
     REQUIRE(result > rhs);
   }
 }
-TEST_CASE("bits_373")
-{
+TEST_CASE("bits_373") {
   // 32'2617246889 `<< 32'13 = 45'21440486514688
   {
     _Bits<32, false> lhs{2617246889u};
@@ -6789,8 +6679,7 @@ TEST_CASE("bits_373")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_374")
-{
+TEST_CASE("bits_374") {
   // 32'2426702107 `<< 32'32 = 64'10422606186699292672
   {
     _Bits<32, false> lhs{2426702107u};
@@ -6849,8 +6738,7 @@ TEST_CASE("bits_374")
     REQUIRE(result > rhs);
   }
 }
-TEST_CASE("bits_375")
-{
+TEST_CASE("bits_375") {
   // 32'4137453446 `<< 32'45 = 77'145573701544284176515072
   {
     _Bits<32, false> lhs{4137453446u};
@@ -6909,8 +6797,7 @@ TEST_CASE("bits_375")
     REQUIRE(result > rhs);
   }
 }
-TEST_CASE("bits_376")
-{
+TEST_CASE("bits_376") {
   // 32'4127000006 `<< 32'63 = 95'38064856451439891980744654848
   {
     _Bits<32, false> lhs{4127000006u};
@@ -6969,8 +6856,7 @@ TEST_CASE("bits_376")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_377")
-{
+TEST_CASE("bits_377") {
   // 32'2292921033 `<< 32'11 = 43'4695902275584
   {
     _Bits<32, false> lhs{2292921033u};
@@ -7029,8 +6915,7 @@ TEST_CASE("bits_377")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_378")
-{
+TEST_CASE("bits_378") {
   // 32'4131050087 `<< 32'59 = 91'2381388240955143050500243456
   {
     _Bits<32, false> lhs{4131050087u};
@@ -7089,8 +6974,7 @@ TEST_CASE("bits_378")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_379")
-{
+TEST_CASE("bits_379") {
   // 32'3828493268 `<< 32'31 = 63'8221626689508081664
   {
     _Bits<32, false> lhs{3828493268u};
@@ -7149,8 +7033,7 @@ TEST_CASE("bits_379")
     REQUIRE(result >= rhs);
   }
 }
-TEST_CASE("bits_380")
-{
+TEST_CASE("bits_380") {
   // 32'3203507597 `<< 32'1 = 33'6407015194
   {
     _Bits<32, false> lhs{3203507597u};
@@ -7209,8 +7092,7 @@ TEST_CASE("bits_380")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_381")
-{
+TEST_CASE("bits_381") {
   // 32'2936664591 `<< 32'3 = 35'23493316728
   {
     _Bits<32, false> lhs{2936664591u};

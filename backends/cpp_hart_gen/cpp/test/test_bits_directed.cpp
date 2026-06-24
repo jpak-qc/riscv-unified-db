@@ -51,8 +51,10 @@ consteval __uint128_t operator""_u128(const char *x) {
       if (x[i] == '\'') {
         continue;
       }
-      if ('0' <= x[i] && x[i] <= '9') y += ((unsigned __int128)(x[i] - '0')) * pow;
-      else throw std::runtime_error("bad literal");
+      if ('0' <= x[i] && x[i] <= '9')
+        y += ((unsigned __int128)(x[i] - '0')) * pow;
+      else
+        throw std::runtime_error("bad literal");
       pow *= 10;
     }
   }

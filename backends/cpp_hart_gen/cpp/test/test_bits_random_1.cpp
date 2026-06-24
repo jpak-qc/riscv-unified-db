@@ -50,8 +50,10 @@ consteval __uint128_t operator""_u128(const char *x) {
       if (x[i] == '\'') {
         continue;
       }
-      if ('0' <= x[i] && x[i] <= '9') y += ((unsigned __int128)(x[i] - '0')) * pow;
-      else throw std::runtime_error("bad literal");
+      if ('0' <= x[i] && x[i] <= '9')
+        y += ((unsigned __int128)(x[i] - '0')) * pow;
+      else
+        throw std::runtime_error("bad literal");
       pow *= 10;
     }
   }
@@ -69,8 +71,7 @@ std::ostream &operator<<(std::ostream &stream, const __int128_t &val) {
 }
 
 using namespace udb;
-TEST_CASE("bits_22")
-{
+TEST_CASE("bits_22") {
   // 8'173 + 8'43 = 8'216
   {
     _Bits<8, false> lhs{173u};
@@ -129,8 +130,7 @@ TEST_CASE("bits_22")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_23")
-{
+TEST_CASE("bits_23") {
   // 8'144 + 8'92 = 8'236
   {
     _Bits<8, false> lhs{144u};
@@ -189,8 +189,7 @@ TEST_CASE("bits_23")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_24")
-{
+TEST_CASE("bits_24") {
   // 8'249 + 8'242 = 8'235
   {
     _Bits<8, false> lhs{249u};
@@ -249,8 +248,7 @@ TEST_CASE("bits_24")
     REQUIRE(result < rhs);
   }
 }
-TEST_CASE("bits_25")
-{
+TEST_CASE("bits_25") {
   // 8'190 + 8'35 = 8'225
   {
     _Bits<8, false> lhs{190u};
@@ -309,8 +307,7 @@ TEST_CASE("bits_25")
     REQUIRE(result > rhs);
   }
 }
-TEST_CASE("bits_26")
-{
+TEST_CASE("bits_26") {
   // 8'234 + 8'52 = 8'30
   {
     _Bits<8, false> lhs{234u};
@@ -369,8 +366,7 @@ TEST_CASE("bits_26")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_27")
-{
+TEST_CASE("bits_27") {
   // 8'22 + 8'102 = 8'124
   {
     _Bits<8, false> lhs{22u};
@@ -429,8 +425,7 @@ TEST_CASE("bits_27")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_28")
-{
+TEST_CASE("bits_28") {
   // 8'88 + 8'145 = 8'233
   {
     _Bits<8, false> lhs{88u};
@@ -489,8 +484,7 @@ TEST_CASE("bits_28")
     REQUIRE(result > rhs);
   }
 }
-TEST_CASE("bits_29")
-{
+TEST_CASE("bits_29") {
   // 8'22 + 8'19 = 8'41
   {
     _Bits<8, false> lhs{22u};
@@ -549,8 +543,7 @@ TEST_CASE("bits_29")
     REQUIRE(result >= rhs);
   }
 }
-TEST_CASE("bits_30")
-{
+TEST_CASE("bits_30") {
   // 8'251 + 8'99 = 8'94
   {
     _Bits<8, false> lhs{251u};
@@ -609,8 +602,7 @@ TEST_CASE("bits_30")
     REQUIRE(result < rhs);
   }
 }
-TEST_CASE("bits_31")
-{
+TEST_CASE("bits_31") {
   // 8'24 + 8'69 = 8'93
   {
     _Bits<8, false> lhs{24u};
@@ -669,8 +661,7 @@ TEST_CASE("bits_31")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_32")
-{
+TEST_CASE("bits_32") {
   // 8'139 `+ 8'252 = 9'391
   {
     _Bits<8, false> lhs{139u};
@@ -729,8 +720,7 @@ TEST_CASE("bits_32")
     REQUIRE(result >= rhs);
   }
 }
-TEST_CASE("bits_33")
-{
+TEST_CASE("bits_33") {
   // 8'194 `+ 8'238 = 9'432
   {
     _Bits<8, false> lhs{194u};
@@ -789,8 +779,7 @@ TEST_CASE("bits_33")
     REQUIRE(result > rhs);
   }
 }
-TEST_CASE("bits_34")
-{
+TEST_CASE("bits_34") {
   // 8'86 `+ 8'129 = 9'215
   {
     _Bits<8, false> lhs{86u};
@@ -849,8 +838,7 @@ TEST_CASE("bits_34")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_35")
-{
+TEST_CASE("bits_35") {
   // 8'179 `+ 8'76 = 9'255
   {
     _Bits<8, false> lhs{179u};
@@ -909,8 +897,7 @@ TEST_CASE("bits_35")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_36")
-{
+TEST_CASE("bits_36") {
   // 8'205 `+ 8'65 = 9'270
   {
     _Bits<8, false> lhs{205u};
@@ -969,8 +956,7 @@ TEST_CASE("bits_36")
     REQUIRE(result >= rhs);
   }
 }
-TEST_CASE("bits_37")
-{
+TEST_CASE("bits_37") {
   // 8'109 `+ 8'250 = 9'359
   {
     _Bits<8, false> lhs{109u};
@@ -1029,8 +1015,7 @@ TEST_CASE("bits_37")
     REQUIRE(result > rhs);
   }
 }
-TEST_CASE("bits_38")
-{
+TEST_CASE("bits_38") {
   // 8'242 `+ 8'44 = 9'286
   {
     _Bits<8, false> lhs{242u};
@@ -1089,8 +1074,7 @@ TEST_CASE("bits_38")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_39")
-{
+TEST_CASE("bits_39") {
   // 8'0 `+ 8'90 = 9'90
   {
     _Bits<8, false> lhs{0u};
@@ -1149,8 +1133,7 @@ TEST_CASE("bits_39")
     REQUIRE(result >= rhs);
   }
 }
-TEST_CASE("bits_40")
-{
+TEST_CASE("bits_40") {
   // 8'107 `+ 8'218 = 9'325
   {
     _Bits<8, false> lhs{107u};
@@ -1209,8 +1192,7 @@ TEST_CASE("bits_40")
     REQUIRE(result >= rhs);
   }
 }
-TEST_CASE("bits_41")
-{
+TEST_CASE("bits_41") {
   // 8'205 `+ 8'226 = 9'431
   {
     _Bits<8, false> lhs{205u};
@@ -1269,8 +1251,7 @@ TEST_CASE("bits_41")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_42")
-{
+TEST_CASE("bits_42") {
   // 8'18 - 8'189 = 8'85
   {
     _Bits<8, false> lhs{18u};
@@ -1329,8 +1310,7 @@ TEST_CASE("bits_42")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_43")
-{
+TEST_CASE("bits_43") {
   // 8'249 - 8'86 = 8'163
   {
     _Bits<8, false> lhs{249u};
@@ -1389,8 +1369,7 @@ TEST_CASE("bits_43")
     REQUIRE(result >= rhs);
   }
 }
-TEST_CASE("bits_44")
-{
+TEST_CASE("bits_44") {
   // 8'206 - 8'146 = 8'60
   {
     _Bits<8, false> lhs{206u};
@@ -1449,8 +1428,7 @@ TEST_CASE("bits_44")
     REQUIRE(result <= rhs);
   }
 }
-TEST_CASE("bits_45")
-{
+TEST_CASE("bits_45") {
   // 8'221 - 8'204 = 8'17
   {
     _Bits<8, false> lhs{221u};
@@ -1509,8 +1487,7 @@ TEST_CASE("bits_45")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_46")
-{
+TEST_CASE("bits_46") {
   // 8'221 - 8'26 = 8'195
   {
     _Bits<8, false> lhs{221u};
@@ -1569,8 +1546,7 @@ TEST_CASE("bits_46")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_47")
-{
+TEST_CASE("bits_47") {
   // 8'215 - 8'150 = 8'65
   {
     _Bits<8, false> lhs{215u};
@@ -1629,8 +1605,7 @@ TEST_CASE("bits_47")
     REQUIRE(result <= rhs);
   }
 }
-TEST_CASE("bits_48")
-{
+TEST_CASE("bits_48") {
   // 8'221 - 8'247 = 8'230
   {
     _Bits<8, false> lhs{221u};
@@ -1689,8 +1664,7 @@ TEST_CASE("bits_48")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_49")
-{
+TEST_CASE("bits_49") {
   // 8'65 - 8'148 = 8'173
   {
     _Bits<8, false> lhs{65u};
@@ -1749,8 +1723,7 @@ TEST_CASE("bits_49")
     REQUIRE(result >= rhs);
   }
 }
-TEST_CASE("bits_50")
-{
+TEST_CASE("bits_50") {
   // 8'156 - 8'170 = 8'242
   {
     _Bits<8, false> lhs{156u};
@@ -1809,8 +1782,7 @@ TEST_CASE("bits_50")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_51")
-{
+TEST_CASE("bits_51") {
   // 8'171 - 8'17 = 8'154
   {
     _Bits<8, false> lhs{171u};
@@ -1869,8 +1841,7 @@ TEST_CASE("bits_51")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_52")
-{
+TEST_CASE("bits_52") {
   // 8'126 `- 8'38 = 9'88
   {
     _Bits<8, false> lhs{126u};
@@ -1929,8 +1900,7 @@ TEST_CASE("bits_52")
     REQUIRE(result > rhs);
   }
 }
-TEST_CASE("bits_53")
-{
+TEST_CASE("bits_53") {
   // 8'127 `- 8'238 = 9'401
   {
     _Bits<8, false> lhs{127u};
@@ -1989,8 +1959,7 @@ TEST_CASE("bits_53")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_54")
-{
+TEST_CASE("bits_54") {
   // 8'77 `- 8'89 = 9'500
   {
     _Bits<8, false> lhs{77u};
@@ -2049,8 +2018,7 @@ TEST_CASE("bits_54")
     REQUIRE(result >= rhs);
   }
 }
-TEST_CASE("bits_55")
-{
+TEST_CASE("bits_55") {
   // 8'117 `- 8'157 = 9'472
   {
     _Bits<8, false> lhs{117u};
@@ -2109,8 +2077,7 @@ TEST_CASE("bits_55")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_56")
-{
+TEST_CASE("bits_56") {
   // 8'227 `- 8'175 = 9'52
   {
     _Bits<8, false> lhs{227u};
@@ -2169,8 +2136,7 @@ TEST_CASE("bits_56")
     REQUIRE(result < rhs);
   }
 }
-TEST_CASE("bits_57")
-{
+TEST_CASE("bits_57") {
   // 8'199 `- 8'24 = 9'175
   {
     _Bits<8, false> lhs{199u};
@@ -2229,8 +2195,7 @@ TEST_CASE("bits_57")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_58")
-{
+TEST_CASE("bits_58") {
   // 8'248 `- 8'219 = 9'29
   {
     _Bits<8, false> lhs{248u};
@@ -2289,8 +2254,7 @@ TEST_CASE("bits_58")
     REQUIRE(result <= rhs);
   }
 }
-TEST_CASE("bits_59")
-{
+TEST_CASE("bits_59") {
   // 8'53 `- 8'70 = 9'495
   {
     _Bits<8, false> lhs{53u};
@@ -2349,8 +2313,7 @@ TEST_CASE("bits_59")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_60")
-{
+TEST_CASE("bits_60") {
   // 8'90 `- 8'251 = 9'351
   {
     _Bits<8, false> lhs{90u};
@@ -2409,8 +2372,7 @@ TEST_CASE("bits_60")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_61")
-{
+TEST_CASE("bits_61") {
   // 8'159 `- 8'98 = 9'61
   {
     _Bits<8, false> lhs{159u};
@@ -2469,8 +2431,7 @@ TEST_CASE("bits_61")
     REQUIRE(result < rhs);
   }
 }
-TEST_CASE("bits_62")
-{
+TEST_CASE("bits_62") {
   // 8'198 * 8'192 = 8'128
   {
     _Bits<8, false> lhs{198u};
@@ -2529,8 +2490,7 @@ TEST_CASE("bits_62")
     REQUIRE(result <= rhs);
   }
 }
-TEST_CASE("bits_63")
-{
+TEST_CASE("bits_63") {
   // 8'233 * 8'180 = 8'212
   {
     _Bits<8, false> lhs{233u};
@@ -2589,8 +2549,7 @@ TEST_CASE("bits_63")
     REQUIRE(result >= rhs);
   }
 }
-TEST_CASE("bits_64")
-{
+TEST_CASE("bits_64") {
   // 8'145 * 8'230 = 8'70
   {
     _Bits<8, false> lhs{145u};
@@ -2649,8 +2608,7 @@ TEST_CASE("bits_64")
     REQUIRE(result < rhs);
   }
 }
-TEST_CASE("bits_65")
-{
+TEST_CASE("bits_65") {
   // 8'99 * 8'58 = 8'110
   {
     _Bits<8, false> lhs{99u};
@@ -2709,8 +2667,7 @@ TEST_CASE("bits_65")
     REQUIRE(result > rhs);
   }
 }
-TEST_CASE("bits_66")
-{
+TEST_CASE("bits_66") {
   // 8'208 * 8'244 = 8'64
   {
     _Bits<8, false> lhs{208u};
@@ -2769,8 +2726,7 @@ TEST_CASE("bits_66")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_67")
-{
+TEST_CASE("bits_67") {
   // 8'31 * 8'80 = 8'176
   {
     _Bits<8, false> lhs{31u};
@@ -2829,8 +2785,7 @@ TEST_CASE("bits_67")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_68")
-{
+TEST_CASE("bits_68") {
   // 8'9 * 8'134 = 8'182
   {
     _Bits<8, false> lhs{9u};
@@ -2889,8 +2844,7 @@ TEST_CASE("bits_68")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_69")
-{
+TEST_CASE("bits_69") {
   // 8'43 * 8'63 = 8'149
   {
     _Bits<8, false> lhs{43u};
@@ -2949,8 +2903,7 @@ TEST_CASE("bits_69")
     REQUIRE(result > rhs);
   }
 }
-TEST_CASE("bits_70")
-{
+TEST_CASE("bits_70") {
   // 8'233 * 8'186 = 8'74
   {
     _Bits<8, false> lhs{233u};
@@ -3009,8 +2962,7 @@ TEST_CASE("bits_70")
     REQUIRE(result <= rhs);
   }
 }
-TEST_CASE("bits_71")
-{
+TEST_CASE("bits_71") {
   // 8'139 * 8'212 = 8'28
   {
     _Bits<8, false> lhs{139u};
@@ -3069,8 +3021,7 @@ TEST_CASE("bits_71")
     REQUIRE(result < rhs);
   }
 }
-TEST_CASE("bits_72")
-{
+TEST_CASE("bits_72") {
   // 8'171 `* 8'88 = 16'15048
   {
     _Bits<8, false> lhs{171u};
@@ -3129,8 +3080,7 @@ TEST_CASE("bits_72")
     REQUIRE(result >= rhs);
   }
 }
-TEST_CASE("bits_73")
-{
+TEST_CASE("bits_73") {
   // 8'1 `* 8'238 = 16'238
   {
     _Bits<8, false> lhs{1u};
@@ -3189,8 +3139,7 @@ TEST_CASE("bits_73")
     REQUIRE(result == rhs);
   }
 }
-TEST_CASE("bits_74")
-{
+TEST_CASE("bits_74") {
   // 8'113 `* 8'115 = 16'12995
   {
     _Bits<8, false> lhs{113u};
@@ -3249,8 +3198,7 @@ TEST_CASE("bits_74")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_75")
-{
+TEST_CASE("bits_75") {
   // 8'198 `* 8'39 = 16'7722
   {
     _Bits<8, false> lhs{198u};
@@ -3309,8 +3257,7 @@ TEST_CASE("bits_75")
     REQUIRE(result > rhs);
   }
 }
-TEST_CASE("bits_76")
-{
+TEST_CASE("bits_76") {
   // 8'46 `* 8'147 = 16'6762
   {
     _Bits<8, false> lhs{46u};
@@ -3369,8 +3316,7 @@ TEST_CASE("bits_76")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_77")
-{
+TEST_CASE("bits_77") {
   // 8'202 `* 8'84 = 16'16968
   {
     _Bits<8, false> lhs{202u};
@@ -3429,8 +3375,7 @@ TEST_CASE("bits_77")
     REQUIRE(result >= rhs);
   }
 }
-TEST_CASE("bits_78")
-{
+TEST_CASE("bits_78") {
   // 8'154 `* 8'48 = 16'7392
   {
     _Bits<8, false> lhs{154u};
@@ -3489,8 +3434,7 @@ TEST_CASE("bits_78")
     REQUIRE(result > rhs);
   }
 }
-TEST_CASE("bits_79")
-{
+TEST_CASE("bits_79") {
   // 8'177 `* 8'251 = 16'44427
   {
     _Bits<8, false> lhs{177u};
@@ -3549,8 +3493,7 @@ TEST_CASE("bits_79")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_80")
-{
+TEST_CASE("bits_80") {
   // 8'5 `* 8'116 = 16'580
   {
     _Bits<8, false> lhs{5u};
@@ -3609,8 +3552,7 @@ TEST_CASE("bits_80")
     REQUIRE(result > rhs);
   }
 }
-TEST_CASE("bits_81")
-{
+TEST_CASE("bits_81") {
   // 8'88 `* 8'1 = 16'88
   {
     _Bits<8, false> lhs{88u};
@@ -3669,8 +3611,7 @@ TEST_CASE("bits_81")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_82")
-{
+TEST_CASE("bits_82") {
   // 8'189 / 8'50 = 8'3
   {
     _Bits<8, false> lhs{189u};
@@ -3729,8 +3670,7 @@ TEST_CASE("bits_82")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_83")
-{
+TEST_CASE("bits_83") {
   // 8'111 / 8'150 = 8'0
   {
     _Bits<8, false> lhs{111u};
@@ -3789,8 +3729,7 @@ TEST_CASE("bits_83")
     REQUIRE(result <= rhs);
   }
 }
-TEST_CASE("bits_84")
-{
+TEST_CASE("bits_84") {
   // 8'155 / 8'3 = 8'51
   {
     _Bits<8, false> lhs{155u};
@@ -3849,8 +3788,7 @@ TEST_CASE("bits_84")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_85")
-{
+TEST_CASE("bits_85") {
   // 8'86 / 8'78 = 8'1
   {
     _Bits<8, false> lhs{86u};
@@ -3909,8 +3847,7 @@ TEST_CASE("bits_85")
     REQUIRE(result <= rhs);
   }
 }
-TEST_CASE("bits_86")
-{
+TEST_CASE("bits_86") {
   // 8'22 / 8'106 = 8'0
   {
     _Bits<8, false> lhs{22u};
@@ -3969,8 +3906,7 @@ TEST_CASE("bits_86")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_87")
-{
+TEST_CASE("bits_87") {
   // 8'157 / 8'151 = 8'1
   {
     _Bits<8, false> lhs{157u};
@@ -4029,8 +3965,7 @@ TEST_CASE("bits_87")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_88")
-{
+TEST_CASE("bits_88") {
   // 8'68 / 8'31 = 8'2
   {
     _Bits<8, false> lhs{68u};
@@ -4089,8 +4024,7 @@ TEST_CASE("bits_88")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_89")
-{
+TEST_CASE("bits_89") {
   // 8'39 / 8'171 = 8'0
   {
     _Bits<8, false> lhs{39u};
@@ -4149,8 +4083,7 @@ TEST_CASE("bits_89")
     REQUIRE(result < rhs);
   }
 }
-TEST_CASE("bits_90")
-{
+TEST_CASE("bits_90") {
   // 8'36 / 8'166 = 8'0
   {
     _Bits<8, false> lhs{36u};
@@ -4209,8 +4142,7 @@ TEST_CASE("bits_90")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_91")
-{
+TEST_CASE("bits_91") {
   // 8'23 / 8'178 = 8'0
   {
     _Bits<8, false> lhs{23u};
@@ -4269,8 +4201,7 @@ TEST_CASE("bits_91")
     REQUIRE(result < rhs);
   }
 }
-TEST_CASE("bits_92")
-{
+TEST_CASE("bits_92") {
   // 8'73 % 8'135 = 8'73
   {
     _Bits<8, false> lhs{73u};
@@ -4329,8 +4260,7 @@ TEST_CASE("bits_92")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_93")
-{
+TEST_CASE("bits_93") {
   // 8'176 % 8'223 = 8'176
   {
     _Bits<8, false> lhs{176u};
@@ -4389,8 +4319,7 @@ TEST_CASE("bits_93")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_94")
-{
+TEST_CASE("bits_94") {
   // 8'84 % 8'15 = 8'9
   {
     _Bits<8, false> lhs{84u};
@@ -4449,8 +4378,7 @@ TEST_CASE("bits_94")
     REQUIRE(result < rhs);
   }
 }
-TEST_CASE("bits_95")
-{
+TEST_CASE("bits_95") {
   // 8'238 % 8'202 = 8'36
   {
     _Bits<8, false> lhs{238u};
@@ -4509,8 +4437,7 @@ TEST_CASE("bits_95")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_96")
-{
+TEST_CASE("bits_96") {
   // 8'168 % 8'240 = 8'168
   {
     _Bits<8, false> lhs{168u};
@@ -4569,8 +4496,7 @@ TEST_CASE("bits_96")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_97")
-{
+TEST_CASE("bits_97") {
   // 8'86 % 8'25 = 8'11
   {
     _Bits<8, false> lhs{86u};
@@ -4629,8 +4555,7 @@ TEST_CASE("bits_97")
     REQUIRE(result < rhs);
   }
 }
-TEST_CASE("bits_98")
-{
+TEST_CASE("bits_98") {
   // 8'221 % 8'245 = 8'221
   {
     _Bits<8, false> lhs{221u};
@@ -4689,8 +4614,7 @@ TEST_CASE("bits_98")
     REQUIRE(result <= rhs);
   }
 }
-TEST_CASE("bits_99")
-{
+TEST_CASE("bits_99") {
   // 8'175 % 8'231 = 8'175
   {
     _Bits<8, false> lhs{175u};
@@ -4749,8 +4673,7 @@ TEST_CASE("bits_99")
     REQUIRE(result <= rhs);
   }
 }
-TEST_CASE("bits_100")
-{
+TEST_CASE("bits_100") {
   // 8'127 % 8'167 = 8'127
   {
     _Bits<8, false> lhs{127u};
@@ -4809,8 +4732,7 @@ TEST_CASE("bits_100")
     REQUIRE(result < rhs);
   }
 }
-TEST_CASE("bits_101")
-{
+TEST_CASE("bits_101") {
   // 8'134 % 8'68 = 8'66
   {
     _Bits<8, false> lhs{134u};
@@ -4869,8 +4791,7 @@ TEST_CASE("bits_101")
     REQUIRE(result <= rhs);
   }
 }
-TEST_CASE("bits_102")
-{
+TEST_CASE("bits_102") {
   // 8'231 >> 8'5 = 8'7
   {
     _Bits<8, false> lhs{231u};
@@ -4929,8 +4850,7 @@ TEST_CASE("bits_102")
     REQUIRE(result > rhs);
   }
 }
-TEST_CASE("bits_103")
-{
+TEST_CASE("bits_103") {
   // 8'87 >> 8'11 = 8'0
   {
     _Bits<8, false> lhs{87u};
@@ -4989,8 +4909,7 @@ TEST_CASE("bits_103")
     REQUIRE(result < rhs);
   }
 }
-TEST_CASE("bits_104")
-{
+TEST_CASE("bits_104") {
   // 8'47 >> 8'10 = 8'0
   {
     _Bits<8, false> lhs{47u};
@@ -5049,8 +4968,7 @@ TEST_CASE("bits_104")
     REQUIRE(result < rhs);
   }
 }
-TEST_CASE("bits_105")
-{
+TEST_CASE("bits_105") {
   // 8'19 >> 8'2 = 8'4
   {
     _Bits<8, false> lhs{19u};
@@ -5109,8 +5027,7 @@ TEST_CASE("bits_105")
     REQUIRE(result > rhs);
   }
 }
-TEST_CASE("bits_106")
-{
+TEST_CASE("bits_106") {
   // 8'236 >> 8'6 = 8'3
   {
     _Bits<8, false> lhs{236u};
@@ -5169,8 +5086,7 @@ TEST_CASE("bits_106")
     REQUIRE(result < rhs);
   }
 }
-TEST_CASE("bits_107")
-{
+TEST_CASE("bits_107") {
   // 8'150 >> 8'1 = 8'75
   {
     _Bits<8, false> lhs{150u};
@@ -5229,8 +5145,7 @@ TEST_CASE("bits_107")
     REQUIRE(result > rhs);
   }
 }
-TEST_CASE("bits_108")
-{
+TEST_CASE("bits_108") {
   // 8'8 >> 8'13 = 8'0
   {
     _Bits<8, false> lhs{8u};
@@ -5289,8 +5204,7 @@ TEST_CASE("bits_108")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_109")
-{
+TEST_CASE("bits_109") {
   // 8'131 >> 8'4 = 8'8
   {
     _Bits<8, false> lhs{131u};
@@ -5349,8 +5263,7 @@ TEST_CASE("bits_109")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_110")
-{
+TEST_CASE("bits_110") {
   // 8'80 >> 8'11 = 8'0
   {
     _Bits<8, false> lhs{80u};
@@ -5409,8 +5322,7 @@ TEST_CASE("bits_110")
     REQUIRE(result <= rhs);
   }
 }
-TEST_CASE("bits_111")
-{
+TEST_CASE("bits_111") {
   // 8'67 >> 8'0 = 8'67
   {
     _Bits<8, false> lhs{67u};
@@ -5469,8 +5381,7 @@ TEST_CASE("bits_111")
     REQUIRE(result >= rhs);
   }
 }
-TEST_CASE("bits_112")
-{
+TEST_CASE("bits_112") {
   // 8'142 >>> 8'1 = 8'199
   {
     _Bits<8, false> lhs{142u};
@@ -5529,8 +5440,7 @@ TEST_CASE("bits_112")
     REQUIRE(result >= rhs);
   }
 }
-TEST_CASE("bits_113")
-{
+TEST_CASE("bits_113") {
   // 8'139 >>> 8'9 = 8'255
   {
     _Bits<8, false> lhs{139u};
@@ -5589,8 +5499,7 @@ TEST_CASE("bits_113")
     REQUIRE(result > rhs);
   }
 }
-TEST_CASE("bits_114")
-{
+TEST_CASE("bits_114") {
   // 8'72 >>> 8'12 = 8'0
   {
     _Bits<8, false> lhs{72u};
@@ -5649,8 +5558,7 @@ TEST_CASE("bits_114")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_115")
-{
+TEST_CASE("bits_115") {
   // 8'247 >>> 8'4 = 8'255
   {
     _Bits<8, false> lhs{247u};
@@ -5709,8 +5617,7 @@ TEST_CASE("bits_115")
     REQUIRE(result >= rhs);
   }
 }
-TEST_CASE("bits_116")
-{
+TEST_CASE("bits_116") {
   // 8'214 >>> 8'8 = 8'255
   {
     _Bits<8, false> lhs{214u};
@@ -5769,8 +5676,7 @@ TEST_CASE("bits_116")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_117")
-{
+TEST_CASE("bits_117") {
   // 8'58 >>> 8'2 = 8'14
   {
     _Bits<8, false> lhs{58u};
@@ -5829,8 +5735,7 @@ TEST_CASE("bits_117")
     REQUIRE(result > rhs);
   }
 }
-TEST_CASE("bits_118")
-{
+TEST_CASE("bits_118") {
   // 8'52 >>> 8'1 = 8'26
   {
     _Bits<8, false> lhs{52u};
@@ -5889,8 +5794,7 @@ TEST_CASE("bits_118")
     REQUIRE(result >= rhs);
   }
 }
-TEST_CASE("bits_119")
-{
+TEST_CASE("bits_119") {
   // 8'104 >>> 8'4 = 8'6
   {
     _Bits<8, false> lhs{104u};
@@ -5949,8 +5853,7 @@ TEST_CASE("bits_119")
     REQUIRE(result >= rhs);
   }
 }
-TEST_CASE("bits_120")
-{
+TEST_CASE("bits_120") {
   // 8'218 >>> 8'13 = 8'255
   {
     _Bits<8, false> lhs{218u};
@@ -6009,8 +5912,7 @@ TEST_CASE("bits_120")
     REQUIRE(result > rhs);
   }
 }
-TEST_CASE("bits_121")
-{
+TEST_CASE("bits_121") {
   // 8'179 >>> 8'11 = 8'255
   {
     _Bits<8, false> lhs{179u};
@@ -6069,8 +5971,7 @@ TEST_CASE("bits_121")
     REQUIRE(result > rhs);
   }
 }
-TEST_CASE("bits_122")
-{
+TEST_CASE("bits_122") {
   // 8'177 << 8'4 = 8'16
   {
     _Bits<8, false> lhs{177u};
@@ -6129,8 +6030,7 @@ TEST_CASE("bits_122")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_123")
-{
+TEST_CASE("bits_123") {
   // 8'142 << 8'5 = 8'192
   {
     _Bits<8, false> lhs{142u};
@@ -6189,8 +6089,7 @@ TEST_CASE("bits_123")
     REQUIRE(result >= rhs);
   }
 }
-TEST_CASE("bits_124")
-{
+TEST_CASE("bits_124") {
   // 8'64 << 8'7 = 8'0
   {
     _Bits<8, false> lhs{64u};
@@ -6249,8 +6148,7 @@ TEST_CASE("bits_124")
     REQUIRE(result < rhs);
   }
 }
-TEST_CASE("bits_125")
-{
+TEST_CASE("bits_125") {
   // 8'96 << 8'8 = 8'0
   {
     _Bits<8, false> lhs{96u};
@@ -6309,8 +6207,7 @@ TEST_CASE("bits_125")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_126")
-{
+TEST_CASE("bits_126") {
   // 8'136 << 8'12 = 8'0
   {
     _Bits<8, false> lhs{136u};
@@ -6369,8 +6266,7 @@ TEST_CASE("bits_126")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_127")
-{
+TEST_CASE("bits_127") {
   // 8'128 << 8'9 = 8'0
   {
     _Bits<8, false> lhs{128u};
@@ -6429,8 +6325,7 @@ TEST_CASE("bits_127")
     REQUIRE(result <= rhs);
   }
 }
-TEST_CASE("bits_128")
-{
+TEST_CASE("bits_128") {
   // 8'240 << 8'2 = 8'192
   {
     _Bits<8, false> lhs{240u};
@@ -6489,8 +6384,7 @@ TEST_CASE("bits_128")
     REQUIRE(result >= rhs);
   }
 }
-TEST_CASE("bits_129")
-{
+TEST_CASE("bits_129") {
   // 8'149 << 8'7 = 8'128
   {
     _Bits<8, false> lhs{149u};
@@ -6549,8 +6443,7 @@ TEST_CASE("bits_129")
     REQUIRE(result > rhs);
   }
 }
-TEST_CASE("bits_130")
-{
+TEST_CASE("bits_130") {
   // 8'5 << 8'4 = 8'80
   {
     _Bits<8, false> lhs{5u};
@@ -6609,8 +6502,7 @@ TEST_CASE("bits_130")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_131")
-{
+TEST_CASE("bits_131") {
   // 8'215 << 8'13 = 8'0
   {
     _Bits<8, false> lhs{215u};
@@ -6669,8 +6561,7 @@ TEST_CASE("bits_131")
     REQUIRE(result < rhs);
   }
 }
-TEST_CASE("bits_132")
-{
+TEST_CASE("bits_132") {
   // 8'75 `<< 8'7 = 15'9600
   {
     _Bits<8, false> lhs{75u};
@@ -6729,8 +6620,7 @@ TEST_CASE("bits_132")
     REQUIRE(result > rhs);
   }
 }
-TEST_CASE("bits_133")
-{
+TEST_CASE("bits_133") {
   // 8'30 `<< 8'7 = 15'3840
   {
     _Bits<8, false> lhs{30u};
@@ -6789,8 +6679,7 @@ TEST_CASE("bits_133")
     REQUIRE(result >= rhs);
   }
 }
-TEST_CASE("bits_134")
-{
+TEST_CASE("bits_134") {
   // 8'34 `<< 8'6 = 14'2176
   {
     _Bits<8, false> lhs{34u};
@@ -6849,8 +6738,7 @@ TEST_CASE("bits_134")
     REQUIRE(result >= rhs);
   }
 }
-TEST_CASE("bits_135")
-{
+TEST_CASE("bits_135") {
   // 8'7 `<< 8'11 = 19'14336
   {
     _Bits<8, false> lhs{7u};
@@ -6909,8 +6797,7 @@ TEST_CASE("bits_135")
     REQUIRE(result > rhs);
   }
 }
-TEST_CASE("bits_136")
-{
+TEST_CASE("bits_136") {
   // 8'48 `<< 8'10 = 18'49152
   {
     _Bits<8, false> lhs{48u};
@@ -6969,8 +6856,7 @@ TEST_CASE("bits_136")
     REQUIRE(result > rhs);
   }
 }
-TEST_CASE("bits_137")
-{
+TEST_CASE("bits_137") {
   // 8'174 `<< 8'7 = 15'22272
   {
     _Bits<8, false> lhs{174u};
@@ -7029,8 +6915,7 @@ TEST_CASE("bits_137")
     REQUIRE(result > rhs);
   }
 }
-TEST_CASE("bits_138")
-{
+TEST_CASE("bits_138") {
   // 8'131 `<< 8'15 = 23'4292608
   {
     _Bits<8, false> lhs{131u};
@@ -7089,8 +6974,7 @@ TEST_CASE("bits_138")
     REQUIRE(result != rhs);
   }
 }
-TEST_CASE("bits_139")
-{
+TEST_CASE("bits_139") {
   // 8'164 `<< 8'9 = 17'83968
   {
     _Bits<8, false> lhs{164u};
@@ -7149,8 +7033,7 @@ TEST_CASE("bits_139")
     REQUIRE(result > rhs);
   }
 }
-TEST_CASE("bits_140")
-{
+TEST_CASE("bits_140") {
   // 8'49 `<< 8'10 = 18'50176
   {
     _Bits<8, false> lhs{49u};
@@ -7209,8 +7092,7 @@ TEST_CASE("bits_140")
     REQUIRE(result >= rhs);
   }
 }
-TEST_CASE("bits_141")
-{
+TEST_CASE("bits_141") {
   // 8'59 `<< 8'9 = 17'30208
   {
     _Bits<8, false> lhs{59u};

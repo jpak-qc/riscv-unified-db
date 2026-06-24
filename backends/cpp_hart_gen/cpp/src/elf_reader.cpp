@@ -27,7 +27,7 @@ udb::ElfReader::ElfReader(const std::string& path) {
   }
 
   GElf_Ehdr hdr;
-  if(gelf_getehdr(m_elf, &hdr) != &hdr) {
+  if (gelf_getehdr(m_elf, &hdr) != &hdr) {
     throw ElfException("could not get elf header");
   }
   m_entry = hdr.e_entry;
@@ -61,8 +61,7 @@ bool udb::ElfReader::getSym(const std::string& name, Elf64_Addr* result) {
       throw ElfException("Could not get Section Header");
     }
 
-    if (strcmp(elf_strptr(m_elf, shstrtab_index, shdr.sh_name), ".strtab") ==
-        0) {
+    if (strcmp(elf_strptr(m_elf, shstrtab_index, shdr.sh_name), ".strtab") == 0) {
       strtab_index = i;
       break;
     }
@@ -76,14 +75,12 @@ bool udb::ElfReader::getSym(const std::string& name, Elf64_Addr* result) {
       throw ElfException("Could not get Section Header");
     }
 
-    if (strcmp(elf_strptr(m_elf, shstrtab_index, section_header.sh_name),
-               ".symtab") == 0) {
+    if (strcmp(elf_strptr(m_elf, shstrtab_index, section_header.sh_name), ".symtab") == 0) {
       unsigned num_syms = section_header.sh_size / section_header.sh_entsize;
       Elf_Data* data;
       if ((data = elf_getdata(section, nullptr)) == nullptr) {
-        throw ElfException(fmt::format("Could not get symtab data. {}",
-                                       elf_errmsg(elf_errno()))
-                               .c_str());
+        throw ElfException(
+            fmt::format("Could not get symtab data. {}", elf_errmsg(elf_errno())).c_str());
       }
 
       for (unsigned j = 0; j < num_syms; j++) {
@@ -92,8 +89,7 @@ bool udb::ElfReader::getSym(const std::string& name, Elf64_Addr* result) {
           throw ElfException("Could not get symbol");
         }
 
-        if (strcmp(elf_strptr(m_elf, strtab_index, sym.st_name),
-                   name.c_str()) == 0) {
+        if (strcmp(elf_strptr(m_elf, strtab_index, sym.st_name), name.c_str()) == 0) {
           *result = sym.st_value;
           return true;
         }
@@ -108,13 +104,13 @@ std::pair<uint64_t, uint64_t> udb::ElfReader::mem_range() {
   uint64_t addr_lo = std::numeric_limits<uint64_t>::max();
   uint64_t addr_hi = std::numeric_limits<uint64_t>::min();
 
-  //Make room for any section allocating memory
-  if(elf_getshdrnum(m_elf, &n) == 0 && n > 0) {
+  // Make room for any section allocating memory
+  if (elf_getshdrnum(m_elf, &n) == 0 && n > 0) {
     for (size_t i = 0; i < n; i++) {
       Elf_Scn* pscn = elf_getscn(m_elf, i);
-      if(pscn != NULL) {
+      if (pscn != NULL) {
         GElf_Shdr shdr;
-        if(gelf_getshdr(pscn, &shdr) != &shdr) {
+        if (gelf_getshdr(pscn, &shdr) != &shdr) {
           throw ElfException("Cannot get section header");
         }
 
@@ -126,8 +122,8 @@ std::pair<uint64_t, uint64_t> udb::ElfReader::mem_range() {
     }
   }
 
-  //No memory to be allocated
-  if(addr_lo > addr_hi) {
+  // No memory to be allocated
+  if (addr_lo > addr_hi) {
     addr_lo = addr_hi = 0;
   }
 
