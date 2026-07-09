@@ -29,10 +29,14 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
+  check_v_ok_vtype($encoding);
   XReg virtual_address = X[xs1];
-  # "A simple in-order implementation can ignore the settings and simply execute all vector instructions using the undisturbed policy"
+
   for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    U32 start_bit_pos = i * 8;
-    U32 end_bit_pos = start_bit_pos + 7;
-    write_memory(8, virtual_address + i, V[vs3][end_bit_pos:start_bit_pos], $encoding);
+    if (v_mask_elem_active?(vm, i)) {
+      # EEW=8 fixed (log2_eew=3), regardless of SEW
+      write_memory(8, virtual_address + i, v_elem_read(vs3, i, 3)[7:0], $encoding);
+    }
   }
+  CSR[vstart].VALUE = 0;
+  mark_v_state_dirty();

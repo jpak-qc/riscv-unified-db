@@ -85,7 +85,8 @@ module Idl
           rf_name = var_type.sub_type.name
           return [[rf_name, index.value(symtab)]]
         else
-          return []
+          # var is not itself a register file — recurse in case it's a nested access like V[v0][i]
+          return var.find_src_registers(symtab)
         end
       end
       value_else(value_result) do
@@ -98,7 +99,7 @@ module Idl
             raise ComplexRegDetermination
           end
         else
-          return []
+          return var.find_src_registers(symtab)
         end
       end
     end

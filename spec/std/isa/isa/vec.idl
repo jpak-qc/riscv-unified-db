@@ -52,3 +52,168 @@ function vector_state {
     return state;
   }
 }
+
+function check_v_ok {
+  arguments
+    Bits<INSTR_ENC_SIZE> encoding
+  description {
+    Checks if vector instructions can be executed, and, if not, raises an
+    IllegalInstruction exception. The vector unit is disabled when mstatus.VS == 0.
+  }
+  body {
+    if (CSR[mstatus].VS == 0) {
+      raise(ExceptionCode::IllegalInstruction, mode(), encoding);
+    }
+  }
+}
+
+function check_v_ok_vtype {
+  arguments
+    Bits<INSTR_ENC_SIZE> encoding
+  description {
+    Like check_v_ok, but additionally raises IllegalInstruction when vtype.VILL is
+    set. Used by instructions whose behavior depends on a valid vtype (i.e. every
+    instruction except vset*, whole-register moves, and whole-register loads/stores).
+  }
+  body {
+    if (CSR[mstatus].VS == 0) {
+      raise(ExceptionCode::IllegalInstruction, mode(), encoding);
+    }
+    if (CSR[vtype].VILL == 1) {
+      raise(ExceptionCode::IllegalInstruction, mode(), encoding);
+    }
+  }
+}
+
+function mark_v_state_dirty {
+  description {
+    Potentially updates `mstatus.VS` to the Dirty (3) state, depending on
+    configuration settings. Mirrors mark_f_state_dirty in fp.idl.
+  }
+  body {
+    if (HW_MSTATUS_VS_DIRTY_UPDATE == "precise") {
+      CSR[mstatus].VS = 3; # set dirty state
+    } else if (HW_MSTATUS_VS_DIRTY_UPDATE == "imprecise") {
+      unpredictable("The hart may or may not update mstatus.VS now");
+    }
+  }
+}
+
+function roundoff_increment {
+  returns Bits<1>
+  arguments
+    Bits<128> v,
+    U32 d
+  description {
+    Computes the fixed-point rounding increment `r` per v-spec 1.0 section 4.2, given the
+    pre-rounding value `v` and the number of bits `d` to be discarded, based on CSR[vxrm].
+    `r` is added to `(v >> d)` by the roundoff_signed/roundoff_unsigned helpers.
+  }
+  body {
+    Bits<2> vxrm = CSR[vxrm].VALUE[1:0];
+
+    # Bits examined by the rounding modes.
+    Bits<1> v_d_minus_1 = (d == 0) ? 1'b0 : v[d - 1];   # v[d-1]
+    Bits<1> v_d         = v[d];                          # v[d]
+    # v[d-2:0] != 0  — true if any bit below index d-1 is set
+    Bits<1> lower_nonzero = ((d >= 2) && ((v & ((128'b1 << (d - 1)) - 1)) != 0)) ? 1'b1 : 1'b0;
+    # v[d-1:0] != 0  — true if any of the d discarded bits is set
+    Bits<1> discarded_nonzero = ((d >= 1) && ((v & ((128'b1 << d) - 1)) != 0)) ? 1'b1 : 1'b0;
+
+    if (vxrm == 2'b00) {          # rnu: round-to-nearest-up
+      return v_d_minus_1;
+    } else if (vxrm == 2'b01) {   # rne: round-to-nearest-even
+      return v_d_minus_1 & (lower_nonzero | v_d);
+    } else if (vxrm == 2'b10) {   # rdn: round-down (truncate)
+      return 1'b0;
+    } else {                      # rod: round-to-odd
+      return ~v_d & discarded_nonzero;
+    }
+  }
+}
+
+function roundoff_unsigned {
+  returns Bits<128>
+  arguments
+    Bits<128> v,
+    U32 d
+  description {
+    Unsigned fixed-point roundoff per v-spec 1.0 section 4.2: (v >> d) + r.
+  }
+  body {
+    return (v >> d) + roundoff_increment(v, d);
+  }
+}
+
+function roundoff_signed {
+  returns Bits<128>
+  arguments
+    Bits<128> v,
+    U32 d
+  description {
+    Signed fixed-point roundoff per v-spec 1.0 section 4.2: ($signed(v) >>> d) + r.
+  }
+  body {
+    return ($signed(v) >>> d) + roundoff_increment(v, d);
+  }
+}
+
+function v_elem_read {
+  returns Bits<128>
+  arguments
+    Bits<5> vreg,
+    U32 idx,
+    U32 log2_eew
+  description {
+    Reads element `idx` from the vector register group starting at `vreg`, where each
+    element is `1 << log2_eew` bits wide. Computes which register of the group holds the
+    element (register-group addressing) so that accesses never spill past VLEN for LMUL>1.
+    Returns the element zero-extended to 128 bits (callers slice/sign-extend as needed).
+    `log2_eew` is the element width as a power of two (3=8b, 4=16b, 5=32b, 6=64b); this
+    covers SEW, a fixed load/store EEW, and the 2xSEW widening width uniformly.
+  }
+  body {
+    U32 eew           = 32'b1 << log2_eew;
+    U32 elems_per_reg = VLEN >> log2_eew;
+    U32 reg_off       = idx / elems_per_reg;
+    U32 start_bit     = (idx % elems_per_reg) * eew;
+    U32 end_bit       = start_bit + eew - 1;
+    return {96'b0, V[vreg + reg_off][end_bit:start_bit]};
+  }
+}
+
+function v_elem_write {
+  arguments
+    Bits<5> vreg,
+    U32 idx,
+    U32 log2_eew,
+    Bits<128> value
+  description {
+    Writes the low `1 << log2_eew` bits of `value` to element `idx` of the vector register
+    group starting at `vreg`, using register-group addressing (the inverse of v_elem_read).
+    Handles SEW, fixed load/store EEW, and 2xSEW widening destinations uniformly.
+  }
+  body {
+    U32 eew           = 32'b1 << log2_eew;
+    U32 elems_per_reg = VLEN >> log2_eew;
+    U32 reg_off       = idx / elems_per_reg;
+    U32 start_bit     = (idx % elems_per_reg) * eew;
+    U32 end_bit       = start_bit + eew - 1;
+    V[vreg + reg_off][end_bit:start_bit] = value[eew - 1:0];
+  }
+}
+
+function v_mask_elem_active? {
+  returns Boolean
+  arguments
+    Bits<1> vm,
+    U32 idx
+  description {
+    Returns true if element `idx` is active: either the instruction is unmasked
+    (vm == 1) or bit `idx` of the mask register v0 is set. The mask register is
+    always v0 (integer literal 0) and never needs register-group math (VLMAX <= VLEN).
+  }
+  body {
+    return (vm == 1'b1) || (V[0][idx] == 1'b1);
+  }
+}
