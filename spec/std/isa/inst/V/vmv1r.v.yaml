@@ -27,3 +27,7 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
+  check_v_ok($encoding);   # whole-register move: vill-exempt, VS-check only
+  V[vd] = V[vs2];
+  CSR[vstart].VALUE = 0;
+  mark_v_state_dirty();
