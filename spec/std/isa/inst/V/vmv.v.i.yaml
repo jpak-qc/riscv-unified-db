@@ -33,29 +33,17 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  # Get current vector state
+  check_v_ok_vtype($encoding);
   VectorState state = vector_state();
-  VectorLmulType lmul_type = state.lmul_type;
 
-  XReg vlen = VLEN;
-  XReg vlmax;
-  if (lmul_type == VectorLmulType::Multiply) {
-    vlmax = (vlen << state.log2_lmul) >> state.log2_sew;
-  } else {
-    # (lmul_type == VectorLmulType::Divide)
-    vlmax = (vlen >> state.log2_lmul) >> state.log2_sew;
-  }
+  # Sign-extend the 5-bit immediate to 64 bits (the element value width used by
+  # v_elem_write, which truncates to SEW). Padded to 128 bits for the argument type.
+  Bits<64> sext_imm = $signed(imm);
 
-  # Sign-extend the 5-bit immediate to XLEN bits for use in loop
-  XReg sext_imm = $signed(imm);
-
-  # Iterate through elements from vstart to vl
+  # vmv.v.i is unmasked by design (vm=1) — write every body element from vstart to vl.
   for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    U32 start_bit_pos = i * state.sew;
-    U32 end_bit_pos = start_bit_pos + state.sew - 1;
-
-    # Write the sign-extended immediate (truncated to SEW bits) to the element
-    V[vd][end_bit_pos:start_bit_pos] = sext_imm[state.sew-1:0];
+    v_elem_write(vd, i, state.log2_sew, {64'b0, sext_imm});
   }
 
   CSR[vstart].VALUE = 0;
+  mark_v_state_dirty();

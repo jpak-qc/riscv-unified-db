@@ -31,9 +31,12 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
+  check_v_ok_vtype($encoding);
   VectorState state = vector_state();
 
-  # vmv.x.s copies element 0 of vs2 to xd, sign-extending to XLEN
+  # vmv.x.s copies element 0 of vs2 to xd, sign-extending to XLEN.
+  # Element 0 is always in the base register of the group (no group math needed).
+  # Scalar destination: no mask, no vstart/vl gating, no vector state dirtied.
   X[xd] = $signed(V[vs2][state.sew-1:0]);
 
   CSR[vstart].VALUE = 0;

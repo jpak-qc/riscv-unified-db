@@ -33,12 +33,11 @@ operation(): |
   VectorState old_state = vector_state();
 
   XReg new_vtype = vtypei;
-  if ((new_vtype[xlen() - 1] == 1'b1) # software is setting the illegal bit
-      || ((new_vtype & 8'd0) != 0)    # reserved bits
-      || (new_vtype[5] == 1)          # reserved vsew encoding
-      || (new_vtype[2:0] == 3'b100)   # reserved vlmul encoding
-      # || (xlen() == 32 && new_vtype[2:0] == 3'b101) # reserved LMUL in RV32
-      )
+  if ((new_vtype[xlen() - 1] == 1'b1)   # software is setting the illegal bit
+      || (new_vtype[10:8] != 0)         # reserved bits (vtypei is 11 bits: [10:8] above vma)
+      || (new_vtype[5] == 1)            # reserved vsew encoding
+      || (new_vtype[2:0] == 3'b100)     # reserved vlmul encoding
+      || (xlen() == 32 && new_vtype[2:0] == 3'b101)) # reserved LMUL (mf8) in RV32
   {
     CSR[vtype].VILL = 1;
     CSR[vtype].VMA = 0;
@@ -56,7 +55,13 @@ operation(): |
 
     VectorState state = vector_state();
     XReg vlen = VLEN;
-    XReg vlmax = (vlen << state.log2_lmul) >> state.log2_sew;
+    XReg vlmax;
+    if (state.lmul_type == VectorLmulType::Multiply) {
+      vlmax = (vlen << state.log2_lmul) >> state.log2_sew;
+    } else {
+      # fractional LMUL divides VLMAX
+      vlmax = (vlen >> state.log2_lmul) >> state.log2_sew;
+    }
     XReg avl = X[xs1];
     XReg ceil_avl_over_two = (avl + 1) / 2;
 
