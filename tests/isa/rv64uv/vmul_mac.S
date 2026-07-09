@@ -32,11 +32,12 @@ RVTEST_CODE_BEGIN
     la x5,mul_b; vle8.v v3,(x5); \
     vmul.vv v4,v2,v3; la x5,result; vse8.v v4,(x5); lbu x2,(x5); )
 
-  # Test 2: vmulhu.vv unsigned high — [0x80]*[0x02]=0x100; high byte=1
-  TEST_CASE(2, x2, 0x01, \
-    li x6,2; vsetvli x7,x6,e8,m1; la x5,mulhu_a; vle8.v v2,(x5); \
-    la x5,mulhu_b; vle8.v v3,(x5); \
-    vmulhu.vv v4,v2,v3; la x5,result; vse8.v v4,(x5); lbu x2,(x5); )
+  # Test 2: vmulh.vv signed high — [-1]*[2]=-2; high8 of -2 in 16-bit (0xFFFE)=0xFF
+  # 0xFF signed = -1 = 0xFFFFFFFFFFFFFFFF
+  TEST_CASE(2, x2, 0xFFFFFFFFFFFFFFFF, \
+    li x6,2; vsetvli x7,x6,e8,m1; la x5,mulh_a; vle8.v v2,(x5); \
+    la x5,mulh_b; vle8.v v3,(x5); \
+    vmulh.vv v4,v2,v3; la x5,result; vse8.v v4,(x5); lb x2,1(x5); )
 
   TEST_CASE(3, x2, 0x01, \
     li x6,2; vsetvli x7,x6,e8,m1; la x5,mulhu_a; vle8.v v2,(x5); \

@@ -33,10 +33,14 @@ data_independent_timing: false
 operation(): |
   check_v_ok_vtype($encoding);
   VectorState state = vector_state();
-  Bits<64> scalar_val = X[xs1][63:0];
+  U32 elems_per_reg = VLEN >> state.log2_sew;
+  Bits<128> scalar_sext = $signed(X[xs1][state.sew - 1:0]);
   for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
     if (v_mask_elem_active?(vm, i)) {
-      v_elem_write(vd, i, state.log2_sew, ($signed(v_elem_read(vs2, i, state.log2_sew)[state.sew - 1:0]) * $signed(scalar_val[state.sew - 1:0]))[2 * state.sew - 1:state.sew]);
+      U32 reg_off   = i / elems_per_reg;
+      U32 start_bit = (i % elems_per_reg) * state.sew;
+      Bits<128> a = $signed(V[vs2 + reg_off][start_bit + state.sew - 1:start_bit]);
+      v_elem_write(vd, i, state.log2_sew, (a * scalar_sext)[2 * state.sew - 1:state.sew]);
     }
   }
   CSR[vstart].VALUE = 0;
