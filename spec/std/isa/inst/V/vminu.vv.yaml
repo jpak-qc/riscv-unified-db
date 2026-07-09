@@ -31,3 +31,12 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
+  check_v_ok_vtype($encoding);
+  VectorState state = vector_state();
+  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
+    if (v_mask_elem_active?(vm, i)) {
+      v_elem_write(vd, i, state.log2_sew, (v_elem_read(vs2, i, state.log2_sew)[state.sew - 1:0] < v_elem_read(vs1, i, state.log2_sew)[state.sew - 1:0]) ? v_elem_read(vs2, i, state.log2_sew) : v_elem_read(vs1, i, state.log2_sew));
+    }
+  }
+  CSR[vstart].VALUE = 0;
+  mark_v_state_dirty();
