@@ -34,3 +34,15 @@ pseudoinstructions:
     to: vmsgtu.vv vd, vs1, vs2, vm
 data_independent_timing: false
 operation(): |
+  check_v_ok_vtype($encoding);
+  VectorState state = vector_state();
+  # Initialize all mask destination bits to 0 before writing active elements
+  # (ISS requires all bits of a mask register to be defined before it is used as a source)
+  for (U32 k = 0; k < VLEN; k++) { V[vd][k] = 1'b0; }
+  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
+    if (v_mask_elem_active?(vm, i)) {
+      V[vd][i] = (v_elem_read(vs2, i, state.log2_sew)[state.sew-1:0] < v_elem_read(vs1, i, state.log2_sew)[state.sew-1:0]) ? 1'b1 : 1'b0;
+    }
+  }
+  CSR[vstart].VALUE = 0;
+  mark_v_state_dirty();

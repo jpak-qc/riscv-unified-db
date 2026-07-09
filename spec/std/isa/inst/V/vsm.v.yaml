@@ -27,3 +27,20 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
+  check_v_ok($encoding);
+  XReg virtual_address = X[xs1];
+  # Store ceil(vl/8) bytes from mask register vs3, packing 8 bits per byte
+  U32 num_bytes = (CSR[vl].VALUE + 7) / 8;
+  for (U32 b = 0; b < num_bytes; b++) {
+    U32 base_idx = b * 8;
+    Bits<8> b0 = (base_idx + 0 < CSR[vl].VALUE) ? V[vs3][base_idx + 0] : 1'b0;
+    Bits<8> b1 = (base_idx + 1 < CSR[vl].VALUE) ? {7'b0, V[vs3][base_idx + 1]} << 1 : 8'b0;
+    Bits<8> b2 = (base_idx + 2 < CSR[vl].VALUE) ? {6'b0, V[vs3][base_idx + 2]} << 2 : 8'b0;
+    Bits<8> b3 = (base_idx + 3 < CSR[vl].VALUE) ? {5'b0, V[vs3][base_idx + 3]} << 3 : 8'b0;
+    Bits<8> b4 = (base_idx + 4 < CSR[vl].VALUE) ? {4'b0, V[vs3][base_idx + 4]} << 4 : 8'b0;
+    Bits<8> b5 = (base_idx + 5 < CSR[vl].VALUE) ? {3'b0, V[vs3][base_idx + 5]} << 5 : 8'b0;
+    Bits<8> b6 = (base_idx + 6 < CSR[vl].VALUE) ? {2'b0, V[vs3][base_idx + 6]} << 6 : 8'b0;
+    Bits<8> b7 = (base_idx + 7 < CSR[vl].VALUE) ? {1'b0, V[vs3][base_idx + 7]} << 7 : 8'b0;
+    write_memory(8, virtual_address + b, b0 | b1 | b2 | b3 | b4 | b5 | b6 | b7, $encoding);
+  }
+  CSR[vstart].VALUE = 0;

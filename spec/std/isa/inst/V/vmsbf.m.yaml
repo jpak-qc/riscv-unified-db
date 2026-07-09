@@ -29,3 +29,19 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
+  check_v_ok_vtype($encoding);
+  if (CSR[vstart].VALUE != 0) { unpredictable("vmsbf requires vstart == 0"); }
+  for (U32 k = 0; k < VLEN; k++) { V[vd][k] = 1'b0; }
+  Boolean found = false;
+  for (U32 i = 0; i < CSR[vl].VALUE; i++) {
+    if (v_mask_elem_active?(vm, i)) {
+      if (!found && V[vs2][i] == 1'b1) {
+        found = true;
+        V[vd][i] = 1'b0;
+      } else {
+        V[vd][i] = found ? 1'b0 : 1'b1;
+      }
+    }
+  }
+  CSR[vstart].VALUE = 0;
+  mark_v_state_dirty();

@@ -29,3 +29,15 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
+  check_v_ok_vtype($encoding);
+  if (CSR[vstart].VALUE != 0) { unpredictable("viota requires vstart == 0"); }
+  VectorState state = vector_state();
+  XReg count = 0;
+  for (U32 i = 0; i < CSR[vl].VALUE; i++) {
+    if (v_mask_elem_active?(vm, i)) {
+      v_elem_write(vd, i, state.log2_sew, {64'b0, count});
+      if (V[vs2][i] == 1'b1) { count = count + 1; }
+    }
+  }
+  CSR[vstart].VALUE = 0;
+  mark_v_state_dirty();

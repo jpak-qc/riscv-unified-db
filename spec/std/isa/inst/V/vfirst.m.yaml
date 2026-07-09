@@ -29,3 +29,18 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
+  check_v_ok_vtype($encoding);
+  if (CSR[vstart].VALUE != 0) { unpredictable("vfirst requires vstart == 0"); }
+  Boolean found = false;
+  XReg first_idx = 0;
+  for (U32 i = 0; i < CSR[vl].VALUE; i++) {
+    if (v_mask_elem_active?(vm, i)) {
+      if (!found && V[vs2][i] == 1'b1) {
+        first_idx = i;
+        found = true;
+      }
+    }
+  }
+  # Return the index of the first set bit, or -1 (all-ones) if none found
+  X[xd] = found ? first_idx : ~0;
+  CSR[vstart].VALUE = 0;

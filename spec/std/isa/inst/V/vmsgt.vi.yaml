@@ -35,3 +35,14 @@ pseudoinstructions:
     to: vmsge.vi vd, vs2, imm+1, vm
 data_independent_timing: false
 operation(): |
+  check_v_ok_vtype($encoding);
+  VectorState state = vector_state();
+  Bits<64> sext_imm = $signed(imm);
+  for (U32 k = 0; k < VLEN; k++) { V[vd][k] = 1'b0; }
+  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
+    if (v_mask_elem_active?(vm, i)) {
+      V[vd][i] = ($signed(v_elem_read(vs2, i, state.log2_sew)[state.sew - 1:0]) > $signed(sext_imm[state.sew - 1:0])) ? 1'b1 : 1'b0;
+    }
+  }
+  CSR[vstart].VALUE = 0;
+  mark_v_state_dirty();
