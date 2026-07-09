@@ -10,7 +10,8 @@ rv64uv_sc_tests = vadd.vv vle8 \
     vmv_v_i \
     vadd_lmul8 \
     vsetvli_frac_lmul \
-    vle_vse_widths
+    vle_vse_widths \
+    vmv_merge
 
 rv64uv_p_tests = $(addprefix rv64uv-p-, $(rv64uv_sc_tests))
 rv64uv_v_tests = $(addprefix rv64uv-v-, $(rv64uv_sc_tests))

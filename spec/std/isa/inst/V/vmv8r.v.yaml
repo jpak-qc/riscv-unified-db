@@ -27,3 +27,14 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
+  check_v_ok($encoding);
+  V[vd + 0] = V[vs2 + 0];
+  V[vd + 1] = V[vs2 + 1];
+  V[vd + 2] = V[vs2 + 2];
+  V[vd + 3] = V[vs2 + 3];
+  V[vd + 4] = V[vs2 + 4];
+  V[vd + 5] = V[vs2 + 5];
+  V[vd + 6] = V[vs2 + 6];
+  V[vd + 7] = V[vs2 + 7];
+  CSR[vstart].VALUE = 0;
+  mark_v_state_dirty();

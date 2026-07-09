@@ -27,3 +27,13 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
+  check_v_ok_vtype($encoding);
+  VectorState state = vector_state();
+  # Writes element 0 only; executes regardless of vstart/vl (scalar dest semantics
+  # apply to scalar *source* instructions, not this write, but the spec is clear:
+  # if vl > 0, element 0 is written; if vl == 0, element 0 is unchanged).
+  if (CSR[vl].VALUE > 0) {
+    v_elem_write(vd, 0, state.log2_sew, {64'b0, X[xs1][63:0]});
+  }
+  CSR[vstart].VALUE = 0;
+  mark_v_state_dirty();
