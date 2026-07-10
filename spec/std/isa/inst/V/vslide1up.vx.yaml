@@ -31,3 +31,20 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
+  check_v_ok_vtype($encoding);
+  VectorState state = vector_state();
+  U32 elems_per_reg = VLEN >> state.log2_sew;
+  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
+    if (vm == 1'b1 || V[0][i] == 1'b1) {
+      U32 d_reg = i / elems_per_reg;  U32 d_bit = (i % elems_per_reg) * state.sew;
+      if (i == 0) {
+        V[vd + d_reg][d_bit + state.sew - 1:d_bit] = X[xs1][state.sew - 1:0];
+      } else {
+        U32 s_idx = i - 1;
+        U32 s_reg = s_idx / elems_per_reg;  U32 s_bit = (s_idx % elems_per_reg) * state.sew;
+        V[vd + d_reg][d_bit + state.sew - 1:d_bit] = V[vs2 + s_reg][s_bit + state.sew - 1:s_bit];
+      }
+    }
+  }
+  CSR[vstart].VALUE = 0;
+  mark_v_state_dirty();

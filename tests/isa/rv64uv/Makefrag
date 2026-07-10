@@ -17,7 +17,8 @@ rv64uv_sc_tests = vadd.vv vle8 \
     vcmp_mask \
     vshift_widen \
     vwiden_extra \
-    vphase_gaps
+    vphase_gaps \
+    vred_perm
 
 rv64uv_p_tests = $(addprefix rv64uv-p-, $(rv64uv_sc_tests))
 rv64uv_v_tests = $(addprefix rv64uv-v-, $(rv64uv_sc_tests))

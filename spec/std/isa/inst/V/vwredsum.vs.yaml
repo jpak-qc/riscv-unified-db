@@ -31,3 +31,24 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
+  check_v_ok_vtype($encoding);
+  if (CSR[vstart].VALUE != 0) { raise(ExceptionCode::IllegalInstruction, mode(), $encoding); }
+  VectorState state = vector_state();
+  U32 elems_per_reg = VLEN >> state.log2_sew;
+  U32 sew2 = state.sew * 2;
+  if (CSR[vl].VALUE == 0) {
+    CSR[vstart].VALUE = 0;
+  } else {
+    Bits<128> acc = V[vs1][sew2 - 1:0];
+    for (U32 i = 0; i < CSR[vl].VALUE; i++) {
+      if (vm == 1'b1 || V[0][i] == 1'b1) {
+        U32 reg_off   = i / elems_per_reg;
+        U32 start_bit = (i % elems_per_reg) * state.sew;
+        Bits<128> src = $signed(V[vs2 + reg_off][start_bit + state.sew - 1:start_bit]);
+        acc = (acc + src)[sew2 - 1:0];
+      }
+    }
+    V[vd][sew2 - 1:0] = acc[sew2 - 1:0];
+    CSR[vstart].VALUE = 0;
+    mark_v_state_dirty();
+  }
