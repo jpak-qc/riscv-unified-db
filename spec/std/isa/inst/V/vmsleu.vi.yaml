@@ -38,10 +38,14 @@ operation(): |
   check_v_ok_vtype($encoding);
   VectorState state = vector_state();
   Bits<64> sext_imm = $signed(imm);
+  # Read-modify-write: avoid setBit-on-copy ISS bug (see bits.hpp)
+  Bits<VLEN> vd_bits = V[vd];
   for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
     if (v_mask_elem_active?(vm, i)) {
-      V[vd][i] = (v_elem_read(vs2, i, state.log2_sew)[state.sew-1:0] <= sext_imm[state.sew - 1:0]) ? 1'b1 : 1'b0;
+      vd_bits[i] = (v_elem_read(vs2, i, state.log2_sew)[state.sew-1:0] <= sext_imm[state.sew - 1:0]) ? 1'b1 : 1'b0;
     }
   }
+  V[vd] = vd_bits;
+
   CSR[vstart].VALUE = 0;
   mark_v_state_dirty();

@@ -30,8 +30,12 @@ access:
 data_independent_timing: false
 operation(): |
   check_v_ok($encoding);
+  # Read-modify-write: avoid setBit-on-copy ISS bug (see bits.hpp)
+  Bits<VLEN> vd_bits = V[vd];
   for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    V[vd][i] = V[vs2][i] | V[vs1][i];
+    vd_bits[i] = V[vs2][i] | V[vs1][i];
   }
+  V[vd] = vd_bits;
+
   CSR[vstart].VALUE = 0;
   mark_v_state_dirty();
