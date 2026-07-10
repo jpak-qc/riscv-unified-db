@@ -70,6 +70,21 @@ RVTEST_CODE_BEGIN
     lw      x2, (x5); \
     )
 
+  # EEW=8 LMUL=8 group-crossing: vl=20, element 16 is in second register of group.
+  # input8a[16]=0x10, input8b[16]=0x20 → sum=0x30. lbu byte16=0x30
+  TEST_CASE(4, x2, 0x30, \
+    li      x6, 20; \
+    vsetvli x7, x6, e8, m8; \
+    la      x5, input8a; \
+    vle8.v  v8, (x5); \
+    la      x5, input8b; \
+    vle8.v  v16, (x5); \
+    vadd.vv v24, v8, v16; \
+    la      x5, result; \
+    vse8.v  v24, (x5); \
+    lbu     x2, 16(x5); \
+    )
+
   TEST_PASSFAIL
 
 RVTEST_CODE_END
@@ -82,8 +97,10 @@ input32a:  .word  0x00000001, 0x00000002
 input32b:  .word  0x00000010, 0x00000020
 input64a:  .dword 0x0000000000000001, 0x0000000000000002
 input64b:  .dword 0x0000000000000010, 0x0000000000000020
+input8a:   .byte 0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,0x10,0x10,0x11,0x12,0x13
+input8b:   .byte 0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,0x10,0x20,0x21,0x22,0x23
 
 RVTEST_DATA_BEGIN
   .balign 8
-result: .dword -1
+result: .fill 24, 1, 0xff
 RVTEST_DATA_END

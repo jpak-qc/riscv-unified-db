@@ -30,7 +30,7 @@ access:
 data_independent_timing: false
 operation(): |
   check_v_ok_vtype($encoding);
-  if (CSR[vstart].VALUE != 0) { unpredictable("vcpop requires vstart == 0"); }
+  if (CSR[vstart].VALUE != 0) { raise(ExceptionCode::IllegalInstruction, mode(), $encoding); }
   XReg count = 0;
   for (U32 i = 0; i < CSR[vl].VALUE; i++) {
     if (v_mask_elem_active?(vm, i)) {

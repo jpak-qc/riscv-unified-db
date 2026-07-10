@@ -55,6 +55,12 @@ RVTEST_CODE_BEGIN
     vmand.mm v0,v2,v3; \
     vcpop.m x2,v0; )
 
+  # LMUL=8 group-crossing: vid.v element 16 = 16 (index value), SEW=8
+  TEST_CASE(7, x2, 16, \
+    li x6,20; vsetvli x7,x6,e8,m8; \
+    vid.v v8; \
+    la x5,result; vse8.v v8,(x5); lbu x2,16(x5); )
+
   TEST_PASSFAIL
 
 RVTEST_CODE_END
@@ -71,5 +77,5 @@ mask_e: .byte 0x0B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 
 RVTEST_DATA_BEGIN
   .balign 8
-result: .dword -1
+result: .fill 24, 1, 0xff
 RVTEST_DATA_END
