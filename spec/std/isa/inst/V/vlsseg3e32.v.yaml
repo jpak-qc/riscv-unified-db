@@ -35,11 +35,12 @@ operation(): |
   VectorState state = vector_state();
   U32 elems_per_reg = VLEN >> 5;
   XReg virtual_address = X[xs1];
+  XReg stride = X[xs2];
   for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
     if (v_mask_elem_active?(vm, i)) {
       for (U32 j = 0; j < 3; j++) {
         U32 start_bit_f = (i % elems_per_reg) * 32;
-        V[vd + j][start_bit_f + 31:start_bit_f] = read_memory(32, virtual_address + i * X[xs2] + j * 4, $encoding)[31:0];
+        V[vd + j][start_bit_f + 31:start_bit_f] = read_memory(32, virtual_address + i * stride + j * 4, $encoding)[31:0];
       }
     }
   }

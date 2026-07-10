@@ -33,13 +33,25 @@ data_independent_timing: false
 operation(): |
   check_v_ok_vtype($encoding);
   VectorState state = vector_state();
-  U32 elems_per_reg = VLEN >> 4;
+  U32 elems_per_reg_idx  = VLEN >> 4;
+  U32 elems_per_reg_data = VLEN >> state.log2_sew;
   XReg virtual_address = X[xs1];
   for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
     if (v_mask_elem_active?(vm, i)) {
+      XReg idx = v_elem_read(vs2, i, 4)[15:0];
+      U32 start_bit_f = (i % elems_per_reg_data) * state.sew;
       for (U32 j = 0; j < 6; j++) {
-        U32 start_bit_f = (i % elems_per_reg) * 16;
-        write_memory(16, virtual_address + v_elem_read(vs2, i, 4)[15:0] + j * 2, V[vs3 + j][start_bit_f + 15:start_bit_f], $encoding);
+        XReg addr = virtual_address + idx + j * (state.sew / 8);
+        Bits<64> data = V[vs3 + j][start_bit_f + state.sew - 1:start_bit_f];
+        if (state.sew == 8) {
+          write_memory(8, addr, data[7:0], $encoding);
+        } else if (state.sew == 16) {
+          write_memory(16, addr, data[15:0], $encoding);
+        } else if (state.sew == 32) {
+          write_memory(32, addr, data[31:0], $encoding);
+        } else {
+          write_memory(64, addr, data[63:0], $encoding);
+        }
       }
     }
   }
