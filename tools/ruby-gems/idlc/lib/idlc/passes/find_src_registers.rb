@@ -106,6 +106,12 @@ module Idl
   end
 
   class AryElementAssignmentAst
+    def find_src_registers(symtab)
+      # The LHS of an array-element assignment (e.g. V[vd][i] = expr) is a destination,
+      # not a source. Only walk the RHS value for source registers.
+      rhs.find_src_registers(symtab)
+    end
+
     def find_dst_registers(symtab)
       # Identify the base variable and the register index based on assignment shape.
       # F[rd] = v    → lhs is IdAst(F),              reg_idx = idx
@@ -141,6 +147,12 @@ module Idl
   end
 
   class AryRangeAssignmentAst
+    def find_src_registers(symtab)
+      # The LHS of a range assignment (e.g. V[vd][end:start] = expr) is a destination.
+      # Only walk the RHS value for source registers.
+      rhs.find_src_registers(symtab)
+    end
+
     def find_dst_registers(symtab)
       return [] unless variable.is_a?(Idl::AryElementAccessAst)
 

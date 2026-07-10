@@ -33,7 +33,6 @@ pseudoinstructions:
 data_independent_timing: false
 operation(): |
   check_v_ok($encoding);
-  for (U32 k = 0; k < VLEN; k++) { V[vd][k] = 1'b0; }
   for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
     V[vd][i] = V[vs2][i] ^ V[vs1][i];
   }

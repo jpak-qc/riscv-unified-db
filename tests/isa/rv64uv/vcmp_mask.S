@@ -2,20 +2,17 @@
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 
 #*****************************************************************************
-# vcmp_mask.S — Phase 6: mask ops (vcpop, vfirst, viota, vid)
+# vcmp_mask.S — Phase 6: compare, mask logical, mask ops
+# Built with IGNOREUNDEFINED=YES to avoid UndefinedValueError on uninitialized
+# mask destination registers (the ISS srcRegs() conservatively lists vd as a
+# source for compare instructions due to the mask guard static analysis).
 #
-# Compare and mask logical instructions (vmseq, vmand, etc.) type-check
-# correctly and their IDL bodies have been verified against the Sail golden
-# model. Runtime verification of compare/mask-write instructions is deferred
-# because the ISS register-tracking marks vd as a source for these instructions
-# (due to the mask guard V[0][i] being statically detected by find_src_registers),
-# and interactions with vmv1r.v produce incorrect ISS behavior for the v0
-# register. The pure mask ops below (vcpop, vfirst, viota, vid) are fully tested.
-#
-# Test 1: vcpop.m — count set bits, mask=0x0F, vl=4 → 4
-# Test 2: vfirst.m — first set bit, mask=0x06, vl=4 → index 1
+# Test 1: vcpop.m — 4 set bits in 0x0F, vl=4
+# Test 2: vfirst.m — first set bit in 0x06, vl=4 → index 1
 # Test 3: viota.m — running count, element 1 = 1
 # Test 4: vid.v — element index, byte 2 = 2
+# Test 5: vmseq.vv — [1,2,3,4]==[1,2,0,4] → 3 equal → vcpop=3
+# Test 6: vmand.mm — 0x0F & 0x55 = 0x05 → 2 set bits → vcpop=2
 
 #include "riscv_test.h"
 #include "test_macros.h"
@@ -44,12 +41,30 @@ RVTEST_CODE_BEGIN
     vid.v v4; \
     la x5,result; vse8.v v4,(x5); lbu x2,2(x5); )
 
+  # Tests 5-6 require IGNOREUNDEFINED=YES build — without it the ISS aborts
+  # on uninitialized mask destination registers before execute() is called.
+  TEST_CASE(5, x2, 3, \
+    li x6,4; vsetvli x7,x6,e8,m1; \
+    la x5,cmp_a; vle8.v v2,(x5); la x5,cmp_b; vle8.v v3,(x5); \
+    vmseq.vv v0,v2,v3; \
+    vcpop.m x2,v0; )
+
+  TEST_CASE(6, x2, 2, \
+    li x6,8; vsetvli x7,x6,e8,m1; \
+    la x5,mask_a; vle8.v v2,(x5); la x5,mask_b; vle8.v v3,(x5); \
+    vmand.mm v0,v2,v3; \
+    vcpop.m x2,v0; )
+
   TEST_PASSFAIL
 
 RVTEST_CODE_END
 
 .data
   .balign 8
+cmp_a:  .byte 0x01, 0x02, 0x03, 0x04
+cmp_b:  .byte 0x01, 0x02, 0x00, 0x04
+mask_a: .byte 0x0F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+mask_b: .byte 0x55, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 mask_c: .byte 0x0F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 mask_d: .byte 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 mask_e: .byte 0x0B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
