@@ -98,6 +98,53 @@ RVTEST_CODE_BEGIN
     vredsum.vs v24,v8,v1; \
     li x6,4; vsetvli x7,x6,e8,m1; la x5,result; vse8.v v24,(x5); lbu x2,(x5); )
 
+  # Test 13: vredand.vs — [0x0F & 0x33 & 0xFF & 0xAA] & acc=0xFF = 0x0F&0x33=0x03&0xFF=0x03&0xAA=0x02
+  TEST_CASE(13, x2, 0x02, \
+    li x6,4; vsetvli x7,x6,e8,m1; la x5,srcand; vle8.v v2,(x5); \
+    la x5,accff; vle8.v v1,(x5); \
+    vredand.vs v4,v2,v1; la x5,result; vse8.v v4,(x5); lbu x2,(x5); )
+
+  # Test 14: vredmax.vs signed — max([0xFE=-2, 0x03], acc=0x00) = 3; lbu=3
+  TEST_CASE(14, x2, 3, \
+    li x6,2; vsetvli x7,x6,e8,m1; la x5,srcfe; vle8.v v2,(x5); \
+    la x5,acc00; vle8.v v1,(x5); \
+    vredmax.vs v4,v2,v1; la x5,result; vse8.v v4,(x5); lbu x2,(x5); )
+
+  # Test 15: vredmaxu.vs unsigned — max_u([0xFE=254, 0x03], acc=0x00) = 254=0xFE; lbu=0xFE
+  TEST_CASE(15, x2, 0xFE, \
+    li x6,2; vsetvli x7,x6,e8,m1; la x5,srcfe; vle8.v v2,(x5); \
+    la x5,acc00; vle8.v v1,(x5); \
+    vredmaxu.vs v4,v2,v1; la x5,result; vse8.v v4,(x5); lbu x2,(x5); )
+
+  # Test 16: vrgather.vx scalar index — idx x5=1, src=[10,20,30,40]: all → 20; lbu=20
+  TEST_CASE(16, x2, 20, \
+    li x6,4; vsetvli x7,x6,e8,m1; la x5,src10; vle8.v v2,(x5); \
+    li x5,1; vrgather.vx v4,v2,x5; la x5,result; vse8.v v4,(x5); lbu x2,(x5); )
+
+  # Test 17: vslideup.vi imm=2 — src=[1,2,3,4], pre-fill vd=0, result=[0,0,1,2]; byte2=1
+  TEST_CASE(17, x2, 1, \
+    li x6,4; vsetvli x7,x6,e8,m1; la x5,zeros; vle8.v v4,(x5); \
+    la x5,src4; vle8.v v2,(x5); \
+    vslideup.vi v4,v2,2; la x5,result; vse8.v v4,(x5); lbu x2,2(x5); )
+
+  # Test 18: vslidedown.vi imm=1 — src=[1,2,3,4]: result=[2,3,4,0]; byte3=0
+  TEST_CASE(18, x2, 0, \
+    li x6,4; vsetvli x7,x6,e8,m1; la x5,src4; vle8.v v2,(x5); \
+    vslidedown.vi v4,v2,1; la x5,result; vse8.v v4,(x5); lbu x2,3(x5); )
+
+  # Test 19: vrgather out-of-bounds — index=10 >= VLMAX=16(SEW=8,LMUL=1) but fine;
+  # Use index=16 which equals VLMAX → should give 0; lbu=0
+  TEST_CASE(19, x2, 0, \
+    li x6,4; vsetvli x7,x6,e8,m1; la x5,src4; vle8.v v2,(x5); \
+    li x5,16; vrgather.vx v4,v2,x5; la x5,result; vse8.v v4,(x5); lbu x2,(x5); )
+
+  # Test 20: vcompress all-ones mask — mask=0xFF, all elements active → compact=copy
+  # src=[1,2,3,4], mask all set: result=[1,2,3,4]; byte0=1, byte3=4
+  TEST_CASE(20, x2, 4, \
+    li x6,4; vsetvli x7,x6,e8,m1; la x5,maskff; vle8.v v1,(x5); \
+    la x5,src4; vle8.v v2,(x5); \
+    vcompress.vm v4,v2,v1; la x5,result; vse8.v v4,(x5); lbu x2,3(x5); )
+
   TEST_PASSFAIL
 
 RVTEST_CODE_END
@@ -107,14 +154,17 @@ RVTEST_CODE_END
 src4:    .byte 0x01, 0x02, 0x03, 0x04
 src10:   .byte 10, 20, 30, 40
 srcff:   .byte 0xFF, 0x01, 0x02, 0x03
-srcfe:   .byte 0xFE, 0x01
+srcfe:   .byte 0xFE, 0x03
 srcffo:  .byte 0xFF, 0x01
+srcand:  .byte 0x0F, 0x33, 0xFF, 0xAA
 acc10:   .byte 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 acc04:   .byte 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 acc00:   .byte 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 acc00_16:.short 0x0000, 0x0000, 0x0000, 0x0000
+accff:   .byte 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 idx3210: .byte 3, 2, 1, 0
 mask1010:.byte 0x0A, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+maskff:  .byte 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 zeros:   .fill 8, 1, 0x00
 src20:   .byte 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20
 
