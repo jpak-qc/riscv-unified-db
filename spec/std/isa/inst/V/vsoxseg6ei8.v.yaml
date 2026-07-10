@@ -31,3 +31,17 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
+  check_v_ok_vtype($encoding);
+  VectorState state = vector_state();
+  U32 elems_per_reg = VLEN >> 3;
+  XReg virtual_address = X[xs1];
+  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
+    if (v_mask_elem_active?(vm, i)) {
+      for (U32 j = 0; j < 6; j++) {
+        U32 start_bit_f = (i % elems_per_reg) * 8;
+        write_memory(8, virtual_address + v_elem_read(vs2, i, 3)[7:0] + j * 1, V[vs3 + j][start_bit_f + 7:start_bit_f], $encoding);
+      }
+    }
+  }
+  CSR[vstart].VALUE = 0;
+  mark_v_state_dirty();

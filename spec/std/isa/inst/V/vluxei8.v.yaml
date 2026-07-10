@@ -31,3 +31,16 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
+  check_v_ok_vtype($encoding);
+  VectorState state = vector_state();
+  XReg virtual_address = X[xs1];
+  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
+    if (v_mask_elem_active?(vm, i)) {
+      # Index from vs2 at EEW=8 (log2_eew=3); data at SEW
+      XReg idx = v_elem_read(vs2, i, 3)[7:0];
+      Bits<128> data = {120'b0, read_memory(8, virtual_address + idx, $encoding)[7:0]};
+      v_elem_write(vd, i, state.log2_sew, data);
+    }
+  }
+  CSR[vstart].VALUE = 0;
+  mark_v_state_dirty();
