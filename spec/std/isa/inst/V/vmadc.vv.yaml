@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmadc.vv
-long_name: "Vector multiply-add with carry"
+long_name: "Vector mask add-carry-out, no carry-in"
 description: |
   Performs multiply-add operation on elements from vector registers vs2 and vs1, adds the carry-in from vector register vs3, and stores results in vector register vd, using vector mask vm.
 definedBy:

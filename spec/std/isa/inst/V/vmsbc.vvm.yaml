@@ -40,7 +40,7 @@ operation(): |
     Bits<128> a   = V[vs2 + reg_off][end_bit:start_bit];
     Bits<128> b   = V[vs1 + reg_off][end_bit:start_bit];
     Bits<128> bin = {127'b0, V[0][i]};
-    vd_bits[i] = (a < b + bin) ? 1'b1 : 1'b0;
+    vd_bits[i] = (a < b || (V[0][i] == 1'b1 && a == b)) ? 1'b1 : 1'b0;
   }
   V[vd] = vd_bits;
   CSR[vstart].VALUE = 0;
