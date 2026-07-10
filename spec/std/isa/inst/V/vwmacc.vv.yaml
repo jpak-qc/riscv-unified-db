@@ -37,7 +37,7 @@ operation(): |
   U32 elems_per_reg_d = VLEN >> (state.log2_sew + 1);
   U32 sew2 = state.sew * 2;
   for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    if (vm == 1'b1 || V[0][i] == 1'b1) {
+    if (v_mask_elem_active?(vm, i)) {
       U32 s_reg = i / elems_per_reg_s;  U32 s_bit = (i % elems_per_reg_s) * state.sew;
       U32 d_reg = i / elems_per_reg_d;  U32 d_bit = (i % elems_per_reg_d) * sew2;
       Bits<128> m1 = $signed(V[vs1 + s_reg][s_bit + state.sew - 1:s_bit]);

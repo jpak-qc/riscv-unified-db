@@ -34,7 +34,7 @@ operation(): |
   check_v_ok_vtype($encoding);
   VectorState state = vector_state();
   U32 elems_per_reg = VLEN >> state.log2_sew;
-  Bits<128> scalar_uzext = {64'b0, X[xs1][63:0]};
+  Bits<128> scalar_uzext = X[xs1][state.sew - 1:0];  # zero-extend to SEW width only
   for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
     if (v_mask_elem_active?(vm, i)) {
       U32 reg_off   = i / elems_per_reg;

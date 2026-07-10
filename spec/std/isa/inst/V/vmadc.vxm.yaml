@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmadc.vxm
-long_name: "Vector multiply-add with carry and scalar, masked"
+long_name: "Vector mask add carry-out with carry-in scalar (.vxm)"
 description: |
   Performs multiply-add operation on elements from vector register vs2 and scalar register xs1, adds the carry-in from vector register vs3, and stores results in vector register vd, using vector mask vm. This variant includes additional masking behavior.
 definedBy:

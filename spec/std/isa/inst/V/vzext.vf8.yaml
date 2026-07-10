@@ -37,7 +37,7 @@ operation(): |
   U32 elems_per_reg_d   = VLEN >> state.log2_sew;
   U32 elems_per_reg_src = VLEN >> log2_src_sew;
   for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    if (vm == 1'b1 || V[0][i] == 1'b1) {
+    if (v_mask_elem_active?(vm, i)) {
       U32 d_reg   = i / elems_per_reg_d;    U32 d_bit   = (i % elems_per_reg_d) * state.sew;
       U32 src_reg = i / elems_per_reg_src;  U32 src_bit = (i % elems_per_reg_src) * src_sew;
       Bits<128> val = V[vs2 + src_reg][src_bit + src_sew - 1:src_bit];

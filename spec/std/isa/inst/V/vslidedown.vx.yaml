@@ -42,7 +42,7 @@ operation(): |
   }
   XReg offset = X[xs1];
   for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    if (vm == 1'b1 || V[0][i] == 1'b1) {
+    if (v_mask_elem_active?(vm, i)) {
       U32 d_reg = i / elems_per_reg;  U32 d_bit = (i % elems_per_reg) * state.sew;
       XReg s_idx = i + offset;
       if (s_idx < vlmax) {

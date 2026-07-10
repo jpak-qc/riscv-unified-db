@@ -41,7 +41,7 @@ operation(): |
   } else {
     Bits<128> acc = V[vs1][sew2 - 1:0];
     for (U32 i = 0; i < CSR[vl].VALUE; i++) {
-      if (vm == 1'b1 || V[0][i] == 1'b1) {
+      if (v_mask_elem_active?(vm, i)) {
         U32 reg_off   = i / elems_per_reg;
         U32 start_bit = (i % elems_per_reg) * state.sew;
         Bits<128> src = (V[vs2 + reg_off][start_bit + state.sew - 1:start_bit]);

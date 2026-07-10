@@ -42,7 +42,7 @@ operation(): |
     vlmax = (VLEN >> state.log2_lmul) >> state.log2_sew;
   }
   for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    if (vm == 1'b1 || V[0][i] == 1'b1) {
+    if (v_mask_elem_active?(vm, i)) {
       U32 d_reg = i / elems_per_reg;    U32 d_bit = (i % elems_per_reg) * state.sew;
       U32 i_reg = i / elems_per_reg_i;  U32 i_bit = (i % elems_per_reg_i) * 16;
       XReg idx = V[vs1 + i_reg][i_bit + 15:i_bit];   # 16-bit index
