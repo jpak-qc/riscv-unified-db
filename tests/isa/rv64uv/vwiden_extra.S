@@ -76,6 +76,62 @@ RVTEST_CODE_BEGIN
     li x6,2; vsetvli x7,x6,e32,m1; vzext.vf4 v4,v2; \
     la x5,result; vse32.v v4,(x5); lw x2,(x5); )
 
+  # Test 10: vwadd.wx signed — vs2(2xSEW)=[0x0010], xs1(SEW scalar)=0x01 → 0x0011
+  TEST_CASE(10, x2, 0x0011, \
+    li x6,2; vsetvli x7,x6,e16,m1; la x5,wx_wide; vle16.v v2,(x5); \
+    li x5,1; \
+    li x6,2; vsetvli x7,x6,e8,m1; vwadd.wx v4,v2,x5; \
+    li x6,2; vsetvli x7,x6,e16,m1; la x5,result; vse16.v v4,(x5); lhu x2,(x5); )
+
+  # Test 11: vwaddu.wx unsigned — vs2(2xSEW)=[0x00FF], xs1=1 → 0x0100
+  TEST_CASE(11, x2, 0x0100, \
+    li x6,2; vsetvli x7,x6,e16,m1; la x5,wx_ff; vle16.v v2,(x5); \
+    li x5,1; \
+    li x6,2; vsetvli x7,x6,e8,m1; vwaddu.wx v4,v2,x5; \
+    li x6,2; vsetvli x7,x6,e16,m1; la x5,result; vse16.v v4,(x5); lhu x2,(x5); )
+
+  # Test 12: vwsub.wx signed — vs2(2xSEW)=[0x0010], xs1=1 → 0x000F
+  TEST_CASE(12, x2, 0x000F, \
+    li x6,2; vsetvli x7,x6,e16,m1; la x5,wx_wide; vle16.v v2,(x5); \
+    li x5,1; \
+    li x6,2; vsetvli x7,x6,e8,m1; vwsub.wx v4,v2,x5; \
+    li x6,2; vsetvli x7,x6,e16,m1; la x5,result; vse16.v v4,(x5); lhu x2,(x5); )
+
+  # Test 13: vwsubu.wx unsigned — vs2(SEW=8)=[0xFE=254], xs1=1 → 0x00FD (16-bit)
+  # Note: .wx reads vs2 at current SEW (8 bits), result is 2*SEW (16 bits)
+  TEST_CASE(13, x2, 0x00FD, \
+    li x6,2; vsetvli x7,x6,e8,m1; la x5,s_fe; vle8.v v2,(x5); \
+    li x5,1; \
+    vwsubu.wx v4,v2,x5; \
+    li x6,2; vsetvli x7,x6,e16,m1; la x5,result; vse16.v v4,(x5); lhu x2,(x5); )
+
+  # Test 14: vsext.vf8 — src SEW=8 [0xFF=-1], dest SEW=64, sign-ext=0xFFFFFFFFFFFFFFFF
+  # Requires SEW=64 which means e64; source group uses SEW=8 EMUL=LMUL/8=m1/8=mf8
+  # vsetvli e64,m1 gives VLMAX=VLEN/64=2 elements. Source at SEW=8 → EMUL=mf8, SEW=8.
+  TEST_CASE(14, x2, 0xFFFFFFFFFFFFFFFF, \
+    li x6,2; vsetvli x7,x6,e8,m1; la x5,s_ff; vle8.v v2,(x5); \
+    li x6,2; vsetvli x7,x6,e64,m1; vsext.vf8 v4,v2; \
+    la x5,result; vse64.v v4,(x5); ld x2,(x5); )
+
+  # Test 15: vzext.vf8 — src SEW=8 [0xFF=255], dest SEW=64, zero-ext=0x00000000000000FF
+  TEST_CASE(15, x2, 0x00000000000000FF, \
+    li x6,2; vsetvli x7,x6,e8,m1; la x5,s_ff; vle8.v v2,(x5); \
+    li x6,2; vsetvli x7,x6,e64,m1; vzext.vf8 v4,v2; \
+    la x5,result; vse64.v v4,(x5); ld x2,(x5); )
+
+  # Test 16: Widening at LMUL=4 (dest crosses into LMUL=8 territory)
+  # SEW=8, LMUL=4: VLMAX=64. vwadd dest LMUL=8, dest has 8 registers (v8-v15).
+  # Use vl=20 so elements 16-19 cross into the second dest register of the 2xSEW group.
+  # v8 group (LMUL=4) holds elements 0-63 at SEW=8.
+  # v16 group (LMUL=8) holds elements 0-63 at SEW=16 (dest).
+  # Element 16 of the dest group: elems_per_reg_d = 128/(8*2) = 8. Element 16/8=reg_off=2.
+  # Check element 16 = 0x01 + 0x02 = 0x0003 (16-bit). Store as e16, lhu byte 32.
+  TEST_CASE(16, x2, 0x0003, \
+    li x6,20; vsetvli x7,x6,e8,m4; \
+    la x5,lmul4_a; vle8.v v8,(x5); la x5,lmul4_b; vle8.v v12,(x5); \
+    vwaddu.vv v16,v8,v12; \
+    li x6,20; vsetvli x7,x6,e16,m8; la x5,result; vse16.v v16,(x5); lhu x2,32(x5); )
+
   TEST_PASSFAIL
 
 RVTEST_CODE_END
@@ -83,6 +139,7 @@ RVTEST_CODE_END
 .data
   .balign 8
 s_ff: .byte 0xFF, 0xFF
+s_fe: .byte 0xFE, 0xFE
 s_7f: .byte 0x7F, 0x7F
 s_01: .byte 0x01, 0x01
 s_02: .byte 0x02, 0x02
@@ -90,8 +147,13 @@ s_03: .byte 0x03, 0x03
 acc16: .short 0x0010, 0x0010
 n16_src: .short 0xFF80, 0xFF80
 n_sh3: .byte 0x03, 0x03
+wx_wide: .short 0x0010, 0x0010   # 2xSEW source for .wx tests
+wx_ff:   .short 0x00FF, 0x00FF   # 0x00FF for vwaddu.wx
+wx_100:  .short 0x0100, 0x0100   # 0x0100 for vwsubu.wx
+lmul4_a: .byte 0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01
+lmul4_b: .byte 0x02,0x02,0x02,0x02,0x02,0x02,0x02,0x02,0x02,0x02,0x02,0x02,0x02,0x02,0x02,0x02,0x02,0x02,0x02,0x02
 
 RVTEST_DATA_BEGIN
   .balign 8
-result: .fill 16, 1, 0x00
+result: .fill 64, 1, 0x00
 RVTEST_DATA_END
