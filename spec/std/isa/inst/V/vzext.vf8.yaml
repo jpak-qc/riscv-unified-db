@@ -31,6 +31,7 @@ data_independent_timing: false
 operation(): |
   check_v_ok_vtype($encoding);
   VectorState state = vector_state();
+  if (state.sew < 64) { raise(ExceptionCode::IllegalInstruction, mode(), $encoding); }
   U32 log2_src_sew = state.log2_sew - 3;
   U32 src_sew = state.sew >> 3;
   U32 elems_per_reg_d   = VLEN >> state.log2_sew;
