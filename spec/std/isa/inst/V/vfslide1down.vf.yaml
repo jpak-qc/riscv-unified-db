@@ -31,3 +31,20 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
+  check_v_ok_vtype($encoding);
+  check_f_ok($encoding);
+  VectorState state = vector_state();
+  Bits<32> b = F[fs1][31:0];
+  U32 last_elem = CSR[vl].VALUE - 1;
+  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
+    if (v_mask_elem_active?(vm, i)) {
+      if (i < last_elem) {
+        v_elem_write(vd, i, 2, {96'b0, v_elem_read(vs2, i + 1, 2)[31:0]});
+      } else {
+        v_elem_write(vd, i, 2, {96'b0, b});
+      }
+    }
+  }
+  CSR[vstart].VALUE = 0;
+  mark_f_state_dirty();
+  mark_v_state_dirty();

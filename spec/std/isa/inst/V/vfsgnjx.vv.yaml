@@ -34,3 +34,17 @@ pseudoinstructions:
     to: vfabs.v vd, vs2
 data_independent_timing: false
 operation(): |
+  check_v_ok_vtype($encoding);
+  check_f_ok($encoding);
+  VectorState state = vector_state();
+  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
+    if (v_mask_elem_active?(vm, i)) {
+      Bits<32> a = v_elem_read(vs2, i, 2)[31:0];
+      Bits<32> b = v_elem_read(vs1, i, 2)[31:0];
+      Bits<1> sign = a[31] ^ b[31];
+      v_elem_write(vd, i, 2, {96'b0, {sign, a[30:0]}});
+    }
+  }
+  CSR[vstart].VALUE = 0;
+  mark_f_state_dirty();
+  mark_v_state_dirty();

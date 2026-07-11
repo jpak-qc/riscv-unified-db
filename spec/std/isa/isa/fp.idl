@@ -2065,3 +2065,103 @@ function softfloat_roundToUI64 {
     return sig;
   }
 }
+
+function f32_lt? {
+  returns Boolean
+  arguments
+    Bits<32> a,
+    Bits<32> b,
+    Boolean quiet
+  description {
+    Single-precision less-than comparison. Sets NV on any NaN unless +quiet+ is
+    true (then only signaling NaN sets NV). Returns false for NaN operands.
+    Mirrors the scalar flt.s ordering logic (sign-aware integer comparison).
+  }
+  body {
+    if (is_sp_nan?(a) || is_sp_nan?(b)) {
+      if (!quiet || is_sp_signaling_nan?(a) || is_sp_signaling_nan?(b)) {
+        set_fp_flag(FpFlag::NV);
+      }
+      return false;
+    }
+    Bits<1> sign_a = a[31];
+    Bits<1> sign_b = b[31];
+    if (sign_a != sign_b) {
+      return (sign_a == 1) && ((a[30:0] | b[30:0]) != 0);
+    } else {
+      return (a != b) && ((sign_a ^ ((a < b) ? 1 : 0)) != 0);
+    }
+  }
+}
+
+function f32_le? {
+  returns Boolean
+  arguments
+    Bits<32> a,
+    Bits<32> b,
+    Boolean quiet
+  description {
+    Single-precision less-than-or-equal comparison. Sets NV on any NaN unless
+    +quiet+ (then only signaling NaN). Returns false for NaN operands.
+    Mirrors the scalar fle.s ordering logic.
+  }
+  body {
+    if (is_sp_nan?(a) || is_sp_nan?(b)) {
+      if (!quiet || is_sp_signaling_nan?(a) || is_sp_signaling_nan?(b)) {
+        set_fp_flag(FpFlag::NV);
+      }
+      return false;
+    }
+    Bits<1> sign_a = a[31];
+    Bits<1> sign_b = b[31];
+    if (sign_a != sign_b) {
+      return (sign_a == 1) || ((a[30:0] | b[30:0]) == 0);
+    } else {
+      return (a == b) || ((sign_a ^ ((a < b) ? 1 : 0)) == 1);
+    }
+  }
+}
+
+function f32_eq? {
+  returns Boolean
+  arguments
+    Bits<32> a,
+    Bits<32> b,
+    Boolean quiet
+  description {
+    Single-precision equality comparison. Quiet form (vmfeq/vmfne) sets NV only
+    on signaling NaN; non-quiet form sets NV on any NaN. Returns false for NaN.
+    +0.0 equals -0.0. Mirrors scalar feq.s.
+  }
+  body {
+    if (is_sp_nan?(a) || is_sp_nan?(b)) {
+      if (!quiet || is_sp_signaling_nan?(a) || is_sp_signaling_nan?(b)) {
+        set_fp_flag(FpFlag::NV);
+      }
+      return false;
+    }
+    return (a == b) || ((a | b)[30:0] == 0);
+  }
+}
+
+function f32_classify {
+  returns Bits<32>
+  arguments
+    Bits<32> a
+  description {
+    Returns the 10-bit one-hot IEEE class of a single-precision value, matching
+    the fclass.s bit assignment. Mirrors the scalar fclass.s classification.
+  }
+  body {
+    if (is_sp_neg_inf?(a))          { return 32'h001; }
+    else if (is_sp_neg_norm?(a))    { return 32'h002; }
+    else if (is_sp_neg_subnorm?(a)) { return 32'h004; }
+    else if (is_sp_neg_zero?(a))    { return 32'h008; }
+    else if (is_sp_pos_zero?(a))    { return 32'h010; }
+    else if (is_sp_pos_subnorm?(a)) { return 32'h020; }
+    else if (is_sp_pos_norm?(a))    { return 32'h040; }
+    else if (is_sp_pos_inf?(a))     { return 32'h080; }
+    else if (is_sp_signaling_nan?(a)) { return 32'h100; }
+    else { return 32'h200; }
+  }
+}
