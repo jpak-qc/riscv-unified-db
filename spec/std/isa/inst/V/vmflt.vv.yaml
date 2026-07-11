@@ -47,4 +47,5 @@ operation(): |
   }
   V[vd] = vd_bits;
   CSR[vstart].VALUE = 0;
+  mark_f_state_dirty();
   mark_v_state_dirty();

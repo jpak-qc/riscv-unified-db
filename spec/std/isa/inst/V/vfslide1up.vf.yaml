@@ -35,7 +35,6 @@ operation(): |
   check_f_ok($encoding);
   VectorState state = vector_state();
   Bits<32> b = F[fs1][31:0];
-  U32 elems_per_reg = VLEN >> 2;
   for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
     if (v_mask_elem_active?(vm, i)) {
       if (i == 0) {

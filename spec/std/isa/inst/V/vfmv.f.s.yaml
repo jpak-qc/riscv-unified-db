@@ -31,4 +31,5 @@ operation(): |
   check_f_ok($encoding);
   VectorState state = vector_state();
   F[fd] = {32'hffffffff, v_elem_read(vs2, 0, 2)[31:0]};
+  CSR[vstart].VALUE = 0;
   mark_f_state_dirty();

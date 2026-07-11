@@ -50,7 +50,6 @@ operation(): |
           acc = elem;
         } else if (is_sp_nan?(elem)) {
           if (is_sp_signaling_nan?(elem)) { set_fp_flag(FpFlag::NV); }
-          acc = acc;
         } else {
           acc = f32_lt?(elem, acc, true) ? elem : acc;
         }
