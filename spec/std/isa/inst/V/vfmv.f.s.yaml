@@ -29,7 +29,6 @@ data_independent_timing: false
 operation(): |
   check_v_ok_vtype($encoding);
   check_f_ok($encoding);
-  VectorState state = vector_state();
-  F[fd] = {32'hffffffff, v_elem_read(vs2, 0, 2)[31:0]};
+  F[fd] = {32'hffffffff, v_elem_read(vs2, 0, 5)[31:0]};
   CSR[vstart].VALUE = 0;
   mark_f_state_dirty();

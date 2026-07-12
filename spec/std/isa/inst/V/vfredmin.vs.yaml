@@ -34,14 +34,15 @@ operation(): |
   check_v_ok_vtype($encoding);
   check_f_ok($encoding);
   if (CSR[vstart].VALUE != 0) { raise(ExceptionCode::IllegalInstruction, mode(), $encoding); }
-  VectorState state = vector_state();
   if (CSR[vl].VALUE == 0) {
+    v_elem_write(vd, 0, 5, {96'b0, V[vs1][31:0]});
     CSR[vstart].VALUE = 0;
+    mark_v_state_dirty();
   } else {
     Bits<32> acc = V[vs1][31:0];
     for (U32 i = 0; i < CSR[vl].VALUE; i++) {
       if (v_mask_elem_active?(vm, i)) {
-        Bits<32> elem = v_elem_read(vs2, i, 2)[31:0];
+        Bits<32> elem = v_elem_read(vs2, i, 5)[31:0];
         if (is_sp_nan?(acc) && is_sp_nan?(elem)) {
           if (is_sp_signaling_nan?(acc) || is_sp_signaling_nan?(elem)) { set_fp_flag(FpFlag::NV); }
           acc = SP_CANONICAL_NAN;
@@ -55,7 +56,7 @@ operation(): |
         }
       }
     }
-    v_elem_write(vd, 0, 2, {96'b0, acc});
+    v_elem_write(vd, 0, 5, {96'b0, acc});
     CSR[vstart].VALUE = 0;
     mark_f_state_dirty();
     mark_v_state_dirty();

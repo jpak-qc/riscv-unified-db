@@ -33,11 +33,10 @@ data_independent_timing: false
 operation(): |
   check_v_ok_vtype($encoding);
   check_f_ok($encoding);
-  VectorState state = vector_state();
   RoundingMode rmode = rm_to_mode(CSR[fcsr].FRM, $encoding);
   for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
     if (v_mask_elem_active?(vm, i)) {
-      v_elem_write(vd, i, 2, {96'b0, f32_muladd(v_elem_read(vs1, i, 2)[31:0], v_elem_read(vd, i, 2)[31:0], v_elem_read(vs2, i, 2)[31:0], F32MulAddOp::Softfloat_mulAdd_subProd, rmode)});
+      v_elem_write(vd, i, 5, {96'b0, f32_muladd(v_elem_read(vs1, i, 5)[31:0], v_elem_read(vd, i, 5)[31:0], v_elem_read(vs2, i, 5)[31:0], F32MulAddOp::Softfloat_mulAdd_subProd, rmode)});
     }
   }
   CSR[vstart].VALUE = 0;
