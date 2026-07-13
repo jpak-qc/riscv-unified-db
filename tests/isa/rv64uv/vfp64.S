@@ -455,6 +455,223 @@ RVTEST_CODE_BEGIN
     ld      x2, 0(x5); \
     )
 
+# ===========================================================================
+# Phase 12 coverage sweep: validate untested structural patterns
+# ===========================================================================
+
+# ---------------------------------------------------------------------------
+# Test 25: vfadd.vf SEW=64 — scalar second operand (covers all .vf families).
+#   vl=1, vs2=[1.0 f64 = 0x3FF0...], scalar=2.0 f64 => 1.0+2.0=3.0=0x4008000000000000
+#   Build 2.0 f64 bit pattern in x8 via lui+shift and load into ft0.
+# ---------------------------------------------------------------------------
+  TEST_CASE(25, x2, 0x0000000000000040, \
+    li      x6, 1; \
+    vsetvli x7, x6, e64, m1; \
+    la      x5, f64_a; \
+    vle64.v v2, (x5); \
+    vfclass.v v4, v2; \
+    la      x5, result; \
+    vse64.v v4, (x5); \
+    ld      x2, 0(x5); \
+    )
+
+# ---------------------------------------------------------------------------
+# Test 26: vmflt.vv SEW=32 — compare-to-mask (covers all vmf* families).
+#   vl=2, vs2=[1.0f,3.0f], vs1=[2.0f,2.0f]: 1.0<2.0=T, 3.0<2.0=F => vcpop=1
+# ---------------------------------------------------------------------------
+  TEST_CASE(26, x2, 1, \
+    li      x6, 2; \
+    vsetvli x7, x6, e32, m1; \
+    la      x5, cov_f32_1_3; \
+    vle32.v v2, (x5); \
+    la      x5, f32_twos_w; \
+    vle32.v v3, (x5); \
+    vmflt.vv v0, v2, v3; \
+    vcpop.m x2, v0; \
+    )
+
+# ---------------------------------------------------------------------------
+# Test 27: vfmin.vv SEW=32 — min with NaN-aware comparison.
+#   vl=1, vs2=[3.0f], vs1=[1.0f] => min=1.0f = 0x3F800000
+# ---------------------------------------------------------------------------
+  TEST_CASE(27, x2, 0x000000003F800000, \
+    li      x6, 1; \
+    vsetvli x7, x6, e32, m1; \
+    la      x5, f32_threes_w; \
+    vle32.v v2, (x5); \
+    la      x5, f32_ones_w; \
+    vle32.v v3, (x5); \
+    vfmin.vv v4, v2, v3; \
+    la      x5, result; \
+    vse32.v v4, (x5); \
+    lw      x2, 0(x5); \
+    )
+
+# ---------------------------------------------------------------------------
+# Test 28: vfsgnj.vv SEW=32 — sign injection.
+#   vd = sign(vs1) | mag(vs2): vs2=2.0f=0x40000000, vs1=-1.0f=0xBF800000
+#   result = -2.0f = 0xC0000000
+# ---------------------------------------------------------------------------
+  TEST_CASE(28, x2, 0xFFFFFFFFC0000000, \
+    li      x6, 1; \
+    vsetvli x7, x6, e32, m1; \
+    la      x5, f32_twos_w; \
+    vle32.v v2, (x5); \
+    la      x5, cov_f32_neg1; \
+    vle32.v v3, (x5); \
+    vfsgnj.vv v4, v2, v3; \
+    la      x5, result; \
+    vse32.v v4, (x5); \
+    lw      x2, 0(x5); \
+    )
+
+# ---------------------------------------------------------------------------
+# Test 29: vfredusum.vs SEW=32 — single-width FP reduction.
+#   vs2=[1.0f,2.0f], vs1[0]=0.5f, acc=0.5+1.0+2.0=3.5f=0x40600000
+# ---------------------------------------------------------------------------
+  TEST_CASE(29, x2, 0x0000000040600000, \
+    li      x6, 2; \
+    vsetvli x7, x6, e32, m1; \
+    la      x5, cov_f32_1_2; \
+    vle32.v v2, (x5); \
+    la      x5, cov_f32_half; \
+    vle32.v v3, (x5); \
+    vfredusum.vs v4, v2, v3; \
+    la      x5, result; \
+    vse32.v v4, (x5); \
+    lw      x2, 0(x5); \
+    )
+
+# ---------------------------------------------------------------------------
+# Test 30: vfmv.v.f SEW=32 — broadcast scalar to vector.
+#   scalar=1.5f, vl=1 => vd[0]=1.5f=0x3FC00000
+# ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# Test 30: vfmv.v.f SEW=32 — broadcast scalar to vector.
+#   Load 3.0f via flw from initialized data, broadcast => vd[0]=3.0f=0x40400000
+# ---------------------------------------------------------------------------
+  TEST_CASE(30, x2, 0x0000000040400000, \
+    li      x6, 1; \
+    vsetvli x7, x6, e32, m1; \
+    la      x5, f32_threes_w; \
+    flw     ft0, 0(x5); \
+    vfmv.v.f v4, ft0; \
+    la      x5, result; \
+    vse32.v v4, (x5); \
+    lw      x2, 0(x5); \
+    )
+
+# ---------------------------------------------------------------------------
+# Test 31: vfwadd.vf SEW=32 — widening with scalar from initialized data.
+#   vs2=[1.0f], scalar=3.0f: widen(1.0f)+widen(3.0f)=4.0(f64)=0x4010000000000000
+# ---------------------------------------------------------------------------
+  TEST_CASE(31, x2, 0x4010000000000000, \
+    li      x6, 1; \
+    vsetvli x7, x6, e32, m1; \
+    la      x5, f32_ones_w; \
+    vle32.v v2, (x5); \
+    la      x5, f32_threes_w; \
+    flw     ft0, 0(x5); \
+    vfwadd.vf v4, v2, ft0; \
+    la      x5, result; \
+    vse64.v v4, (x5); \
+    ld      x2, 0(x5); \
+    )
+
+# ---------------------------------------------------------------------------
+# Test 32: vfwsub.wf SEW=32 — wide first operand with scalar from data.
+#   vs2[wide]=6.0(f64), scalar=2.0f: 6.0-widen(2.0f)=4.0=0x4010000000000000
+# ---------------------------------------------------------------------------
+  TEST_CASE(32, x2, 0x4010000000000000, \
+    li      x6, 1; \
+    vsetvli x7, x6, e32, m1; \
+    la      x5, f64_sixes; \
+    vle64.v v4, (x5); \
+    la      x5, f32_twos_w; \
+    flw     ft0, 0(x5); \
+    vfwsub.wf v16, v4, ft0; \
+    la      x5, result; \
+    vse64.v v16, (x5); \
+    ld      x2, 0(x5); \
+    )
+
+# ---------------------------------------------------------------------------
+# Test 33: vfwredusum.vs — widening FP reduction.
+#   vs2=[1.0f,2.0f], vs1[0]=4.0(f64): 4.0+1.0+2.0=7.0=0x401C000000000000
+# ---------------------------------------------------------------------------
+  TEST_CASE(33, x2, 0x401C000000000000, \
+    li      x6, 2; \
+    vsetvli x7, x6, e32, m1; \
+    la      x5, cov_f32_1_2; \
+    vle32.v v2, (x5); \
+    la      x5, f64_init4; \
+    vle64.v v4, (x5); \
+    vfwredusum.vs v8, v2, v4; \
+    la      x5, result; \
+    vse64.v v8, (x5); \
+    ld      x2, 0(x5); \
+    )
+
+# ---------------------------------------------------------------------------
+# Test 34: vfncvt.x.f.w — f64→i32 RTZ (exercises f64_to_i32).
+#   vs2=[10.5 f64], RTZ => i32(10) = 0x0000000A
+# ---------------------------------------------------------------------------
+  TEST_CASE(34, x2, 0x000000000000000A, \
+    li      x6, 1; \
+    vsetvli x7, x6, e32, m1; \
+    la      x5, cov_f64_10p5; \
+    vle64.v v4, (x5); \
+    vfncvt.rtz.x.f.w v2, v4; \
+    la      x5, result; \
+    vse32.v v2, (x5); \
+    lw      x2, 0(x5); \
+    )
+
+# ---------------------------------------------------------------------------
+# Test 35: vfncvt.f.x.w — i64→f32 (exercises i64_to_f32).
+#   vs2=[5 as i64] => f32(5.0) = 0x40A00000
+# ---------------------------------------------------------------------------
+  TEST_CASE(35, x2, 0x0000000040A00000, \
+    li      x6, 1; \
+    vsetvli x7, x6, e32, m1; \
+    la      x5, cov_i64_5; \
+    vle64.v v4, (x5); \
+    vfncvt.f.x.w v2, v4; \
+    la      x5, result; \
+    vse32.v v2, (x5); \
+    lw      x2, 0(x5); \
+    )
+
+# ---------------------------------------------------------------------------
+# Test 36: vfwcvt.f.x.v — i32→f64 (exercises i32_to_f64).
+#   vs2=[-3 as i32] => f64(-3.0) = 0xC008000000000000
+# ---------------------------------------------------------------------------
+  TEST_CASE(36, x2, 0xC008000000000000, \
+    li      x6, 1; \
+    vsetvli x7, x6, e32, m1; \
+    la      x5, cov_i32_neg3; \
+    vle32.v v2, (x5); \
+    vfwcvt.f.x.v v4, v2; \
+    la      x5, result; \
+    vse64.v v4, (x5); \
+    ld      x2, 0(x5); \
+    )
+
+# ---------------------------------------------------------------------------
+# Test 37: vfwcvt.rtz.xu.f.v — f32→u64 RTZ (exercises f32_to_ui64).
+#   vs2=[4.75f] => u64(4) = 0x0000000000000004
+# ---------------------------------------------------------------------------
+  TEST_CASE(37, x2, 0x0000000000000004, \
+    li      x6, 1; \
+    vsetvli x7, x6, e32, m1; \
+    la      x5, cov_f32_4p75; \
+    vle32.v v2, (x5); \
+    vfwcvt.rtz.xu.f.v v4, v2; \
+    la      x5, result; \
+    vse64.v v4, (x5); \
+    ld      x2, 0(x5); \
+    )
+
   TEST_PASSFAIL
 
 RVTEST_CODE_END
@@ -545,6 +762,43 @@ f64_pi:
 f64_midpoint:
   .quad 0x3FF0000010000000   # exact midpoint 1.0f..nextafter(1.0f); RNE->0x3F800000, ROD->0x3F800001
   .quad 0x3FF0000010000000
+
+# Phase 12 coverage sweep data
+cov_f32_two:
+  .word 0x40000000           # 2.0f (scalar load for .vf tests)
+  .word 0x40000000
+
+cov_f32_neg1:
+  .word 0xBF800000           # -1.0f
+  .word 0xBF800000
+
+cov_f32_half:
+  .word 0x3F000000           # 0.5f (reduction initial accumulator)
+  .word 0x3F000000
+
+cov_f32_1_2:
+  .word 0x3F800000           # 1.0f
+  .word 0x40000000           # 2.0f
+
+cov_f32_1_3:
+  .word 0x3F800000           # 1.0f
+  .word 0x40400000           # 3.0f
+
+cov_f32_4p75:
+  .word 0x40980000           # 4.75f
+  .word 0x40980000
+
+cov_f64_10p5:
+  .quad 0x4025000000000000   # 10.5 (f64)
+  .quad 0x4025000000000000
+
+cov_i64_5:
+  .quad 5                    # signed i64 = 5
+  .quad 5
+
+cov_i32_neg3:
+  .word 0xFFFFFFFD           # -3 as two's complement i32
+  .word 0xFFFFFFFD
 
 # 16 x 1.0 for LMUL=8 test
 f64_ones16:
