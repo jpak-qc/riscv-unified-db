@@ -31,3 +31,19 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
+  check_v_ok_vtype($encoding);
+  check_f_ok($encoding);
+  VectorState state = vector_state();
+  RoundingMode rmode = rm_to_mode(CSR[fcsr].FRM, $encoding);
+  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
+    if (v_mask_elem_active?(vm, i)) {
+      Bits<64> a = f32_to_f64(F[fs1][31:0], rmode);
+      Bits<64> b = f32_to_f64(v_elem_read(vs2, i, state.log2_sew)[31:0], rmode);
+      Bits<64> c = v_elem_read(vd, i, state.log2_sew + 1)[63:0];
+      Bits<64> result = f64_muladd(a, b, c, F64MulAddOp::Softfloat_f64_mulAdd_addC, rmode) ^ 64'h8000000000000000;
+      v_elem_write(vd, i, state.log2_sew + 1, {64'b0, result});
+    }
+  }
+  CSR[vstart].VALUE = 0;
+  mark_f_state_dirty();
+  mark_v_state_dirty();
