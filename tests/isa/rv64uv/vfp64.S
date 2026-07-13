@@ -1065,9 +1065,12 @@ RVTEST_CODE_BEGIN
     )
 
 # ---------------------------------------------------------------------------
-# Test 61: vfrsqrt7.v SEW=32 — second invocation, input 3.0f (even exp, non-zero sig).
-#   vs2=[3.0f=0x40400000]: exp=128(even),sig[22:17]=32, idx=32, tab=19
+# Test 61: vfrsqrt7.v SEW=32 — non-zero significand (even exp, exercises sig bits).
+#   vs2=[3.0f=0x40400000]: exp=128(even), sig[22:17]=32, idx=32, tab=19
 #   rsqrt7(3.0) = 0x3F130000 (≈0.574, true≈0.577, err<0.6%)
+# Note: odd-exponent inputs (exp[0]=1) exercise table entries 64-127 but cannot
+#   be ISS-tested under IGNOREUNDEFINED=YES — the {exp[0]=1, sig_bits} table
+#   index propagates as PossiblyUnknownBits. Validated via C reference model.
 # ---------------------------------------------------------------------------
   TEST_CASE(61, x2, 0x000000003F130000, \
     li      x6, 1; \

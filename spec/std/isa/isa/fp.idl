@@ -3631,6 +3631,14 @@ function f32_rsqrt7 {
     }
 
     # Table index: [normalized_exp[0]] @ normalized_sig[22:17]
+    # NOTE: Computed via bit-concatenation matching Sail exactly. Under
+    # IGNOREUNDEFINED=YES in the ISS, the {exp[0]=1, sig_bits} concatenation
+    # propagates as PossiblyUnknownBits through the table lookup, so odd-exponent
+    # inputs cannot be ISS-validated without an ISS-level fix. This is a known
+    # limitation — the odd-exponent path is validated via C reference model instead.
+    # Arithmetic reformulation was tried but does not resolve the issue because the
+    # ISS template system propagates PossiblyUnknown through all operations on
+    # the argument, regardless of how the index is computed. ISS is not modified.
     Bits<7> idx = {normalized_exp[0], normalized_sig[22:17]};
     U32 tidx = idx;
     # Place top 7 bits of table value into bits 22:16 of 23-bit significand
