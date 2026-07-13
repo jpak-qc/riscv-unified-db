@@ -1043,6 +1043,101 @@ RVTEST_CODE_BEGIN
     lw      x2, 0(x5); \
     )
 
+# ===========================================================================
+# Phase 12E: vfrsqrt7.v and vfrec7.v — 7-bit approximation tables
+# Expected values computed from the RISC-V V spec §14.10-14.11 algorithm.
+# These are *approximations* (~0.4% max relative error), not exact values.
+# ===========================================================================
+
+# ---------------------------------------------------------------------------
+# Test 60: vfrsqrt7.v SEW=32 — first invocation, input 2.0f (even exponent).
+#   vs2=[2.0f=0x40000000]: rsqrt7(2.0) = 0x3F340000 (≈0.703, true≈0.707)
+# ---------------------------------------------------------------------------
+  TEST_CASE(60, x2, 0x000000003F340000, \
+    li      x6, 1; \
+    vsetvli x7, x6, e32, m1; \
+    la      x5, f32_twos_w; \
+    vle32.v v2, (x5); \
+    vfrsqrt7.v v4, v2; \
+    la      x5, result; \
+    vse32.v v4, (x5); \
+    lw      x2, 0(x5); \
+    )
+
+# ---------------------------------------------------------------------------
+# Test 61: vfrsqrt7.v SEW=32 — second invocation, input 3.0f (even exp, non-zero sig).
+#   vs2=[3.0f=0x40400000]: exp=128(even),sig[22:17]=32, idx=32, tab=19
+#   rsqrt7(3.0) = 0x3F130000 (≈0.574, true≈0.577, err<0.6%)
+# ---------------------------------------------------------------------------
+  TEST_CASE(61, x2, 0x000000003F130000, \
+    li      x6, 1; \
+    vsetvli x7, x6, e32, m1; \
+    la      x5, f32_threes_w; \
+    vle32.v v2, (x5); \
+    vfrsqrt7.v v4, v2; \
+    la      x5, result; \
+    vse32.v v4, (x5); \
+    lw      x2, 0(x5); \
+    )
+
+# ---------------------------------------------------------------------------
+# Test 62: vfrsqrt7.v +inf — special case: rsqrt7(+inf) = +0
+# ---------------------------------------------------------------------------
+  TEST_CASE(62, x2, 0x0000000000000000, \
+    li      x6, 1; \
+    vsetvli x7, x6, e32, m1; \
+    la      x5, b12e_pos_inf; \
+    vle32.v v2, (x5); \
+    vfrsqrt7.v v4, v2; \
+    la      x5, result; \
+    vse32.v v4, (x5); \
+    lw      x2, 0(x5); \
+    )
+
+# ---------------------------------------------------------------------------
+# Test 63: vfrec7.v SEW=32 — 7-bit approx of 1/x.
+#   vs2=[1.0f]: rec7(1.0) = 0x3F7F0000 (≈0.996, true=1.0, err<0.5%)
+# ---------------------------------------------------------------------------
+  TEST_CASE(63, x2, 0x000000003F7F0000, \
+    li      x6, 1; \
+    vsetvli x7, x6, e32, m1; \
+    la      x5, f32_ones_w; \
+    vle32.v v2, (x5); \
+    vfrec7.v v4, v2; \
+    la      x5, result; \
+    vse32.v v4, (x5); \
+    lw      x2, 0(x5); \
+    )
+
+# ---------------------------------------------------------------------------
+# Test 64: vfrec7.v SEW=32 — input 2.0f.
+#   rec7(2.0) = 0x3EFF0000 (≈0.498, true=0.5, err<0.4%)
+# ---------------------------------------------------------------------------
+  TEST_CASE(64, x2, 0x000000003EFF0000, \
+    li      x6, 1; \
+    vsetvli x7, x6, e32, m1; \
+    la      x5, f32_twos_w; \
+    vle32.v v2, (x5); \
+    vfrec7.v v4, v2; \
+    la      x5, result; \
+    vse32.v v4, (x5); \
+    lw      x2, 0(x5); \
+    )
+
+# ---------------------------------------------------------------------------
+# Test 65: vfrec7.v +inf — special case: rec7(+inf) = +0
+# ---------------------------------------------------------------------------
+  TEST_CASE(65, x2, 0x0000000000000000, \
+    li      x6, 1; \
+    vsetvli x7, x6, e32, m1; \
+    la      x5, b12e_pos_inf; \
+    vle32.v v2, (x5); \
+    vfrec7.v v4, v2; \
+    la      x5, result; \
+    vse32.v v4, (x5); \
+    lw      x2, 0(x5); \
+    )
+
   TEST_PASSFAIL
 
 RVTEST_CODE_END
@@ -1200,6 +1295,15 @@ b12_f32_7p9:
 b12_f32_4p0:
   .word 0x40800000           # 4.0f (initial vd for vfnmadd test)
   .word 0x40800000
+
+# Phase 12E data
+b12e_pos_inf:
+  .word 0x7F800000           # +inf (f32)
+  .word 0x7F800000
+
+b12e_1p5:
+  .word 0x3FC00000           # 1.5f
+  .word 0x3FC00000
 
 # 16 x 1.0 for LMUL=8 test
 f64_ones16:
