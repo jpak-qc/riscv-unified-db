@@ -237,6 +237,157 @@ RVTEST_CODE_BEGIN
     ld      x2, 0(x5); \
     )
 
+# ===========================================================================
+# Phase 12C: widening FP arithmetic and FMA (SEW=32 -> 64)
+# vsetivli with e32,m1 sets SEW=32; destination registers are at 2*SEW=64.
+# f32 inputs: 1.0f=0x3F800000, 2.0f=0x40000000, 3.0f=0x40400000
+# f64 init (4.0): 0x4010000000000000
+# ===========================================================================
+
+# ---------------------------------------------------------------------------
+# Test 13: vfwadd.vv SEW=32 — widen(1.0f) + widen(2.0f) = 3.0 (f64)
+#   Expected: 0x4008000000000000
+# ---------------------------------------------------------------------------
+  TEST_CASE(13, x2, 0x4008000000000000, \
+    li      x6, 2; \
+    vsetvli x7, x6, e32, m1; \
+    la      x5, f32_ones_w; \
+    vle32.v v2, (x5); \
+    la      x5, f32_twos_w; \
+    vle32.v v3, (x5); \
+    vfwadd.vv v4, v2, v3; \
+    la      x5, result; \
+    vse64.v v4, (x5); \
+    ld      x2, 0(x5); \
+    )
+
+# ---------------------------------------------------------------------------
+# Test 14: vfwsub.vv SEW=32 — widen(2.0f) - widen(1.0f) = 1.0 (f64)
+#   Expected: 0x3FF0000000000000
+# ---------------------------------------------------------------------------
+  TEST_CASE(14, x2, 0x3FF0000000000000, \
+    li      x6, 1; \
+    vsetvli x7, x6, e32, m1; \
+    la      x5, f32_twos_w; \
+    vle32.v v2, (x5); \
+    la      x5, f32_ones_w; \
+    vle32.v v3, (x5); \
+    vfwsub.vv v4, v2, v3; \
+    la      x5, result; \
+    vse64.v v4, (x5); \
+    ld      x2, 0(x5); \
+    )
+
+# ---------------------------------------------------------------------------
+# Test 15: vfwmul.vv SEW=32 — widen(2.0f) * widen(3.0f) = 6.0 (f64)
+#   Expected: 0x4018000000000000
+# ---------------------------------------------------------------------------
+  TEST_CASE(15, x2, 0x4018000000000000, \
+    li      x6, 1; \
+    vsetvli x7, x6, e32, m1; \
+    la      x5, f32_twos_w; \
+    vle32.v v2, (x5); \
+    la      x5, f32_threes_w; \
+    vle32.v v3, (x5); \
+    vfwmul.vv v4, v2, v3; \
+    la      x5, result; \
+    vse64.v v4, (x5); \
+    ld      x2, 0(x5); \
+    )
+
+# ---------------------------------------------------------------------------
+# Test 16: vfwadd.wv — wide_vs2(4.0 f64) + widen(1.0f) = 5.0 (f64)
+#   Expected: 0x4014000000000000
+# ---------------------------------------------------------------------------
+  TEST_CASE(16, x2, 0x4014000000000000, \
+    li      x6, 1; \
+    vsetvli x7, x6, e32, m1; \
+    la      x5, f64_init4; \
+    vle64.v v4, (x5); \
+    la      x5, f32_ones_w; \
+    vle32.v v3, (x5); \
+    vfwadd.wv v8, v4, v3; \
+    la      x5, result; \
+    vse64.v v8, (x5); \
+    ld      x2, 0(x5); \
+    )
+
+# ---------------------------------------------------------------------------
+# Test 17: vfwmacc.vv — vd=4.0 + widen(1.0f)*widen(2.0f) = 6.0 (f64)
+#   Expected: 0x4018000000000000
+# ---------------------------------------------------------------------------
+  TEST_CASE(17, x2, 0x4018000000000000, \
+    li      x6, 1; \
+    vsetvli x7, x6, e32, m1; \
+    la      x5, f64_init4; \
+    vle64.v v4, (x5); \
+    la      x5, f32_ones_w; \
+    vle32.v v2, (x5); \
+    la      x5, f32_twos_w; \
+    vle32.v v3, (x5); \
+    vfwmacc.vv v4, v2, v3; \
+    la      x5, result; \
+    vse64.v v4, (x5); \
+    ld      x2, 0(x5); \
+    )
+
+# ---------------------------------------------------------------------------
+# Test 18: vfwnmacc.vv — -(4.0 + widen(1.0f)*widen(2.0f)) = -6.0 (f64)
+#   Expected: 0xC018000000000000
+# ---------------------------------------------------------------------------
+  TEST_CASE(18, x2, 0xC018000000000000, \
+    li      x6, 1; \
+    vsetvli x7, x6, e32, m1; \
+    la      x5, f64_init4; \
+    vle64.v v4, (x5); \
+    la      x5, f32_ones_w; \
+    vle32.v v2, (x5); \
+    la      x5, f32_twos_w; \
+    vle32.v v3, (x5); \
+    vfwnmacc.vv v4, v2, v3; \
+    la      x5, result; \
+    vse64.v v4, (x5); \
+    ld      x2, 0(x5); \
+    )
+
+# ---------------------------------------------------------------------------
+# Test 19: vfwmsac.vv — widen(1.0f)*widen(2.0f) - 4.0 = -2.0 (f64)
+#   Expected: 0xC000000000000000
+# ---------------------------------------------------------------------------
+  TEST_CASE(19, x2, 0xC000000000000000, \
+    li      x6, 1; \
+    vsetvli x7, x6, e32, m1; \
+    la      x5, f64_init4; \
+    vle64.v v4, (x5); \
+    la      x5, f32_ones_w; \
+    vle32.v v2, (x5); \
+    la      x5, f32_twos_w; \
+    vle32.v v3, (x5); \
+    vfwmsac.vv v4, v2, v3; \
+    la      x5, result; \
+    vse64.v v4, (x5); \
+    ld      x2, 0(x5); \
+    )
+
+# ---------------------------------------------------------------------------
+# Test 20: vfwnmsac.vv — -(widen(1.0f))*widen(2.0f) + 4.0 = 2.0 (f64)
+#   Expected: 0x4000000000000000
+# ---------------------------------------------------------------------------
+  TEST_CASE(20, x2, 0x4000000000000000, \
+    li      x6, 1; \
+    vsetvli x7, x6, e32, m1; \
+    la      x5, f64_init4; \
+    vle64.v v4, (x5); \
+    la      x5, f32_ones_w; \
+    vle32.v v2, (x5); \
+    la      x5, f32_twos_w; \
+    vle32.v v3, (x5); \
+    vfwnmsac.vv v4, v2, v3; \
+    la      x5, result; \
+    vse64.v v4, (x5); \
+    ld      x2, 0(x5); \
+    )
+
   TEST_PASSFAIL
 
 RVTEST_CODE_END
@@ -292,6 +443,24 @@ f64_tens:
 i64_three:
   .quad 3                    # signed 64-bit integer 3
   .quad 3
+
+# f32 inputs for widening tests (stored as 32-bit words, 2 per entry)
+f32_ones_w:
+  .word 0x3F800000           # 1.0f
+  .word 0x3F800000           # 1.0f
+
+f32_twos_w:
+  .word 0x40000000           # 2.0f
+  .word 0x40000000           # 2.0f
+
+f32_threes_w:
+  .word 0x40400000           # 3.0f
+  .word 0x40400000           # 3.0f
+
+# f64 initial accumulator (4.0) for widening FMA tests
+f64_init4:
+  .quad 0x4010000000000000   # 4.0 (f64)
+  .quad 0x4010000000000000   # 4.0 (f64)
 
 # 16 x 1.0 for LMUL=8 test
 f64_ones16:
