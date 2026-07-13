@@ -1,0 +1,233 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+#*****************************************************************************
+# vfp64.S
+#-----------------------------------------------------------------------------
+#
+# Phase 12A/12B ISS validation: exercise f64_add, f64_mul, f64_muladd through
+# vfadd.vv, vfmul.vv, vfmacc.vv at SEW=64.
+#
+# VLEN=128, SEW=64, LMUL=1: 2 f64 elements per register.
+# VLEN=128, SEW=64, LMUL=8: 16 f64 elements across 8 registers.
+#
+# f64 bit patterns:
+#   1.0 = 0x3FF0000000000000
+#   2.0 = 0x4000000000000000
+#   3.0 = 0x4008000000000000
+#   5.0 = 0x4014000000000000
+#   6.0 = 0x4018000000000000
+
+#include "riscv_test.h"
+#include "test_macros.h"
+
+RVTEST_RV64UV
+RVTEST_CODE_BEGIN
+
+# ---------------------------------------------------------------------------
+# Test 1: vfadd.vv SEW=64 LMUL=1, unmasked.
+#   vl=2, vs2=[1.0, 2.0], vs1=[1.0, 3.0]
+#   result=[2.0, 5.0] = [0x4000000000000000, 0x4014000000000000]
+#   Load result[0] (low 8 bytes) into x2 and check.
+# ---------------------------------------------------------------------------
+  TEST_CASE(1, x2, 0x4000000000000000, \
+    li      x6, 2; \
+    vsetvli x7, x6, e64, m1; \
+    la      x5, f64_a; \
+    vle64.v v2, (x5); \
+    la      x5, f64_b; \
+    vle64.v v3, (x5); \
+    vfadd.vv v4, v2, v3; \
+    la      x5, result; \
+    vse64.v v4, (x5); \
+    ld      x2, 0(x5); \
+    )
+
+# ---------------------------------------------------------------------------
+# Test 2: vfadd.vv SEW=64 LMUL=1, check second element.
+#   Same setup as Test 1. Load result[1] (high 8 bytes).
+# ---------------------------------------------------------------------------
+  TEST_CASE(2, x2, 0x4014000000000000, \
+    li      x6, 2; \
+    vsetvli x7, x6, e64, m1; \
+    la      x5, f64_a; \
+    vle64.v v2, (x5); \
+    la      x5, f64_b; \
+    vle64.v v3, (x5); \
+    vfadd.vv v4, v2, v3; \
+    la      x5, result; \
+    vse64.v v4, (x5); \
+    ld      x2, 8(x5); \
+    )
+
+# ---------------------------------------------------------------------------
+# Test 3: vfadd.vv SEW=64 LMUL=1, masked (mask=0b01, only element 0 active).
+#   Pre-fill vd with 0xFFFF...FFFF (by loading dest_init).
+#   After masked add: elem0 = 1.0+1.0 = 2.0 (active), elem1 = 0xFFFF... (undisturbed).
+#   Load result[0]: expect 0x4000000000000000.
+#   Load result[1]: expect 0xFFFFFFFFFFFFFFFF.
+# ---------------------------------------------------------------------------
+  TEST_CASE(3, x2, 0x4000000000000000, \
+    li      x6, 2; \
+    vsetvli x7, x6, e64, m1; \
+    la      x5, dest_init; \
+    vle64.v v4, (x5); \
+    la      x5, mask01; \
+    vle64.v v0, (x5); \
+    la      x5, f64_ones; \
+    vle64.v v2, (x5); \
+    la      x5, f64_ones; \
+    vle64.v v3, (x5); \
+    vfadd.vv v4, v2, v3, v0.t; \
+    la      x5, result; \
+    vse64.v v4, (x5); \
+    ld      x2, 0(x5); \
+    )
+
+  TEST_CASE(4, x2, 0xFFFFFFFFFFFFFFFF, \
+    li      x6, 2; \
+    vsetvli x7, x6, e64, m1; \
+    la      x5, dest_init; \
+    vle64.v v4, (x5); \
+    la      x5, mask01; \
+    vle64.v v0, (x5); \
+    la      x5, f64_ones; \
+    vle64.v v2, (x5); \
+    la      x5, f64_ones; \
+    vle64.v v3, (x5); \
+    vfadd.vv v4, v2, v3, v0.t; \
+    la      x5, result; \
+    vse64.v v4, (x5); \
+    ld      x2, 8(x5); \
+    )
+
+# ---------------------------------------------------------------------------
+# Test 5: vfmul.vv SEW=64 LMUL=1, unmasked.
+#   vl=2, vs2=[2.0, 3.0], vs1=[3.0, 2.0]
+#   result=[6.0, 6.0] = [0x4018000000000000, 0x4018000000000000]
+# ---------------------------------------------------------------------------
+  TEST_CASE(5, x2, 0x4018000000000000, \
+    li      x6, 2; \
+    vsetvli x7, x6, e64, m1; \
+    la      x5, f64_c; \
+    vle64.v v2, (x5); \
+    la      x5, f64_d; \
+    vle64.v v3, (x5); \
+    vfmul.vv v4, v2, v3; \
+    la      x5, result; \
+    vse64.v v4, (x5); \
+    ld      x2, 0(x5); \
+    )
+
+# ---------------------------------------------------------------------------
+# Test 6: vfmacc.vv SEW=64 LMUL=1.
+#   Assembly: vfmacc.vv vd, vs1, vs2  => vd[i] = vd[i] + vs1[i] * vs2[i]
+#   Pre-load vd with [3.0, 3.0].
+#   vs1 = [1.0, 1.0], vs2 = [2.0, 2.0]
+#   result = [3.0 + 1.0*2.0, 3.0 + 1.0*2.0] = [5.0, 5.0] = 0x4014000000000000
+# ---------------------------------------------------------------------------
+  TEST_CASE(6, x2, 0x4014000000000000, \
+    li      x6, 2; \
+    vsetvli x7, x6, e64, m1; \
+    la      x5, f64_threes; \
+    vle64.v v4, (x5); \
+    la      x5, f64_ones; \
+    vle64.v v2, (x5); \
+    la      x5, f64_twos; \
+    vle64.v v3, (x5); \
+    vfmacc.vv v4, v2, v3; \
+    la      x5, result; \
+    vse64.v v4, (x5); \
+    ld      x2, 0(x5); \
+    )
+
+# ---------------------------------------------------------------------------
+# Test 7: vfadd.vv SEW=64 LMUL=8 (16 elements, spans 8 registers).
+#   Verify element 8 (first element of second half of register group) is correct.
+#   All elements = 1.0 + 1.0 = 2.0.
+#   Result element 8 is at result + 8*8 = result + 64 bytes.
+# ---------------------------------------------------------------------------
+  TEST_CASE(7, x2, 0x4000000000000000, \
+    li      x6, 16; \
+    vsetvli x7, x6, e64, m8; \
+    la      x5, f64_ones16; \
+    vle64.v v8, (x5); \
+    la      x5, f64_ones16; \
+    vle64.v v16, (x5); \
+    vfadd.vv v24, v8, v16; \
+    la      x5, result; \
+    vse64.v v24, (x5); \
+    ld      x2, 64(x5); \
+    )
+
+  TEST_PASSFAIL
+
+RVTEST_CODE_END
+
+.data
+  .balign 8
+
+# f64 input arrays
+f64_a:
+  .quad 0x3FF0000000000000   # 1.0
+  .quad 0x4000000000000000   # 2.0
+
+f64_b:
+  .quad 0x3FF0000000000000   # 1.0
+  .quad 0x4008000000000000   # 3.0
+
+f64_c:
+  .quad 0x4000000000000000   # 2.0
+  .quad 0x4008000000000000   # 3.0
+
+f64_d:
+  .quad 0x4008000000000000   # 3.0
+  .quad 0x4000000000000000   # 2.0
+
+f64_ones:
+  .quad 0x3FF0000000000000   # 1.0
+  .quad 0x3FF0000000000000   # 1.0
+
+f64_twos:
+  .quad 0x4000000000000000   # 2.0
+  .quad 0x4000000000000000   # 2.0
+
+f64_threes:
+  .quad 0x4008000000000000   # 3.0
+  .quad 0x4008000000000000   # 3.0
+
+# 16 x 1.0 for LMUL=8 test
+f64_ones16:
+  .quad 0x3FF0000000000000
+  .quad 0x3FF0000000000000
+  .quad 0x3FF0000000000000
+  .quad 0x3FF0000000000000
+  .quad 0x3FF0000000000000
+  .quad 0x3FF0000000000000
+  .quad 0x3FF0000000000000
+  .quad 0x3FF0000000000000
+  .quad 0x3FF0000000000000
+  .quad 0x3FF0000000000000
+  .quad 0x3FF0000000000000
+  .quad 0x3FF0000000000000
+  .quad 0x3FF0000000000000
+  .quad 0x3FF0000000000000
+  .quad 0x3FF0000000000000
+  .quad 0x3FF0000000000000
+
+# mask: bit 0 set (element 0 active), bit 1 clear (element 1 inactive)
+mask01:
+  .quad 0x0000000000000001
+  .quad 0x0000000000000000
+
+# pre-fill destination with all-ones (undisturbed sentinel)
+dest_init:
+  .quad 0xFFFFFFFFFFFFFFFF
+  .quad 0xFFFFFFFFFFFFFFFF
+
+RVTEST_DATA_BEGIN
+
+result:
+  .fill 128, 1, -1     # 128 bytes = 16 f64 slots, all 0xFF initially
+
+RVTEST_DATA_END

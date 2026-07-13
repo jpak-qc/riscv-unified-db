@@ -3456,7 +3456,7 @@ function f64_muladd {
     Bits<128> prodA = sigA;
     Bits<128> prodB = sigB;
     Bits<128> sigProd = prodA * prodB;
-    if (sigProd < 128'h20000000000000000000000000000000) {
+    if (sigProd[125] == 0) {
       expProd = expProd - 1;
       sigProd = sigProd << 1;
     }
@@ -3508,7 +3508,7 @@ function f64_muladd {
         if (sig128Z == 0) {
           return packToF64UI((mode == RoundingMode::RDN) ? 1 : 0, 0, 0);
         }
-        if ((sig128Z & (128'h1 << 127)) != 0) {
+        if (sig128Z[127] == 1) {
           signZ = signZ ^ 1;
           sig128Z = -sig128Z;
         }
