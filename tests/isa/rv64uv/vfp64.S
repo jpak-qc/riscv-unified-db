@@ -388,6 +388,73 @@ RVTEST_CODE_BEGIN
     ld      x2, 0(x5); \
     )
 
+# ===========================================================================
+# Phase 12D: widening/narrowing FP converts
+# Closes final 12A ISS gaps: f32_to_f64, f64_to_f32, and ROD rounding.
+# ===========================================================================
+
+# ---------------------------------------------------------------------------
+# Test 21: vfwcvt.f.f.v — f32→f64 (exercises f32_to_f64).
+#   vl=1, vs2=[1.5f=0x3FC00000] => vd[0] = 1.5 (f64) = 0x3FF8000000000000
+# ---------------------------------------------------------------------------
+  TEST_CASE(21, x2, 0x3FF8000000000000, \
+    li      x6, 1; \
+    vsetvli x7, x6, e32, m1; \
+    la      x5, f32_onehalf; \
+    vle32.v v2, (x5); \
+    vfwcvt.f.f.v v4, v2; \
+    la      x5, result; \
+    vse64.v v4, (x5); \
+    ld      x2, 0(x5); \
+    )
+
+# ---------------------------------------------------------------------------
+# Test 22: vfncvt.f.f.w — f64→f32 (exercises f64_to_f32, dynamic RNE).
+#   vl=1, vs2=[pi as f64=0x400921FB54442D18] => vd[0] = pi as f32 = 0x40490FDB
+# ---------------------------------------------------------------------------
+  TEST_CASE(22, x2, 0x0000000040490FDB, \
+    li      x6, 1; \
+    vsetvli x7, x6, e32, m1; \
+    la      x5, f64_pi; \
+    vle64.v v4, (x5); \
+    vfncvt.f.f.w v2, v4; \
+    la      x5, result; \
+    vse32.v v2, (x5); \
+    lw      x2, 0(x5); \
+    )
+
+# ---------------------------------------------------------------------------
+# Test 23: vfncvt.rod.f.f.w — f64→f32 round-to-odd (exercises ROD mode).
+#   Midpoint between 1.0f and nextf32: 0x3FF0000010000000
+#   RNE -> 0x3F800000 (even), ROD -> 0x3F800001 (odd)
+#   Expected: 0x000000003F800001
+# ---------------------------------------------------------------------------
+  TEST_CASE(23, x2, 0x000000003F800001, \
+    li      x6, 1; \
+    vsetvli x7, x6, e32, m1; \
+    la      x5, f64_midpoint; \
+    vle64.v v4, (x5); \
+    vfncvt.rod.f.f.w v2, v4; \
+    la      x5, result; \
+    vse32.v v2, (x5); \
+    lw      x2, 0(x5); \
+    )
+
+# ---------------------------------------------------------------------------
+# Test 24: vfwcvt.x.f.v — f32→i64 (exercises f32_to_i64).
+#   vl=1, vs2=[7.5f=0x40F00000], RTZ => i64(7) = 0x0000000000000007
+# ---------------------------------------------------------------------------
+  TEST_CASE(24, x2, 0x0000000000000007, \
+    li      x6, 1; \
+    vsetvli x7, x6, e32, m1; \
+    la      x5, f32_sevenhalf; \
+    vle32.v v2, (x5); \
+    vfwcvt.rtz.x.f.v v4, v2; \
+    la      x5, result; \
+    vse64.v v4, (x5); \
+    ld      x2, 0(x5); \
+    )
+
   TEST_PASSFAIL
 
 RVTEST_CODE_END
@@ -461,6 +528,23 @@ f32_threes_w:
 f64_init4:
   .quad 0x4010000000000000   # 4.0 (f64)
   .quad 0x4010000000000000   # 4.0 (f64)
+
+# 12D convert test data
+f32_onehalf:
+  .word 0x3FC00000           # 1.5f
+  .word 0x3FC00000
+
+f32_sevenhalf:
+  .word 0x40F00000           # 7.5f
+  .word 0x40F00000
+
+f64_pi:
+  .quad 0x400921FB54442D18   # pi as f64
+  .quad 0x400921FB54442D18
+
+f64_midpoint:
+  .quad 0x3FF0000010000000   # exact midpoint 1.0f..nextafter(1.0f); RNE->0x3F800000, ROD->0x3F800001
+  .quad 0x3FF0000010000000
 
 # 16 x 1.0 for LMUL=8 test
 f64_ones16:
