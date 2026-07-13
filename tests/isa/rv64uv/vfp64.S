@@ -672,6 +672,118 @@ RVTEST_CODE_BEGIN
     ld      x2, 0(x5); \
     )
 
+# ===========================================================================
+# Phase 12D gap-close: remaining untested convert stubs
+# ===========================================================================
+
+# ---------------------------------------------------------------------------
+# Test 38: vfwcvt.xu.f.v — f32→u64 dynamic rmode (exercises f32_to_ui64).
+#   vs2=[4.5f] => u64(4) RNE (rounds to even = 4)
+# ---------------------------------------------------------------------------
+  TEST_CASE(38, x2, 0x0000000000000004, \
+    li      x6, 1; \
+    vsetvli x7, x6, e32, m1; \
+    la      x5, d12_f32_4p5; \
+    vle32.v v2, (x5); \
+    vfwcvt.xu.f.v v4, v2; \
+    la      x5, result; \
+    vse64.v v4, (x5); \
+    ld      x2, 0(x5); \
+    )
+
+# ---------------------------------------------------------------------------
+# Test 39: vfwcvt.f.xu.v — u32→f64 (exercises ui32_to_f64).
+#   vs2=[7 as u32] => f64(7.0) = 0x401C000000000000
+# ---------------------------------------------------------------------------
+  TEST_CASE(39, x2, 0x401C000000000000, \
+    li      x6, 1; \
+    vsetvli x7, x6, e32, m1; \
+    la      x5, d12_u32_7; \
+    vle32.v v2, (x5); \
+    vfwcvt.f.xu.v v4, v2; \
+    la      x5, result; \
+    vse64.v v4, (x5); \
+    ld      x2, 0(x5); \
+    )
+
+# ---------------------------------------------------------------------------
+# Test 40: vfncvt.x.f.w — f64→i32 dynamic rmode (exercises f64_to_i32).
+#   vs2=[3.7 f64], RNE rounds to 4 = 0x00000004
+# ---------------------------------------------------------------------------
+  TEST_CASE(40, x2, 0x0000000000000004, \
+    li      x6, 1; \
+    vsetvli x7, x6, e32, m1; \
+    la      x5, d12_f64_3p7; \
+    vle64.v v4, (x5); \
+    vfncvt.x.f.w v2, v4; \
+    la      x5, result; \
+    vse32.v v2, (x5); \
+    lw      x2, 0(x5); \
+    )
+
+# ---------------------------------------------------------------------------
+# Test 41: vfncvt.xu.f.w — f64→u32 dynamic rmode (exercises f64_to_ui32).
+#   vs2=[5.0 f64] => u32(5) = 0x00000005
+# ---------------------------------------------------------------------------
+  TEST_CASE(41, x2, 0x0000000000000005, \
+    li      x6, 1; \
+    vsetvli x7, x6, e32, m1; \
+    la      x5, f64_fives; \
+    vle64.v v4, (x5); \
+    vfncvt.xu.f.w v2, v4; \
+    la      x5, result; \
+    vse32.v v2, (x5); \
+    lw      x2, 0(x5); \
+    )
+
+# ---------------------------------------------------------------------------
+# Test 42: vfncvt.f.xu.w — u64→f32 (exercises ui64_to_f32).
+#   vs2=[8 as u64] => f32(8.0) = 0x41000000
+# ---------------------------------------------------------------------------
+  TEST_CASE(42, x2, 0x0000000041000000, \
+    li      x6, 1; \
+    vsetvli x7, x6, e32, m1; \
+    la      x5, d12_u64_8; \
+    vle64.v v4, (x5); \
+    vfncvt.f.xu.w v2, v4; \
+    la      x5, result; \
+    vse32.v v2, (x5); \
+    lw      x2, 0(x5); \
+    )
+
+# ---------------------------------------------------------------------------
+# Test 43: vfncvt.rtz.xu.f.w — f64→u32 RTZ (exercises f64_to_ui32 RTZ).
+#   vs2=[7.9 f64] => u32(7) RTZ = 0x00000007
+# ---------------------------------------------------------------------------
+  TEST_CASE(43, x2, 0x0000000000000007, \
+    li      x6, 1; \
+    vsetvli x7, x6, e32, m1; \
+    la      x5, d12_f64_7p9; \
+    vle64.v v4, (x5); \
+    vfncvt.rtz.xu.f.w v2, v4; \
+    la      x5, result; \
+    vse32.v v2, (x5); \
+    lw      x2, 0(x5); \
+    )
+
+# ---------------------------------------------------------------------------
+# Test 44: vfncvt.f.f.w with RDN (dynamic rmode, different from RNE test 22).
+#   Set fcsr.FRM=2 (RDN), vs2=[pi f64] => f32 rounds down = 0x40490FDA
+#   Restore fcsr.FRM=0 (RNE) after.
+# ---------------------------------------------------------------------------
+  TEST_CASE(44, x2, 0x0000000040490FDA, \
+    li      x6, 1; \
+    vsetvli x7, x6, e32, m1; \
+    la      x5, f64_pi; \
+    vle64.v v4, (x5); \
+    csrwi   frm, 2; \
+    vfncvt.f.f.w v2, v4; \
+    csrwi   frm, 0; \
+    la      x5, result; \
+    vse32.v v2, (x5); \
+    lw      x2, 0(x5); \
+    )
+
   TEST_PASSFAIL
 
 RVTEST_CODE_END
@@ -799,6 +911,27 @@ cov_i64_5:
 cov_i32_neg3:
   .word 0xFFFFFFFD           # -3 as two's complement i32
   .word 0xFFFFFFFD
+
+# Phase 12D gap-close data
+d12_f32_4p5:
+  .word 0x40900000           # 4.5f
+  .word 0x40900000
+
+d12_u32_7:
+  .word 7                    # u32 = 7
+  .word 7
+
+d12_u64_8:
+  .quad 8                    # u64 = 8
+  .quad 8
+
+d12_f64_3p7:
+  .quad 0x400D99999999999A   # 3.7 as f64
+  .quad 0x400D99999999999A
+
+d12_f64_7p9:
+  .quad 0x401F99999999999A   # 7.9 as f64
+  .quad 0x401F99999999999A
 
 # 16 x 1.0 for LMUL=8 test
 f64_ones16:
