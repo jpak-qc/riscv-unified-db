@@ -784,6 +784,265 @@ RVTEST_CODE_BEGIN
     lw      x2, 0(x5); \
     )
 
+# ===========================================================================
+# Phase 12B targeted gap-close: one test per distinct untested pattern.
+# Philosophy: we test each distinct *structural pattern* and *helper call*,
+# not every individual stub. "Same dispatch, different enum" stubs (e.g. all
+# FMA sign variants) are covered by one representative per helper function.
+# See plan for the full coverage rationale.
+# ===========================================================================
+
+# ---------------------------------------------------------------------------
+# Test 45: vfsub.vv SEW=32 — f32_sub (different helper from vfadd.vv).
+#   vs2=[3.0f], vs1=[1.0f] => 3.0-1.0=2.0=0x40000000
+# ---------------------------------------------------------------------------
+  TEST_CASE(45, x2, 0x0000000040000000, \
+    li      x6, 1; \
+    vsetvli x7, x6, e32, m1; \
+    la      x5, f32_threes_w; \
+    vle32.v v2, (x5); \
+    la      x5, f32_ones_w; \
+    vle32.v v3, (x5); \
+    vfsub.vv v4, v2, v3; \
+    la      x5, result; \
+    vse32.v v4, (x5); \
+    lw      x2, 0(x5); \
+    )
+
+# ---------------------------------------------------------------------------
+# Test 46: vfmax.vv SEW=32 — max comparison (different logic from vfmin.vv).
+#   vs2=[3.0f], vs1=[1.0f] => max=3.0f=0x40400000
+# ---------------------------------------------------------------------------
+  TEST_CASE(46, x2, 0x0000000040400000, \
+    li      x6, 1; \
+    vsetvli x7, x6, e32, m1; \
+    la      x5, f32_threes_w; \
+    vle32.v v2, (x5); \
+    la      x5, f32_ones_w; \
+    vle32.v v3, (x5); \
+    vfmax.vv v4, v2, v3; \
+    la      x5, result; \
+    vse32.v v4, (x5); \
+    lw      x2, 0(x5); \
+    )
+
+# ---------------------------------------------------------------------------
+# Test 47: vmfne.vv SEW=32 — not-equal compare-to-mask (complement of vmfeq).
+#   vs2=[1.0,2.0], vs1=[2.0,2.0]: 1.0!=2.0=T, 2.0!=2.0=F => vcpop=1
+# ---------------------------------------------------------------------------
+  TEST_CASE(47, x2, 1, \
+    li      x6, 2; \
+    vsetvli x7, x6, e32, m1; \
+    la      x5, cov_f32_1_2; \
+    vle32.v v2, (x5); \
+    la      x5, f32_twos_w; \
+    vle32.v v3, (x5); \
+    vmfne.vv v0, v2, v3; \
+    vcpop.m x2, v0; \
+    )
+
+# ---------------------------------------------------------------------------
+# Test 48: vmfle.vv SEW=32 — less-than-or-equal compare-to-mask.
+#   vs2=[1.0,3.0], vs1=[2.0,2.0]: 1.0<=2.0=T, 3.0<=2.0=F => vcpop=1
+# ---------------------------------------------------------------------------
+  TEST_CASE(48, x2, 1, \
+    li      x6, 2; \
+    vsetvli x7, x6, e32, m1; \
+    la      x5, cov_f32_1_3; \
+    vle32.v v2, (x5); \
+    la      x5, f32_twos_w; \
+    vle32.v v3, (x5); \
+    vmfle.vv v0, v2, v3; \
+    vcpop.m x2, v0; \
+    )
+
+# ---------------------------------------------------------------------------
+# Test 49: vfredmax.vs SEW=32 — max reduction (different from vfredusum).
+#   vs2=[1.0,3.0], vs1[0]=0.5 acc => max=3.0=0x40400000
+# ---------------------------------------------------------------------------
+  TEST_CASE(49, x2, 0x0000000040400000, \
+    li      x6, 2; \
+    vsetvli x7, x6, e32, m1; \
+    la      x5, cov_f32_1_3; \
+    vle32.v v2, (x5); \
+    la      x5, cov_f32_half; \
+    vle32.v v3, (x5); \
+    vfredmax.vs v4, v2, v3; \
+    la      x5, result; \
+    vse32.v v4, (x5); \
+    lw      x2, 0(x5); \
+    )
+
+# ---------------------------------------------------------------------------
+# Test 50: vfredmin.vs SEW=32 — min reduction.
+#   vs2=[1.0,3.0], vs1[0]=0.5 acc => min=0.5=0x3F000000
+# ---------------------------------------------------------------------------
+  TEST_CASE(50, x2, 0x000000003F000000, \
+    li      x6, 2; \
+    vsetvli x7, x6, e32, m1; \
+    la      x5, cov_f32_1_3; \
+    vle32.v v2, (x5); \
+    la      x5, cov_f32_half; \
+    vle32.v v3, (x5); \
+    vfredmin.vs v4, v2, v3; \
+    la      x5, result; \
+    vse32.v v4, (x5); \
+    lw      x2, 0(x5); \
+    )
+
+# ---------------------------------------------------------------------------
+# Test 51: vfredosum.vs SEW=32 — ordered sum (different ordering from vfredusum).
+#   vs2=[1.0,3.0], vs1[0]=0.5 => 0.5+1.0+3.0=4.5=0x40900000
+# ---------------------------------------------------------------------------
+  TEST_CASE(51, x2, 0x0000000040900000, \
+    li      x6, 2; \
+    vsetvli x7, x6, e32, m1; \
+    la      x5, cov_f32_1_3; \
+    vle32.v v2, (x5); \
+    la      x5, cov_f32_half; \
+    vle32.v v3, (x5); \
+    vfredosum.vs v4, v2, v3; \
+    la      x5, result; \
+    vse32.v v4, (x5); \
+    lw      x2, 0(x5); \
+    )
+
+# ---------------------------------------------------------------------------
+# Test 52: vfmerge.vfm SEW=32 — mask-blend scalar into vector (unique pattern).
+#   mask=[1,0], vs2=[3.0,3.0], scalar=1.0: vd=[1.0,3.0]. Check elem[0]=1.0.
+# ---------------------------------------------------------------------------
+  TEST_CASE(52, x2, 0x000000003F800000, \
+    li      x6, 2; \
+    vsetvli x7, x6, e32, m1; \
+    la      x5, mask01; \
+    vle64.v v0, (x5); \
+    la      x5, f32_threes_w; \
+    vle32.v v2, (x5); \
+    la      x5, f32_ones_w; \
+    flw     ft0, 0(x5); \
+    vfmerge.vfm v4, v2, ft0, v0; \
+    la      x5, result; \
+    vse32.v v4, (x5); \
+    lw      x2, 0(x5); \
+    )
+
+# ---------------------------------------------------------------------------
+# Test 53: vfmv.f.s + vfmv.v.f roundtrip (validates scalar FP move patterns).
+#   Load vs2=[3.0], extract elem[0] to ft0 via vfmv.f.s, broadcast back via
+#   vfmv.v.f — result vd[0]=3.0=0x40400000.
+# ---------------------------------------------------------------------------
+  TEST_CASE(53, x2, 0x0000000040400000, \
+    li      x6, 1; \
+    vsetvli x7, x6, e32, m1; \
+    la      x5, f32_threes_w; \
+    vle32.v v2, (x5); \
+    vfmv.f.s ft0, v2; \
+    vfmv.v.f v4, ft0; \
+    la      x5, result; \
+    vse32.v v4, (x5); \
+    lw      x2, 0(x5); \
+    )
+
+# ---------------------------------------------------------------------------
+# Test 54: vfslide1up.vf SEW=32 — scalar slides into element 0, others shift up.
+#   vs2=[1.0,2.0], scalar=3.0f, vl=2: vd=[3.0,1.0]. Check elem[1]=vs2[0]=1.0.
+# ---------------------------------------------------------------------------
+  TEST_CASE(54, x2, 0x000000003F800000, \
+    li      x6, 2; \
+    vsetvli x7, x6, e32, m1; \
+    la      x5, cov_f32_1_2; \
+    vle32.v v2, (x5); \
+    la      x5, f32_threes_w; \
+    flw     ft0, 0(x5); \
+    vfslide1up.vf v4, v2, ft0; \
+    la      x5, result; \
+    vse32.v v4, (x5); \
+    lw      x2, 4(x5); \
+    )
+
+# ---------------------------------------------------------------------------
+# Test 55: vfslide1down.vf SEW=32 — elements shift down, scalar fills last.
+#   vs2=[1.0,2.0], scalar=3.0f, vl=2: vd=[2.0,3.0]. Check elem[1]=scalar=3.0.
+# ---------------------------------------------------------------------------
+  TEST_CASE(55, x2, 0x0000000040400000, \
+    li      x6, 2; \
+    vsetvli x7, x6, e32, m1; \
+    la      x5, cov_f32_1_2; \
+    vle32.v v2, (x5); \
+    la      x5, f32_threes_w; \
+    flw     ft0, 0(x5); \
+    vfslide1down.vf v4, v2, ft0; \
+    la      x5, result; \
+    vse32.v v4, (x5); \
+    lw      x2, 4(x5); \
+    )
+
+# ---------------------------------------------------------------------------
+# Test 56: vfcvt.f.xu.v SEW=32 — u32->f32 (different from signed i32->f32).
+#   vs2=[5 as u32] => f32(5.0)=0x40A00000
+# ---------------------------------------------------------------------------
+  TEST_CASE(56, x2, 0x0000000040E00000, \
+    li      x6, 1; \
+    vsetvli x7, x6, e32, m1; \
+    la      x5, d12_u32_7; \
+    vle32.v v2, (x5); \
+    vfcvt.f.xu.v v4, v2; \
+    la      x5, result; \
+    vse32.v v4, (x5); \
+    lw      x2, 0(x5); \
+    )
+
+# ---------------------------------------------------------------------------
+# Test 57: vfcvt.rtz.x.f.v SEW=32 — f32->i32 RTZ (different from dynamic rmode).
+#   vs2=[7.9f] => i32(7) RTZ = 0x00000007
+# ---------------------------------------------------------------------------
+  TEST_CASE(57, x2, 0x0000000000000007, \
+    li      x6, 1; \
+    vsetvli x7, x6, e32, m1; \
+    la      x5, b12_f32_7p9; \
+    vle32.v v2, (x5); \
+    vfcvt.rtz.x.f.v v4, v2; \
+    la      x5, result; \
+    vse32.v v4, (x5); \
+    lw      x2, 0(x5); \
+    )
+
+# ---------------------------------------------------------------------------
+# Test 58: vfcvt.rtz.xu.f.v SEW=32 — f32->u32 RTZ.
+#   vs2=[7.9f] => u32(7) RTZ = 0x00000007
+# ---------------------------------------------------------------------------
+  TEST_CASE(58, x2, 0x0000000000000007, \
+    li      x6, 1; \
+    vsetvli x7, x6, e32, m1; \
+    la      x5, b12_f32_7p9; \
+    vle32.v v2, (x5); \
+    vfcvt.rtz.xu.f.v v4, v2; \
+    la      x5, result; \
+    vse32.v v4, (x5); \
+    lw      x2, 0(x5); \
+    )
+
+# ---------------------------------------------------------------------------
+# Test 59: vfnmadd.vv SEW=32 — FMA sign variant representative.
+#   vfnmadd vd, vs1, vs2: vd = -(vs1*vd) - vs2  [fp_nmulsub: negate both]
+#   vs1=[1.0], vd_init=[2.0], vs2=[1.0]: -(1.0*2.0)-1.0 = -3.0=0xC0400000
+#   lw sign-extends: expected 0xFFFFFFFFC0400000
+# ---------------------------------------------------------------------------
+  TEST_CASE(59, x2, 0xFFFFFFFFC0400000, \
+    li      x6, 1; \
+    vsetvli x7, x6, e32, m1; \
+    la      x5, f32_twos_w; \
+    vle32.v v4, (x5); \
+    la      x5, f32_ones_w; \
+    vle32.v v2, (x5); \
+    la      x5, f32_ones_w; \
+    vle32.v v3, (x5); \
+    vfnmadd.vv v4, v2, v3; \
+    la      x5, result; \
+    vse32.v v4, (x5); \
+    lw      x2, 0(x5); \
+    )
+
   TEST_PASSFAIL
 
 RVTEST_CODE_END
@@ -932,6 +1191,15 @@ d12_f64_3p7:
 d12_f64_7p9:
   .quad 0x401F99999999999A   # 7.9 as f64
   .quad 0x401F99999999999A
+
+# Phase 12B targeted gap-close data
+b12_f32_7p9:
+  .word 0x40FCCCCD           # 7.9f
+  .word 0x40FCCCCD
+
+b12_f32_4p0:
+  .word 0x40800000           # 4.0f (initial vd for vfnmadd test)
+  .word 0x40800000
 
 # 16 x 1.0 for LMUL=8 test
 f64_ones16:
