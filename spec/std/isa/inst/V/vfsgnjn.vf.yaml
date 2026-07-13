@@ -33,12 +33,20 @@ data_independent_timing: false
 operation(): |
   check_v_ok_vtype($encoding);
   check_f_ok($encoding);
-  Bits<32> b = F[fs1][31:0];
+  VectorState state = vector_state();
   for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
     if (v_mask_elem_active?(vm, i)) {
-      Bits<32> a = v_elem_read(vs2, i, 5)[31:0];
-      Bits<1> sign = ~b[31];
-      v_elem_write(vd, i, 5, {96'b0, {sign, a[30:0]}});
+      if (state.log2_sew == 6) {
+        Bits<64> a = v_elem_read(vs2, i, 6)[63:0];
+        Bits<64> b = F[fs1][63:0];
+        Bits<1> sign = ~b[63];
+        v_elem_write(vd, i, 6, {64'b0, {sign, a[62:0]}});
+      } else {
+        Bits<32> a = v_elem_read(vs2, i, 5)[31:0];
+        Bits<32> b = F[fs1][31:0];
+        Bits<1> sign = ~b[31];
+        v_elem_write(vd, i, 5, {96'b0, {sign, a[30:0]}});
+      }
     }
   }
   CSR[vstart].VALUE = 0;

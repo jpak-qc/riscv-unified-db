@@ -31,12 +31,20 @@ data_independent_timing: false
 operation(): |
   check_v_ok_vtype($encoding);
   check_f_ok($encoding);
-  Bits<32> b = F[fs1][31:0];
+  VectorState state = vector_state();
   for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    if (V[0][i] == 1'b1) {
-      v_elem_write(vd, i, 5, {96'b0, b});
+    if (state.log2_sew == 6) {
+      if (V[0][i] == 1'b1) {
+        v_elem_write(vd, i, 6, {64'b0, F[fs1][63:0]});
+      } else {
+        v_elem_write(vd, i, 6, {64'b0, v_elem_read(vs2, i, 6)[63:0]});
+      }
     } else {
-      v_elem_write(vd, i, 5, {96'b0, v_elem_read(vs2, i, 5)[31:0]});
+      if (V[0][i] == 1'b1) {
+        v_elem_write(vd, i, 5, {96'b0, F[fs1][31:0]});
+      } else {
+        v_elem_write(vd, i, 5, {96'b0, v_elem_read(vs2, i, 5)[31:0]});
+      }
     }
   }
   CSR[vstart].VALUE = 0;

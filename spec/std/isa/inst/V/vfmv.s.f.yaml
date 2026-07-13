@@ -29,8 +29,13 @@ data_independent_timing: false
 operation(): |
   check_v_ok_vtype($encoding);
   check_f_ok($encoding);
+  VectorState state = vector_state();
   if (CSR[vl].VALUE > 0) {
-    v_elem_write(vd, 0, 5, {96'b0, F[fs1][31:0]});
+    if (state.log2_sew == 6) {
+      v_elem_write(vd, 0, 6, {64'b0, F[fs1][63:0]});
+    } else {
+      v_elem_write(vd, 0, 5, {96'b0, F[fs1][31:0]});
+    }
   }
   CSR[vstart].VALUE = 0;
   mark_v_state_dirty();

@@ -29,6 +29,11 @@ data_independent_timing: false
 operation(): |
   check_v_ok_vtype($encoding);
   check_f_ok($encoding);
-  F[fd] = {32'hffffffff, v_elem_read(vs2, 0, 5)[31:0]};
+  VectorState state = vector_state();
+  if (state.log2_sew == 6) {
+    F[fd] = v_elem_read(vs2, 0, 6)[63:0];
+  } else {
+    F[fd] = {32'hffffffff, v_elem_read(vs2, 0, 5)[31:0]};
+  }
   CSR[vstart].VALUE = 0;
   mark_f_state_dirty();
