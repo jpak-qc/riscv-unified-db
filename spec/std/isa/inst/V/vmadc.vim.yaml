@@ -34,7 +34,7 @@ operation(): |
   VectorState state = vector_state();
   U32 elems_per_reg = VLEN >> state.log2_sew;
   Bits<64> sext_imm = $signed(imm);
-  Bits<128> b = {64'b0, sext_imm};
+  Bits<128> b = {64'b0, sext_imm} & ((128'b1 << state.sew) - 1);
   Bits<VLEN> vd_bits = V[vd];
   for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
     U32 reg_off   = i / elems_per_reg;
