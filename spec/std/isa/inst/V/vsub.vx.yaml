@@ -8,7 +8,7 @@ kind: instruction
 name: vsub.vx
 long_name: Vector-scalar integer subtraction
 description: |
-  Subtracts elements of vs2 from scalar rs1 according to mask vm and stores results in vd. Element width is determined by SEW setting.
+  Subtracts scalar rs1 from elements of vs2 according to mask vm and stores results in vd. Element width is determined by SEW setting.
 definedBy:
   extension:
     name: Zvl32b
@@ -33,7 +33,7 @@ data_independent_timing: true
 operation(): |
   check_v_ok_vtype($encoding);
   VectorState state = vector_state();
-  Bits<64> scalar_val = X[xs1][63:0];
+  Bits<64> scalar_val = X[xs1][state.sew - 1:0];
   for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
     if (v_mask_elem_active?(vm, i)) {
       v_elem_write(vd, i, state.log2_sew, v_elem_read(vs2, i, state.log2_sew) - {64'b0, scalar_val});

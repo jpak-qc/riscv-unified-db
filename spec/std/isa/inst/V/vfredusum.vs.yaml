@@ -31,6 +31,10 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
+  # UNORDERED reduction (v-spec 1.0 §14.3): the sum may be computed in any order
+  # (e.g. tree reduction). This model uses a sequential left-to-right loop as one
+  # valid ordering; a backend is permitted to reassociate for parallelism, unlike
+  # vfredosum which mandates strict left-to-right evaluation.
   check_v_ok_vtype($encoding);
   check_f_ok($encoding);
   VectorState state = vector_state();
