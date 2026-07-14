@@ -37,3 +37,6 @@ pseudoinstructions:
     to: fneg.d fd, fs1
 data_independent_timing: false
 operation(): |
+  check_f_ok($encoding);
+  F[fd] = {~F[fs2][63], F[fs1][62:0]};
+  mark_f_state_dirty();

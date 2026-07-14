@@ -34,3 +34,5 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
+  check_f_ok($encoding);
+  X[xd] = f64_to_ui64(F[fs1], rm_to_mode(rm, $encoding));

@@ -36,3 +36,8 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
+  check_f_ok($encoding);
+  RoundingMode mode = rm_to_mode(rm, $encoding);
+  Bits<64> fs3_negated = F[fs3] ^ 64'h8000_0000_0000_0000;
+  F[fd] = f64_muladd(F[fs1], F[fs2], fs3_negated, F64MulAddOp::Softfloat_f64_mulAdd_subProd, mode);
+  mark_f_state_dirty();
