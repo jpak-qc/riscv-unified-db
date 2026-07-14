@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vssra.vi
-long_name: "Vector signed shift right arithmetic with immediate"
+long_name: "Vector rounding shift right arithmetic with immediate"
 description: |
-  Performs signed arithmetic right shift on elements from vector register vs2 by immediate shift amount and stores results in vector register vd, using vector mask vm. The operation preserves the sign bit.
+  Performs a rounding arithmetic right shift on each element of vector register vs2 by the immediate shift amount (low log2(SEW) bits), sign-preserving, rounding the discarded bits per vxrm, storing results in vector register vd using vector mask vm. This is a fixed-point scaling shift and does not affect vxsat.
 definedBy:
   extension:
     name: Zvl32b
@@ -31,3 +31,14 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
+  check_v_ok_vtype($encoding);
+  VectorState state = vector_state();
+  U32 shamt = {27'b0, imm} & (state.sew - 1);
+  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
+    if (v_mask_elem_active?(vm, i)) {
+      Bits<128> v = $signed(v_elem_read(vs2, i, state.log2_sew)[state.sew - 1:0]);
+      v_elem_write(vd, i, state.log2_sew, roundoff_signed(v, shamt));
+    }
+  }
+  CSR[vstart].VALUE = 0;
+  mark_v_state_dirty();
