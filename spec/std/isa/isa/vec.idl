@@ -158,6 +158,54 @@ function roundoff_signed {
   }
 }
 
+function sat_signed {
+  returns Bits<128>
+  arguments
+    Bits<128> v,
+    U32 sew
+  description {
+    Clamps the signed value `v` to the signed range representable in `sew` bits,
+    [-2^(sew-1), 2^(sew-1)-1], and sets the sticky CSR[vxsat] flag if clamping occurred.
+    Used by the saturating fixed-point instructions (vsadd, vssub, vsmul, vnclip). `v` must
+    already be a valid two's-complement value wider than `sew` (callers sign-extend to 128b).
+  }
+  body {
+    Bits<128> smax = (128'b1 << (sew - 1)) - 1;
+    Bits<128> smin = -(128'b1 << (sew - 1));
+    if ($signed(v) > $signed(smax)) {
+      CSR[vxsat].VALUE = 1;
+      return smax;
+    }
+    if ($signed(v) < $signed(smin)) {
+      CSR[vxsat].VALUE = 1;
+      return smin;
+    }
+    return v;
+  }
+}
+
+function sat_unsigned {
+  returns Bits<128>
+  arguments
+    Bits<128> v,
+    U32 sew
+  description {
+    Clamps the unsigned value `v` to the unsigned range [0, 2^sew-1] and sets the sticky
+    CSR[vxsat] flag if clamping occurred. Used by the unsigned saturating fixed-point
+    instructions (vsaddu, vssubu, vnclipu). Callers zero-extend `v` to 128b; the low end is
+    handled by the caller (unsigned subtract borrow saturates to 0 before calling, or the
+    exact result is already >= 0).
+  }
+  body {
+    Bits<128> umax = (128'b1 << sew) - 1;
+    if (v > umax) {
+      CSR[vxsat].VALUE = 1;
+      return umax;
+    }
+    return v;
+  }
+}
+
 function v_elem_read {
   returns Bits<128>
   arguments

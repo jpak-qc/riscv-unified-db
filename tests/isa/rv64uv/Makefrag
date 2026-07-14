@@ -21,7 +21,8 @@ rv64uv_sc_tests = vadd.vv vle8 \
     vred_perm \
     vcarry \
     vmem_phase10 \
-    vfp64
+    vfp64 \
+    vsat_addsub
 
 rv64uv_p_tests = $(addprefix rv64uv-p-, $(rv64uv_sc_tests))
 rv64uv_v_tests = $(addprefix rv64uv-v-, $(rv64uv_sc_tests))
