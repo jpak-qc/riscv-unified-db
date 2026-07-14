@@ -97,12 +97,12 @@ RVTEST_CODE_BEGIN
     li x6,2; vsetvli x7,x6,e8,m1; vwsub.wx v4,v2,x5; \
     li x6,2; vsetvli x7,x6,e16,m1; la x5,result; vse16.v v4,(x5); lhu x2,(x5); )
 
-  # Test 13: vwsubu.wx unsigned — vs2(SEW=8)=[0xFE=254], xs1=1 → 0x00FD (16-bit)
-  # Note: .wx reads vs2 at current SEW (8 bits), result is 2*SEW (16 bits)
+  # Test 13: vwsubu.wx unsigned — vs2(2xSEW=16-bit)=[0x00FE=254], xs1=1 → 0x00FD (16-bit)
+  # vs2 is the widened source (.w operand), must be loaded at 2*SEW=16-bit width.
   TEST_CASE(13, x2, 0x00FD, \
-    li x6,2; vsetvli x7,x6,e8,m1; la x5,s_fe; vle8.v v2,(x5); \
+    li x6,2; vsetvli x7,x6,e16,m1; la x5,wx_fe; vle16.v v2,(x5); \
     li x5,1; \
-    vwsubu.wx v4,v2,x5; \
+    li x6,2; vsetvli x7,x6,e8,m1; vwsubu.wx v4,v2,x5; \
     li x6,2; vsetvli x7,x6,e16,m1; la x5,result; vse16.v v4,(x5); lhu x2,(x5); )
 
   # Test 14: vsext.vf8 — src SEW=8 [0xFF=-1], dest SEW=64, sign-ext=0xFFFFFFFFFFFFFFFF
@@ -150,6 +150,7 @@ n_sh3: .byte 0x03, 0x03
 wx_wide: .short 0x0010, 0x0010   # 2xSEW source for .wx tests
 wx_ff:   .short 0x00FF, 0x00FF   # 0x00FF for vwaddu.wx
 wx_100:  .short 0x0100, 0x0100   # 0x0100 for vwsubu.wx
+wx_fe:   .short 0x00FE, 0x00FE   # 0x00FE for vwsubu.wx test 13
 lmul4_a: .byte 0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01
 lmul4_b: .byte 0x02,0x02,0x02,0x02,0x02,0x02,0x02,0x02,0x02,0x02,0x02,0x02,0x02,0x02,0x02,0x02,0x02,0x02,0x02,0x02
 
