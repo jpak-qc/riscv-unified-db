@@ -46,5 +46,9 @@ operation(): |
     }
   }
   CSR[vstart].VALUE = 0;
-  mark_f_state_dirty();
+  if (state.log2_sew != 6) {
+    # f64 path is a deferred placeholder that performs no FP op, so it never
+    # updates fflags and must not mark FP state dirty (Phase D will implement it).
+    mark_f_state_dirty();
+  }
   mark_v_state_dirty();
