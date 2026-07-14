@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vaaddu.vv
-long_name: No synopsis available
+long_name: "Vector unsigned averaging add"
 description: |
-  No description available.
+  Adds elements from vector registers vs2 and vs1 (zero-extended), rounds per vxrm, and shifts right by 1, storing the SEW-wide unsigned average in vd using vector mask vm. Does not affect vxsat.
 definedBy:
   extension:
     name: Zvl32b
@@ -31,3 +31,14 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
+  check_v_ok_vtype($encoding);
+  VectorState state = vector_state();
+  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
+    if (v_mask_elem_active?(vm, i)) {
+      Bits<128> a = v_elem_read(vs2, i, state.log2_sew)[state.sew - 1:0];
+      Bits<128> b = v_elem_read(vs1, i, state.log2_sew)[state.sew - 1:0];
+      v_elem_write(vd, i, state.log2_sew, roundoff_unsigned(a + b, 1));
+    }
+  }
+  CSR[vstart].VALUE = 0;
+  mark_v_state_dirty();
