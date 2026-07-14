@@ -165,7 +165,7 @@ function sat_signed {
     U32 sew
   description {
     Clamps the signed value `v` to the signed range representable in `sew` bits,
-    [-2^(sew-1), 2^(sew-1)-1], and sets the sticky CSR[vxsat] flag if clamping occurred.
+    [-2^(sew-1), 2^(sew-1)-1], and sets the sticky CSR[vcsr].VXSAT flag if clamping occurred.
     Used by the saturating fixed-point instructions (vsadd, vssub, vsmul, vnclip). `v` must
     already be a valid two's-complement value wider than `sew` (callers sign-extend to 128b).
   }
@@ -191,7 +191,7 @@ function sat_unsigned {
     U32 sew
   description {
     Clamps the unsigned value `v` to the unsigned range [0, 2^sew-1] and sets the sticky
-    CSR[vxsat] flag if clamping occurred. Used by the unsigned saturating fixed-point
+    CSR[vcsr].VXSAT flag if clamping occurred. Used by the unsigned saturating fixed-point
     instructions (vsaddu, vssubu, vnclipu). Callers zero-extend `v` to 128b; the low end is
     handled by the caller (unsigned subtract borrow saturates to 0 before calling, or the
     exact result is already >= 0).
