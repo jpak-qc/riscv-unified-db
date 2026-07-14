@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vsmul.vx
-long_name: "Vector signed multiplication with scalar"
+long_name: "Vector signed saturating fractional multiply with scalar"
 description: |
-  Performs signed multiplication on elements from vector register vs2 and scalar register xs1 and stores results in vector register vd, using vector mask vm.
+  Performs signed fixed-point fractional multiplication of elements from vector register vs2 by scalar register xs1: the full 2*SEW product is rounded (per vxrm) and shifted right by SEW-1 to keep the high SEW bits, storing results in vector register vd using vector mask vm. Only the INT_MIN*INT_MIN case saturates (to INT_MAX), setting the vxsat flag.
 definedBy:
   extension:
     name: Zvl32b
@@ -31,3 +31,21 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
+  check_v_ok_vtype($encoding);
+  VectorState state = vector_state();
+  Bits<128> int_max = (128'b1 << (state.sew - 1)) - 1;
+  Bits<128> int_min = -(128'b1 << (state.sew - 1));
+  Bits<128> b = $signed(X[xs1][state.sew - 1:0]);
+  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
+    if (v_mask_elem_active?(vm, i)) {
+      Bits<128> a = $signed(v_elem_read(vs2, i, state.log2_sew)[state.sew - 1:0]);
+      Bits<128> res = roundoff_signed(a * b, state.sew - 1);
+      if (a == int_min && b == int_min) {
+        CSR[vcsr].VXSAT = 1;
+        res = int_max;
+      }
+      v_elem_write(vd, i, state.log2_sew, res);
+    }
+  }
+  CSR[vstart].VALUE = 0;
+  mark_v_state_dirty();

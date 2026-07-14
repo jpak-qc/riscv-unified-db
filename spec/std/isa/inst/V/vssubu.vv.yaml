@@ -38,7 +38,7 @@ operation(): |
       Bits<128> a = v_elem_read(vs2, i, state.log2_sew)[state.sew - 1:0];
       Bits<128> b = v_elem_read(vs1, i, state.log2_sew)[state.sew - 1:0];
       if (a < b) {
-        CSR[vxsat].VALUE = 1;
+        CSR[vcsr].VXSAT = 1;
         v_elem_write(vd, i, state.log2_sew, 128'b0);
       } else {
         v_elem_write(vd, i, state.log2_sew, a - b);

@@ -173,11 +173,11 @@ function sat_signed {
     Bits<128> smax = (128'b1 << (sew - 1)) - 1;
     Bits<128> smin = -(128'b1 << (sew - 1));
     if ($signed(v) > $signed(smax)) {
-      CSR[vxsat].VALUE = 1;
+      CSR[vcsr].VXSAT = 1;
       return smax;
     }
     if ($signed(v) < $signed(smin)) {
-      CSR[vxsat].VALUE = 1;
+      CSR[vcsr].VXSAT = 1;
       return smin;
     }
     return v;
@@ -199,7 +199,7 @@ function sat_unsigned {
   body {
     Bits<128> umax = (128'b1 << sew) - 1;
     if (v > umax) {
-      CSR[vxsat].VALUE = 1;
+      CSR[vcsr].VXSAT = 1;
       return umax;
     }
     return v;
