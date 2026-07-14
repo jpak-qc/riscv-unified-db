@@ -29,16 +29,15 @@ data_independent_timing: false
 operation(): |
   check_v_ok($encoding);
   XReg virtual_address = X[xs1];
-  U32 elems_per_reg = VLEN >> 6;
-  U32 cur_elem = CSR[vstart].VALUE;
-  U32 total_elem = 2 * elems_per_reg;
-  if (cur_elem < total_elem) {
-    for (U32 j = cur_elem / elems_per_reg; j < 2; j++) {
-      U32 start_i = (j == cur_elem / elems_per_reg) ? cur_elem % elems_per_reg : 0;
-      for (U32 i = start_i; i < elems_per_reg; i++) {
-        U32 e = j * elems_per_reg + i;
-        U32 start_bit = i * 64;
-        V[vd + j][start_bit + 63:start_bit] = read_memory(64, virtual_address + e * 8, $encoding)[63:0];
+  U32 bytes_per_reg = VLEN / 8;
+  U32 cur_byte = CSR[vstart].VALUE;
+  U32 total_bytes = 2 * bytes_per_reg;
+  if (cur_byte < total_bytes) {
+    for (U32 j = cur_byte / bytes_per_reg; j < 2; j++) {
+      U32 start_i = (j == cur_byte / bytes_per_reg) ? cur_byte % bytes_per_reg : 0;
+      for (U32 i = start_i; i < bytes_per_reg; i++) {
+        U32 e = j * bytes_per_reg + i;
+        V[vd + j][i*8+7:i*8] = read_memory(8, virtual_address + e, $encoding)[7:0];
       }
     }
   }
