@@ -460,9 +460,11 @@ RVTEST_CODE_BEGIN
 # ===========================================================================
 
 # ---------------------------------------------------------------------------
-# Test 25: vfadd.vf SEW=64 — scalar second operand (covers all .vf families).
-#   vl=1, vs2=[1.0 f64 = 0x3FF0...], scalar=2.0 f64 => 1.0+2.0=3.0=0x4008000000000000
-#   Build 2.0 f64 bit pattern in x8 via lui+shift and load into ft0.
+# Test 25: vfclass.v SEW=64 — classify 1.0 (positive normal number, bit 6 set = 0x40).
+#   vl=1, vs2=[1.0 f64 = 0x3FF0...] => fclass result = 0x40 (bit 6: positive normal).
+#   NOTE: comment previously claimed this tested vfadd.vf with a scalar operand — that
+#   was stale/aspirational; the body has always run vfclass.v. Real .vf SEW=64 scalar-
+#   operand coverage is added in Tests 70-75 (Phase D gap-close) once fld was available.
 # ---------------------------------------------------------------------------
   TEST_CASE(25, x2, 0x0000000000000040, \
     li      x6, 1; \
@@ -1141,6 +1143,171 @@ RVTEST_CODE_BEGIN
     lw      x2, 0(x5); \
     )
 
+# ---------------------------------------------------------------------------
+# Phase D gap-close: vfrsqrt7.v / vfrec7.v SEW=64 path (was an identity
+# placeholder deferred pending Phase D's f64 infrastructure; f64_rsqrt7/
+# f64_rec7 now implemented in fp.idl as a direct width-port of f32_rsqrt7/
+# f32_rec7, verified against 1/sqrt(x) and 1/x with a scratch numerical model
+# before writing IDL — see tasks/VECTOR_EXECUTION_LOG.md Phase D gap-close entry).
+#
+# rsqrt7 inputs are restricted to EVEN-exponent values (2.0, 3.0) to avoid the
+# known odd-exponent PossiblyUnknownBits ISS limitation (same root cause as the
+# f32 path documented in Phase 12E — rsqrt7's index concatenates exp[0], which
+# the ISS cannot resolve for odd exponents). rec7's index is pure mantissa bits
+# (no exponent concatenation) so it is unaffected by that limitation.
+# ---------------------------------------------------------------------------
+
+# Test 66: vfrsqrt7.v SEW=64 — input 2.0 (even exponent).
+#   rsqrt7(2.0) = 0x3FE6800000000000 (~0.7011, true~0.7071)
+  TEST_CASE(66, x2, 0x3FE6800000000000, \
+    li      x6, 1; \
+    vsetvli x7, x6, e64, m1; \
+    la      x5, f64_twos; \
+    vle64.v v2, (x5); \
+    vfrsqrt7.v v4, v2; \
+    la      x5, result; \
+    vse64.v v4, (x5); \
+    ld      x2, 0(x5); \
+    )
+
+# Test 67: vfrsqrt7.v SEW=64 — input 3.0 (even exponent, exercises sig bits).
+#   rsqrt7(3.0) = 0x3FE2600000000000 (~0.5723, true~0.5774)
+  TEST_CASE(67, x2, 0x3FE2600000000000, \
+    li      x6, 1; \
+    vsetvli x7, x6, e64, m1; \
+    la      x5, f64_threes; \
+    vle64.v v2, (x5); \
+    vfrsqrt7.v v4, v2; \
+    la      x5, result; \
+    vse64.v v4, (x5); \
+    ld      x2, 0(x5); \
+    )
+
+# Test 68: vfrec7.v SEW=64 — input 1.0.
+#   rec7(1.0) = 0x3FEFE00000000000 (~0.9932, true=1.0)
+  TEST_CASE(68, x2, 0x3FEFE00000000000, \
+    li      x6, 1; \
+    vsetvli x7, x6, e64, m1; \
+    la      x5, f64_ones; \
+    vle64.v v2, (x5); \
+    vfrec7.v v4, v2; \
+    la      x5, result; \
+    vse64.v v4, (x5); \
+    ld      x2, 0(x5); \
+    )
+
+# Test 69: vfrec7.v SEW=64 — input 2.0.
+#   rec7(2.0) = 0x3FDFE00000000000 (~0.4966, true=0.5)
+  TEST_CASE(69, x2, 0x3FDFE00000000000, \
+    li      x6, 1; \
+    vsetvli x7, x6, e64, m1; \
+    la      x5, f64_twos; \
+    vle64.v v2, (x5); \
+    vfrec7.v v4, v2; \
+    la      x5, result; \
+    vse64.v v4, (x5); \
+    ld      x2, 0(x5); \
+    )
+
+# ---------------------------------------------------------------------------
+# Phase D gap-close: .vf SEW=64 ISS coverage (deferred since Phase 12B/12C —
+# needed fld to preload an f64 scalar into an F register, which Phase D
+# provides). One representative test per distinct helper-function family,
+# per this file's established coverage philosophy (see Phase 12B/12D notes).
+# ---------------------------------------------------------------------------
+
+# Test 70: vfadd.vf SEW=64 — vs2=[3.0], scalar(fs1)=2.0 -> 5.0.
+# Representative of the f64_add/f64_sub/f64_mul/f64_div helper family (vfsub.vf,
+# vfmul.vf, vfdiv.vf, vfrdiv.vf, vfrsub.vf all share this exact read/write structure).
+  TEST_CASE(70, x2, 0x4014000000000000, \
+    li      x6, 1; \
+    vsetvli x7, x6, e64, m1; \
+    la      x5, f64_threes; \
+    vle64.v v2, (x5); \
+    la      x5, f64_twos; \
+    fld     f1, (x5); \
+    vfadd.vf v4, v2, f1; \
+    la      x5, result; \
+    vse64.v v4, (x5); \
+    ld      x2, 0(x5); \
+    )
+
+# Test 71: vfmacc.vf SEW=64 — vd=[1.0], scalar(fs1)=2.0, vs2=[3.0] -> vd+scalar*vs2 = 7.0.
+# Representative of the f64_muladd FMA family (vfmadd/vfmsac/vfmsub/vfnmacc/vfnmadd/
+# vfnmsac/vfnmsub.vf all share this structure, differing only in operand order/negation).
+  TEST_CASE(71, x2, 0x401C000000000000, \
+    li      x6, 1; \
+    vsetvli x7, x6, e64, m1; \
+    la      x5, f64_ones; \
+    vle64.v v4, (x5); \
+    la      x5, f64_threes; \
+    vle64.v v2, (x5); \
+    la      x5, f64_twos; \
+    fld     f1, (x5); \
+    vfmacc.vf v4, f1, v2; \
+    la      x5, result; \
+    vse64.v v4, (x5); \
+    ld      x2, 0(x5); \
+    )
+
+# Test 72: vfmax.vf SEW=64 — vs2=[3.0], scalar(fs1)=2.0 -> max=3.0.
+# Representative of the NaN-aware max/min family (vfmin.vf shares this structure).
+  TEST_CASE(72, x2, 0x4008000000000000, \
+    li      x6, 1; \
+    vsetvli x7, x6, e64, m1; \
+    la      x5, f64_threes; \
+    vle64.v v2, (x5); \
+    la      x5, f64_twos; \
+    fld     f1, (x5); \
+    vfmax.vf v4, v2, f1; \
+    la      x5, result; \
+    vse64.v v4, (x5); \
+    ld      x2, 0(x5); \
+    )
+
+# Test 73: vfsgnj.vf SEW=64 — magnitude from vs2=[3.0], sign from scalar(fs1)=-1.0 -> -3.0.
+# Representative of the sign-injection family (vfsgnjn.vf, vfsgnjx.vf share this structure).
+  TEST_CASE(73, x2, 0xC008000000000000, \
+    li      x6, 1; \
+    vsetvli x7, x6, e64, m1; \
+    la      x5, f64_threes; \
+    vle64.v v2, (x5); \
+    la      x5, f64_neg_ones; \
+    fld     f1, (x5); \
+    vfsgnj.vf v4, v2, f1; \
+    la      x5, result; \
+    vse64.v v4, (x5); \
+    ld      x2, 0(x5); \
+    )
+
+# Test 74: vfslide1up.vf SEW=64 — element 0 becomes scalar(fs1)=4.0, vl=2.
+# Representative of the slide family (vfslide1down.vf shares this structure).
+  TEST_CASE(74, x2, 0x4010000000000000, \
+    li      x6, 2; \
+    vsetvli x7, x6, e64, m1; \
+    la      x5, f64_ones; \
+    vle64.v v2, (x5); \
+    la      x5, f64_fours; \
+    fld     f1, (x5); \
+    vfslide1up.vf v4, v2, f1; \
+    la      x5, result; \
+    vse64.v v4, (x5); \
+    ld      x2, 0(x5); \
+    )
+
+# Test 75: vmfeq.vf SEW=64 — vs2=[2.0], scalar(fs1)=2.0 -> equal -> mask bit 0 = 1.
+# Representative of the compare-to-mask family (vmfne/vmflt/vmfle/vmfgt/vmfge.vf share this).
+  TEST_CASE(75, x2, 1, \
+    li      x6, 1; \
+    vsetvli x7, x6, e64, m1; \
+    la      x5, f64_twos; \
+    vle64.v v2, (x5); \
+    fld     f1, (x5); \
+    vmfeq.vf v4, v2, f1; \
+    vmv.x.s x2, v4; \
+    andi    x2, x2, 1; \
+    )
+
   TEST_PASSFAIL
 
 RVTEST_CODE_END
@@ -1168,6 +1335,10 @@ f64_d:
 f64_ones:
   .quad 0x3FF0000000000000   # 1.0
   .quad 0x3FF0000000000000   # 1.0
+
+f64_neg_ones:
+  .quad 0xBFF0000000000000   # -1.0
+  .quad 0xBFF0000000000000   # -1.0
 
 f64_twos:
   .quad 0x4000000000000000   # 2.0
