@@ -29,3 +29,63 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
+  check_v_ok_vtype($encoding);
+  XReg virtual_address = X[xs1];
+
+  # Fault-only-first: fault on element > 0 trims vl and stops (no raise); fault on
+  # element 0 raises normally. See vle8ff.v for the detailed rationale.
+  Boolean trimmed = false;
+  U32 new_vl = CSR[vl].VALUE;
+
+  for (U32 i = CSR[vstart].VALUE; (i < CSR[vl].VALUE) && !trimmed; i++) {
+    if (v_mask_elem_active?(vm, i)) {
+      XReg elem_addr = virtual_address + (i * 4);
+
+      TranslationResult tr;
+      Boolean faulted = false;
+      ExceptionCode fcode;
+      PrivilegeMode fmode;
+      XReg ftval;
+
+      if (CSR[misa].S == 1) {
+        TranslationFaultResult tprobe = translate_probe(elem_addr, MemoryOperation::Read, effective_ldst_mode(), $encoding);
+        if (tprobe.has_fault) {
+          faulted = true;
+          fcode = tprobe.fault_code;
+          fmode = tprobe.from_mode;
+          ftval = tprobe.tval;
+        } else {
+          tr = tprobe.result;
+        }
+      } else {
+        tr.paddr = elem_addr;
+      }
+
+      if (!faulted) {
+        TranslationFaultResult aprobe = access_check_probe(tr.paddr, 32, elem_addr, MemoryOperation::Read, ExceptionCode::LoadAccessFault, effective_ldst_mode());
+        if (aprobe.has_fault) {
+          faulted = true;
+          fcode = aprobe.fault_code;
+          fmode = aprobe.from_mode;
+          ftval = aprobe.tval;
+        }
+      }
+
+      if (faulted) {
+        if (i == 0) {
+          raise(fcode, fmode, ftval);
+        }
+        new_vl = i;
+        trimmed = true;
+      } else {
+        # EEW=32 fixed (log2_eew=5), regardless of SEW
+        v_elem_write(vd, i, 5, {96'b0, read_physical_memory(32, tr.paddr)[31:0]});
+      }
+    }
+  }
+
+  if (trimmed) {
+    CSR[vl].VALUE = new_vl;
+  }
+  CSR[vstart].VALUE = 0;
+  mark_v_state_dirty();

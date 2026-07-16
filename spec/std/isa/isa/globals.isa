@@ -1238,12 +1238,16 @@ function effective_ldst_mode {
 
 function pmp_check {
   returns Boolean
-  arguments Bits<PHYS_ADDR_WIDTH> paddr, U32 access_size, MemoryOperation type
+  arguments Bits<PHYS_ADDR_WIDTH> paddr, U32 access_size, MemoryOperation type, PrivilegeMode mode
   description {
-    Given a physical address and operation type, return whether or not the access is allowed by PMP.
+    Given a physical address, operation type, and effective privilege mode, return whether or not
+    the access is allowed by PMP.
+
+    The caller is responsible for passing the correct effective mode: for load/store operations
+    this is effective_ldst_mode() (which accounts for MPRV); for instruction fetches this is
+    mode() (MPRV does not affect fetches per the RISC-V spec).
   }
   body {
-    PrivilegeMode mode = effective_ldst_mode();
     PmpMatchResult match_result;
     PmpCfg cfg;
 
@@ -1316,7 +1320,7 @@ function access_check_probe {
 
     # check PMP
     if (NUM_PMP_ENTRIES > 0) {
-      if (!pmp_check(paddr[PHYS_ADDR_WIDTH-1:0], access_size, type)) {
+      if (!pmp_check(paddr[PHYS_ADDR_WIDTH-1:0], access_size, type, from_mode)) {
         TranslationFaultResult tfault_result;
         tfault_result.has_fault = true;
         tfault_result.fault_code = fault_type;
