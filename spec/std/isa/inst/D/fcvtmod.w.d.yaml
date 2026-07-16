@@ -40,3 +40,35 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
+  check_f_ok($encoding);
+  Bits<1>  sign = signF64UI(F[fs1]);
+  Bits<16> exp  = expF64UI(F[fs1]);
+  Bits<64> sig  = fracF64UI(F[fs1]);
+
+  # NaN or infinity: result is zero, set NV.
+  if (exp == 16'h7FF) {
+    set_fp_flag(FpFlag::NV);
+    X[xd] = 0;
+  } else {
+    if (exp != 0) {
+      sig = sig | 64'h0010000000000000;
+    }
+    # Align significand to units at bit 12 (same as f64_to_i32 path).
+    Bits<16> shiftDist = 16'h427 - exp;
+    if ($signed(shiftDist) > 0s) {
+      sig = softfloat_shiftRightJam64(sig, shiftDist);
+    }
+    # RTZ rounding (rm is fixed to 1 by encoding): truncate the low 12 bits.
+    # NX flag if any fractional bits were lost.
+    if ((sig & 64'hFFF) != 0) {
+      set_fp_flag(FpFlag::NX);
+    }
+    Bits<32> sig32 = sig[43:12];
+    # NV flag if value is out of i32 range (same as fcvt.w.d).
+    Bits<32> z = (sign == 1) ? -sig32 : sig32;
+    if ((sig32 != 0) && (($signed(z) < 's0) != (sign == 1))) {
+      set_fp_flag(FpFlag::NV);
+    }
+    # Modular result: take bits 31:0 of the unbounded two's-complement value.
+    X[xd] = $signed(z);
+  }

@@ -32,3 +32,12 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
+  check_f_ok($encoding);
+  RoundingMode rounding_mode = rm_to_mode(rm, $encoding);
+  Bits<64> result = round_f64_to_integral(F[fs1], rounding_mode);
+  # Set NX if rounded result differs from input and input is not a NaN.
+  if (!is_dp_nan?(F[fs1]) && !f64_eq?(result, F[fs1], true)) {
+    set_fp_flag(FpFlag::NX);
+  }
+  F[fd] = result;
+  mark_f_state_dirty();

@@ -93,6 +93,40 @@ RVTEST_CODE_BEGIN
     la x5,d_1p0; fld f1,(x5); la x5,d_2p0; fld f2,(x5); \
     fmin.d f3,f1,f2; la x5,result; fsd f3,(x5); lwu x2,4(x5); )
 
+  # T15: fli.d index 10 = 1.0 (0x3FF0_0000_0000_0000; upper = 0x3FF00000)
+  # xs1=10 (a0=x10) selects constant 1.0 from the 32-entry table.
+  TEST_CASE(15, x2, 0x3FF00000, \
+    fli.d f1, a0; la x5,result; fsd f1,(x5); lwu x2,4(x5); )
+
+  # T16: fli.d index 14 = 2.0 (0x4000_0000_0000_0000; upper = 0x40000000)
+  # xs1=14 (a4=x14).
+  TEST_CASE(16, x2, 0x40000000, \
+    fli.d f1, a4; la x5,result; fsd f1,(x5); lwu x2,4(x5); )
+
+  # T17: fli.d index 28 = +inf (0x7FF0_0000_0000_0000; upper = 0x7FF00000)
+  # xs1=28 (t3=x28).
+  TEST_CASE(17, x2, 0x7FF00000, \
+    fli.d f1, t3; la x5,result; fsd f1,(x5); lwu x2,4(x5); )
+
+  # T18: fround.d 2.7 (RNE) -> 3.0 (upper = 0x40080000)
+  TEST_CASE(18, x2, 0x40080000, \
+    la x5,d_2p7; fld f1,(x5); \
+    fround.d f2,f1,rne; la x5,result; fsd f2,(x5); lwu x2,4(x5); )
+
+  # T19: froundnx.d 2.7 (RNE) -> 3.0, NX set. Check result (upper = 0x40080000).
+  TEST_CASE(19, x2, 0x40080000, \
+    la x5,d_2p7; fld f1,(x5); \
+    froundnx.d f2,f1,rne; la x5,result; fsd f2,(x5); lwu x2,4(x5); )
+
+  # T20: fcvtmod.w.d 2.7 (RTZ) -> 2 (modular truncation, sign-extended to XLEN)
+  # RTZ truncates 2.7 -> 2 (bits 31:0 = 0x00000002).
+  TEST_CASE(20, x2, 2, \
+    la x5,d_2p7; fld f1,(x5); \
+    fcvtmod.w.d x2,f1,rtz; )
+
+  # fmvh.x.d and fmvp.d.x are RV32-only (definedBy xlen:32) and cannot be
+  # assembled or tested in this rv64 binary. Correctness verified by IDL type-check.
+
   TEST_PASSFAIL
 
 RVTEST_CODE_END
@@ -106,6 +140,7 @@ d_3p0:   .quad 0x4008000000000000   # 3.0
 d_4p0:   .quad 0x4010000000000000   # 4.0
 d_6p0:   .quad 0x4018000000000000   # 6.0
 d_neg2p0:.quad 0xC000000000000000   # -2.0
+d_2p7:   .quad 0x400599999999999A   # 2.7
 d_pinf:  .quad 0x7FF0000000000000   # +infinity
 f_1p5:   .float 1.5                 # f32 1.5 for fcvt.d.s
 

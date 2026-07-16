@@ -1919,6 +1919,37 @@ function round_f32_to_integral {
   }
 }
 
+function round_f64_to_integral {
+  returns Bits<64>
+  arguments
+    Bits<64> a,
+    RoundingMode mode
+  description {
+    Rounds a double-precision floating-point number to an integer-valued double.
+    Zero and infinity inputs are returned unchanged. Signaling NaN sets NV and
+    returns the input. Mirrors round_f32_to_integral using f64_to_i64 internals.
+  }
+  body {
+    if (is_dp_neg_inf?(a) || is_dp_pos_inf?(a) || is_dp_pos_zero?(a) || is_dp_neg_zero?(a)) {
+      return a;
+    } else if (is_dp_signaling_nan?(a)) {
+      set_fp_flag(FpFlag::NV);
+      return a;
+    } else if (is_dp_nan?(a)) {
+      return a;
+    }
+    # If the magnitude is large enough that it is already an integer
+    # (|exp| >= 52 means no fractional bits), return unchanged.
+    Bits<16> exp = expF64UI(a);
+    if (exp >= 16'h433) {
+      return a;
+    }
+    # Convert to i64 without flags, then back to f64 without flags.
+    Bits<64> int_val = f64_to_i64_no_flag(a, mode);
+    return i64_to_f64_no_flag(int_val);
+  }
+}
+
 struct ExpAndSig {
   Bits<16> exp;
   Bits<32> sig;
@@ -2005,6 +2036,45 @@ function softfloat_roundToI64 {
       set_fp_flag(FpFlag::NX);
     }
 
+    return z;
+  }
+}
+
+function softfloat_roundToI64_no_flag {
+  returns Bits<64>
+  arguments
+    Bits<1> sign,
+    Bits<64> sig,
+    Bits<64> sigExtra,
+    RoundingMode roundingMode
+  description {
+    Round to signed 64-bit integer without setting any floating-point flags.
+    Used by round_f64_to_integral where flags are managed by the caller.
+  }
+  body {
+    Boolean needs_increment = false;
+    if ((roundingMode == RoundingMode::RMM) || (roundingMode == RoundingMode::RNE)) {
+      if (64'h8000000000000000 <= sigExtra) {
+        needs_increment = true;
+      }
+    } else {
+      if ((sigExtra != 0) && ((sign != 0) ? (roundingMode == RoundingMode::RDN) : (roundingMode == RoundingMode::RUP))) {
+        needs_increment = true;
+      }
+    }
+    if (needs_increment) {
+      sig = sig + 1;
+      if (sig == 0) {
+        return (sign == 1) ? I64_NEG_OVERFLOW : I64_POS_OVERFLOW;
+      }
+      if ((sigExtra == 64'h8000000000000000) && (roundingMode == RoundingMode::RNE)) {
+        sig = sig & ~64'h1;
+      }
+    }
+    Bits<64> z = (sign == 1) ? -sig : sig;
+    if ((z != 0) && (((($signed(z) < 0s) ? 1 : 0) ^ sign) == 1)) {
+      return (sign == 1) ? I64_NEG_OVERFLOW : I64_POS_OVERFLOW;
+    }
     return z;
   }
 }
@@ -3049,6 +3119,37 @@ function f64_to_i64 {
   }
 }
 
+function f64_to_i64_no_flag {
+  returns Bits<64>
+  arguments
+    Bits<64> a,
+    RoundingMode mode
+  description {
+    Converts a 64-bit float to a signed 64-bit integer without setting flags.
+    Used by round_f64_to_integral; caller guards NaN/inf/large-exp before calling.
+  }
+  body {
+    Bits<1>  sign = signF64UI(a);
+    Bits<16> exp  = expF64UI(a);
+    Bits<64> sig  = fracF64UI(a);
+    Bits<64> sig64;
+    Bits<64> extra;
+    if (exp != 0) {
+      sig = sig | 64'h0010000000000000;
+    }
+    Bits<16> shiftDist = 16'h433 - exp;
+    if ($signed(shiftDist) <= 0s) {
+      sig64 = sig << (-shiftDist);
+      extra = 0;
+    } else {
+      TwoU64s sig64Extra = softfloat_shiftRightJam64Extra(sig, 0, shiftDist);
+      sig64 = sig64Extra.u1;
+      extra = sig64Extra.u2;
+    }
+    return softfloat_roundToI64_no_flag(sign, sig64, extra, mode);
+  }
+}
+
 function f64_to_ui64 {
   returns Bits<64>
   arguments
@@ -3218,6 +3319,25 @@ function i64_to_f64 {
     }
     Bits<64> absA = (sign == 1) ? -a : a;
     return softfloat_normRoundPackToF64(sign, 16'h43C, absA, mode);
+  }
+}
+
+function i64_to_f64_no_flag {
+  returns Bits<64>
+  arguments
+    Bits<64> a
+  description {
+    Converts a signed 64-bit integer to f64 using RNE, without setting flags.
+    Rounding is inherently inexact for large integers (>2^53), but fround only
+    needs flag-free conversion back to f64 after a flag-free int round.
+  }
+  body {
+    if ((a & 64'h7FFFFFFFFFFFFFFF) == 0) {
+      return (a[63] == 1) ? packToF64UI(1, 11'h43E, 0) : DP_POS_ZERO;
+    }
+    Bits<1>  sign = a[63];
+    Bits<64> absA = (sign == 1) ? -a : a;
+    return softfloat_normRoundPackToF64(sign, 16'h43C, absA, RoundingMode::RNE);
   }
 }
 
