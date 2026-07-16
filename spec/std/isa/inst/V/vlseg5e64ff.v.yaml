@@ -3,12 +3,15 @@
 
 # yaml-language-server: $schema=../../../../schemas/inst_schema.json
 
-$schema: inst_schema.json#
+$schema: "inst_schema.json#"
 kind: instruction
 name: vlseg5e64ff.v
 long_name: "Vector segmented load 5 elements of 64 bits, fault-first"
 description: |
-  Loads 5 segments of 64-bit elements from memory starting at address in xs1 register, using vector mask vm, and stores results in vector register vd. This is a fault-first operation that stops on the first fault. The effective element width is 64 bits.
+  Loads 5 segments of 64-bit elements from memory starting at address in xs1 register,
+  using vector mask vm, and stores results in vector register vd. This is a fault-first
+  operation: a fault on element 0 raises normally; a fault on element i > 0 trims CSR[vl]
+  to i and stops without raising. The effective element width is 64 bits.
 definedBy:
   extension:
     name: Zvl32b
@@ -30,16 +33,178 @@ access:
 data_independent_timing: false
 operation(): |
   check_v_ok_vtype($encoding);
-  VectorState state = vector_state();
-  U32 elems_per_reg = VLEN >> 6;
   XReg virtual_address = X[xs1];
-  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
+  PrivilegeMode ldst_mode = effective_ldst_mode();
+  Boolean trimmed = false;
+  U32 new_vl = CSR[vl].VALUE;
+
+  for (U32 i = CSR[vstart].VALUE; (i < CSR[vl].VALUE) && !trimmed; i++) {
     if (v_mask_elem_active?(vm, i)) {
-      for (U32 j = 0; j < 5; j++) {
-        U32 start_bit_f = (i % elems_per_reg) * 64;
-        V[vd + j][start_bit_f + 63:start_bit_f] = read_memory(64, virtual_address + (i * 5 + j) * 8, $encoding)[63:0];
+      # Declare per-field translation result slots (populated by probe phase below)
+      TranslationResult tr_0;
+      TranslationResult tr_1;
+      TranslationResult tr_2;
+      TranslationResult tr_3;
+      TranslationResult tr_4;
+      Boolean element_faulted = false;
+      ExceptionCode fcode;
+      PrivilegeMode fmode;
+      XReg ftval;
+
+      # Probe phase: check translate + PMP/PMA for all 5 fields of this element.
+      # Stop probing at the first fault but continue tracking fault info.
+            # Field 0: probe translate + PMP/PMA
+            if (!element_faulted) {
+              XReg addr_0 = virtual_address + (i * 5 + 0) * 8;
+              if (CSR[misa].S == 1) {
+                TranslationFaultResult tprobe_0 = translate_probe(addr_0, MemoryOperation::Read, ldst_mode, $encoding);
+                if (tprobe_0.has_fault) {
+                  element_faulted = true;
+                  fcode = tprobe_0.fault_code;
+                  fmode = tprobe_0.from_mode;
+                  ftval = tprobe_0.tval;
+                } else {
+                  tr_0.paddr = tprobe_0.result.paddr;
+                }
+              } else {
+                tr_0.paddr = addr_0;
+              }
+              if (!element_faulted) {
+                TranslationFaultResult aprobe_0 = access_check_probe(tr_0.paddr, 64, addr_0, MemoryOperation::Read, ExceptionCode::LoadAccessFault, ldst_mode);
+                if (aprobe_0.has_fault) {
+                  element_faulted = true;
+                  fcode = aprobe_0.fault_code;
+                  fmode = aprobe_0.from_mode;
+                  ftval = aprobe_0.tval;
+                }
+              }
+            }
+            # Field 1: probe translate + PMP/PMA
+            if (!element_faulted) {
+              XReg addr_1 = virtual_address + (i * 5 + 1) * 8;
+              if (CSR[misa].S == 1) {
+                TranslationFaultResult tprobe_1 = translate_probe(addr_1, MemoryOperation::Read, ldst_mode, $encoding);
+                if (tprobe_1.has_fault) {
+                  element_faulted = true;
+                  fcode = tprobe_1.fault_code;
+                  fmode = tprobe_1.from_mode;
+                  ftval = tprobe_1.tval;
+                } else {
+                  tr_1.paddr = tprobe_1.result.paddr;
+                }
+              } else {
+                tr_1.paddr = addr_1;
+              }
+              if (!element_faulted) {
+                TranslationFaultResult aprobe_1 = access_check_probe(tr_1.paddr, 64, addr_1, MemoryOperation::Read, ExceptionCode::LoadAccessFault, ldst_mode);
+                if (aprobe_1.has_fault) {
+                  element_faulted = true;
+                  fcode = aprobe_1.fault_code;
+                  fmode = aprobe_1.from_mode;
+                  ftval = aprobe_1.tval;
+                }
+              }
+            }
+            # Field 2: probe translate + PMP/PMA
+            if (!element_faulted) {
+              XReg addr_2 = virtual_address + (i * 5 + 2) * 8;
+              if (CSR[misa].S == 1) {
+                TranslationFaultResult tprobe_2 = translate_probe(addr_2, MemoryOperation::Read, ldst_mode, $encoding);
+                if (tprobe_2.has_fault) {
+                  element_faulted = true;
+                  fcode = tprobe_2.fault_code;
+                  fmode = tprobe_2.from_mode;
+                  ftval = tprobe_2.tval;
+                } else {
+                  tr_2.paddr = tprobe_2.result.paddr;
+                }
+              } else {
+                tr_2.paddr = addr_2;
+              }
+              if (!element_faulted) {
+                TranslationFaultResult aprobe_2 = access_check_probe(tr_2.paddr, 64, addr_2, MemoryOperation::Read, ExceptionCode::LoadAccessFault, ldst_mode);
+                if (aprobe_2.has_fault) {
+                  element_faulted = true;
+                  fcode = aprobe_2.fault_code;
+                  fmode = aprobe_2.from_mode;
+                  ftval = aprobe_2.tval;
+                }
+              }
+            }
+            # Field 3: probe translate + PMP/PMA
+            if (!element_faulted) {
+              XReg addr_3 = virtual_address + (i * 5 + 3) * 8;
+              if (CSR[misa].S == 1) {
+                TranslationFaultResult tprobe_3 = translate_probe(addr_3, MemoryOperation::Read, ldst_mode, $encoding);
+                if (tprobe_3.has_fault) {
+                  element_faulted = true;
+                  fcode = tprobe_3.fault_code;
+                  fmode = tprobe_3.from_mode;
+                  ftval = tprobe_3.tval;
+                } else {
+                  tr_3.paddr = tprobe_3.result.paddr;
+                }
+              } else {
+                tr_3.paddr = addr_3;
+              }
+              if (!element_faulted) {
+                TranslationFaultResult aprobe_3 = access_check_probe(tr_3.paddr, 64, addr_3, MemoryOperation::Read, ExceptionCode::LoadAccessFault, ldst_mode);
+                if (aprobe_3.has_fault) {
+                  element_faulted = true;
+                  fcode = aprobe_3.fault_code;
+                  fmode = aprobe_3.from_mode;
+                  ftval = aprobe_3.tval;
+                }
+              }
+            }
+            # Field 4: probe translate + PMP/PMA
+            if (!element_faulted) {
+              XReg addr_4 = virtual_address + (i * 5 + 4) * 8;
+              if (CSR[misa].S == 1) {
+                TranslationFaultResult tprobe_4 = translate_probe(addr_4, MemoryOperation::Read, ldst_mode, $encoding);
+                if (tprobe_4.has_fault) {
+                  element_faulted = true;
+                  fcode = tprobe_4.fault_code;
+                  fmode = tprobe_4.from_mode;
+                  ftval = tprobe_4.tval;
+                } else {
+                  tr_4.paddr = tprobe_4.result.paddr;
+                }
+              } else {
+                tr_4.paddr = addr_4;
+              }
+              if (!element_faulted) {
+                TranslationFaultResult aprobe_4 = access_check_probe(tr_4.paddr, 64, addr_4, MemoryOperation::Read, ExceptionCode::LoadAccessFault, ldst_mode);
+                if (aprobe_4.has_fault) {
+                  element_faulted = true;
+                  fcode = aprobe_4.fault_code;
+                  fmode = aprobe_4.from_mode;
+                  ftval = aprobe_4.tval;
+                }
+              }
+            }
+
+      if (element_faulted) {
+        if (i == 0) {
+          # Forward progress guarantee: fault on first active element always raises.
+          raise(fcode, fmode, ftval);
+        }
+        # Trim vl to elements completed so far and stop (fault-only-first semantics).
+        new_vl = i;
+        trimmed = true;
+      } else {
+        # All 5 fields are safe: write them using saved physical addresses.
+            v_elem_write(vd + 0, i, 6, {64'b0, read_physical_memory(64, tr_0.paddr)[63:0]});
+            v_elem_write(vd + 1, i, 6, {64'b0, read_physical_memory(64, tr_1.paddr)[63:0]});
+            v_elem_write(vd + 2, i, 6, {64'b0, read_physical_memory(64, tr_2.paddr)[63:0]});
+            v_elem_write(vd + 3, i, 6, {64'b0, read_physical_memory(64, tr_3.paddr)[63:0]});
+            v_elem_write(vd + 4, i, 6, {64'b0, read_physical_memory(64, tr_4.paddr)[63:0]});
       }
     }
+  }
+
+  if (trimmed) {
+    CSR[vl].VALUE = new_vl;
   }
   CSR[vstart].VALUE = 0;
   mark_v_state_dirty();
