@@ -140,9 +140,9 @@ operation(): |
         trimmed = true;
       } else {
         # All 3 fields are safe: write them using saved physical addresses.
-            v_elem_write(vd + 0, i, 5, {96'b0, read_physical_memory(32, tr_0.paddr)[31:0]});
-            v_elem_write(vd + 1, i, 5, {96'b0, read_physical_memory(32, tr_1.paddr)[31:0]});
-            v_elem_write(vd + 2, i, 5, {96'b0, read_physical_memory(32, tr_2.paddr)[31:0]});
+            v_elem_write(vd + 0 * emul_reg, i, 5, {96'b0, read_physical_memory(32, tr_0.paddr)[31:0]});
+            v_elem_write(vd + 1 * emul_reg, i, 5, {96'b0, read_physical_memory(32, tr_1.paddr)[31:0]});
+            v_elem_write(vd + 2 * emul_reg, i, 5, {96'b0, read_physical_memory(32, tr_2.paddr)[31:0]});
       }
     }
   }

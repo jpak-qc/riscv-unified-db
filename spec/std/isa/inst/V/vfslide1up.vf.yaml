@@ -33,6 +33,7 @@ data_independent_timing: false
 operation(): |
   check_v_ok_vtype($encoding);
   check_f_ok($encoding);
+  if (vs2 == vd) { raise(ExceptionCode::IllegalInstruction, mode(), $encoding); }
   VectorState state = vector_state();
   for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
     if (v_mask_elem_active?(vm, i)) {

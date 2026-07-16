@@ -31,7 +31,7 @@ operation(): |
   XReg virtual_address = X[xs1];
   # Store ceil(vl/8) bytes from mask register vs3, packing 8 bits per byte
   U32 num_bytes = (CSR[vl].VALUE + 7) / 8;
-  for (U32 b = 0; b < num_bytes; b++) {
+  for (U32 b = CSR[vstart].VALUE; b < num_bytes; b++) {
     U32 base_idx = b * 8;
     Bits<8> b0 = (base_idx + 0 < CSR[vl].VALUE) ? V[vs3][base_idx + 0] : 1'b0;
     Bits<8> b1 = (base_idx + 1 < CSR[vl].VALUE) ? {7'b0, V[vs3][base_idx + 1]} << 1 : 8'b0;

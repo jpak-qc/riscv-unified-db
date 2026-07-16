@@ -41,12 +41,10 @@ operation(): |
         Bits<64> b = F[fs1][63:0];
         Bits<64> vs2v = v_elem_read(vs2, i, 6)[63:0];
         Bits<64> vdv  = v_elem_read(vd,  i, 6)[63:0];
-        Bits<64> res = f64_muladd(b, vs2v, vdv, F64MulAddOp::Softfloat_f64_mulAdd_addC, rmode);
-        v_elem_write(vd, i, 6, {64'b0, res ^ 64'h8000000000000000});
+        v_elem_write(vd, i, 6, {64'b0, f64_muladd(b, vs2v, vdv, F64MulAddOp::Softfloat_f64_mulAdd_subProd, rmode)});
       } else {
         Bits<32> b = F[fs1][31:0];
-        Bits<32> res = f32_muladd(b, v_elem_read(vs2, i, 5)[31:0], v_elem_read(vd, i, 5)[31:0], F32MulAddOp::Softfloat_mulAdd_addC, rmode);
-        v_elem_write(vd, i, 5, {96'b0, res ^ 32'h80000000});
+        v_elem_write(vd, i, 5, {96'b0, f32_muladd(b, v_elem_read(vs2, i, 5)[31:0], v_elem_read(vd, i, 5)[31:0], F32MulAddOp::Softfloat_mulAdd_subProd, rmode)});
       }
     }
   }

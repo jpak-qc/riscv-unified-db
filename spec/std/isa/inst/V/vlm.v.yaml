@@ -31,7 +31,7 @@ operation(): |
   XReg virtual_address = X[xs1];
   # Load ceil(vl/8) bytes into the mask register vd, bit by bit
   U32 num_bytes = (CSR[vl].VALUE + 7) / 8;
-  for (U32 b = 0; b < num_bytes; b++) {
+  for (U32 b = CSR[vstart].VALUE; b < num_bytes; b++) {
     Bits<8> byte_val = read_memory(8, virtual_address + b, $encoding)[7:0];
     for (U32 bit = 0; bit < 8; bit++) {
       U32 idx = b * 8 + bit;

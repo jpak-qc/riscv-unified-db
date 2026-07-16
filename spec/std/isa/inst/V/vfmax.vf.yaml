@@ -50,7 +50,11 @@ operation(): |
           if (is_dp_signaling_nan?(b)) { set_fp_flag(FpFlag::NV); }
           res = a;
         } else {
-          res = f64_lt?(a, b, true) ? b : a;
+          if (is_dp_pos_zero?(a) || is_dp_pos_zero?(b)) {
+            res = DP_POS_ZERO;
+          } else {
+            res = f64_lt?(a, b, true) ? b : a;
+          }
         }
         v_elem_write(vd, i, 6, {64'b0, res});
       } else {
@@ -67,7 +71,11 @@ operation(): |
           if (is_sp_signaling_nan?(b)) { set_fp_flag(FpFlag::NV); }
           res = a;
         } else {
-          res = f32_lt?(a, b, true) ? b : a;
+          if (is_sp_pos_zero?(a) || is_sp_pos_zero?(b)) {
+            res = SP_POS_ZERO;
+          } else {
+            res = f32_lt?(a, b, true) ? b : a;
+          }
         }
         v_elem_write(vd, i, 5, {96'b0, res});
       }

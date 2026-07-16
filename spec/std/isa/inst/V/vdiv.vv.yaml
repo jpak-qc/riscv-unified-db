@@ -33,9 +33,21 @@ data_independent_timing: false
 operation(): |
   check_v_ok_vtype($encoding);
   VectorState state = vector_state();
+  Bits<128> int_min = -(128'b1 << (state.sew - 1));
+  Bits<128> all_ones = (128'b1 << state.sew) - 1;
   for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
     if (v_mask_elem_active?(vm, i)) {
-      v_elem_write(vd, i, state.log2_sew, ($signed(v_elem_read(vs2, i, state.log2_sew)[state.sew - 1:0]) / $signed(v_elem_read(vs1, i, state.log2_sew)[state.sew - 1:0]))[state.sew - 1:0]);
+      Bits<128> dividend = $signed(v_elem_read(vs2, i, state.log2_sew)[state.sew - 1:0]);
+      Bits<128> divisor  = $signed(v_elem_read(vs1, i, state.log2_sew)[state.sew - 1:0]);
+      Bits<128> result;
+      if (divisor == 0) {
+        result = all_ones;
+      } else if (dividend == int_min && divisor == all_ones) {
+        result = int_min;
+      } else {
+        result = (dividend / divisor);
+      }
+      v_elem_write(vd, i, state.log2_sew, result[state.sew - 1:0]);
     }
   }
   CSR[vstart].VALUE = 0;

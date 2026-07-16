@@ -248,13 +248,13 @@ operation(): |
         trimmed = true;
       } else {
         # All 7 fields are safe: write them using saved physical addresses.
-            v_elem_write(vd + 0, i, 4, {112'b0, read_physical_memory(16, tr_0.paddr)[15:0]});
-            v_elem_write(vd + 1, i, 4, {112'b0, read_physical_memory(16, tr_1.paddr)[15:0]});
-            v_elem_write(vd + 2, i, 4, {112'b0, read_physical_memory(16, tr_2.paddr)[15:0]});
-            v_elem_write(vd + 3, i, 4, {112'b0, read_physical_memory(16, tr_3.paddr)[15:0]});
-            v_elem_write(vd + 4, i, 4, {112'b0, read_physical_memory(16, tr_4.paddr)[15:0]});
-            v_elem_write(vd + 5, i, 4, {112'b0, read_physical_memory(16, tr_5.paddr)[15:0]});
-            v_elem_write(vd + 6, i, 4, {112'b0, read_physical_memory(16, tr_6.paddr)[15:0]});
+            v_elem_write(vd + 0 * emul_reg, i, 4, {112'b0, read_physical_memory(16, tr_0.paddr)[15:0]});
+            v_elem_write(vd + 1 * emul_reg, i, 4, {112'b0, read_physical_memory(16, tr_1.paddr)[15:0]});
+            v_elem_write(vd + 2 * emul_reg, i, 4, {112'b0, read_physical_memory(16, tr_2.paddr)[15:0]});
+            v_elem_write(vd + 3 * emul_reg, i, 4, {112'b0, read_physical_memory(16, tr_3.paddr)[15:0]});
+            v_elem_write(vd + 4 * emul_reg, i, 4, {112'b0, read_physical_memory(16, tr_4.paddr)[15:0]});
+            v_elem_write(vd + 5 * emul_reg, i, 4, {112'b0, read_physical_memory(16, tr_5.paddr)[15:0]});
+            v_elem_write(vd + 6 * emul_reg, i, 4, {112'b0, read_physical_memory(16, tr_6.paddr)[15:0]});
       }
     }
   }

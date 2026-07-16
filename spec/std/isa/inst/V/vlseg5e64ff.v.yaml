@@ -194,11 +194,11 @@ operation(): |
         trimmed = true;
       } else {
         # All 5 fields are safe: write them using saved physical addresses.
-            v_elem_write(vd + 0, i, 6, {64'b0, read_physical_memory(64, tr_0.paddr)[63:0]});
-            v_elem_write(vd + 1, i, 6, {64'b0, read_physical_memory(64, tr_1.paddr)[63:0]});
-            v_elem_write(vd + 2, i, 6, {64'b0, read_physical_memory(64, tr_2.paddr)[63:0]});
-            v_elem_write(vd + 3, i, 6, {64'b0, read_physical_memory(64, tr_3.paddr)[63:0]});
-            v_elem_write(vd + 4, i, 6, {64'b0, read_physical_memory(64, tr_4.paddr)[63:0]});
+            v_elem_write(vd + 0 * emul_reg, i, 6, {64'b0, read_physical_memory(64, tr_0.paddr)[63:0]});
+            v_elem_write(vd + 1 * emul_reg, i, 6, {64'b0, read_physical_memory(64, tr_1.paddr)[63:0]});
+            v_elem_write(vd + 2 * emul_reg, i, 6, {64'b0, read_physical_memory(64, tr_2.paddr)[63:0]});
+            v_elem_write(vd + 3 * emul_reg, i, 6, {64'b0, read_physical_memory(64, tr_3.paddr)[63:0]});
+            v_elem_write(vd + 4 * emul_reg, i, 6, {64'b0, read_physical_memory(64, tr_4.paddr)[63:0]});
       }
     }
   }

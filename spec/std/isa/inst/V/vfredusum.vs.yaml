@@ -40,16 +40,8 @@ operation(): |
   VectorState state = vector_state();
   if (CSR[vstart].VALUE != 0) { raise(ExceptionCode::IllegalInstruction, mode(), $encoding); }
   RoundingMode rmode = rm_to_mode(CSR[fcsr].FRM, $encoding);
-  if (CSR[vl].VALUE == 0) {
-    if (state.log2_sew == 6) {
-      v_elem_write(vd, 0, 6, {64'b0, V[vs1][63:0]});
-    } else {
-      v_elem_write(vd, 0, 5, {96'b0, V[vs1][31:0]});
-    }
-    CSR[vstart].VALUE = 0;
-    mark_v_state_dirty();
-  } else {
-    if (state.log2_sew == 6) {
+  if (CSR[vl].VALUE == 0) { return; }
+  if (state.log2_sew == 6) {
       Bits<64> acc = V[vs1][63:0];
       for (U32 i = 0; i < CSR[vl].VALUE; i++) {
         if (v_mask_elem_active?(vm, i)) {
@@ -68,7 +60,5 @@ operation(): |
       }
       v_elem_write(vd, 0, 5, {96'b0, acc});
     }
-    CSR[vstart].VALUE = 0;
     mark_f_state_dirty();
     mark_v_state_dirty();
-  }
