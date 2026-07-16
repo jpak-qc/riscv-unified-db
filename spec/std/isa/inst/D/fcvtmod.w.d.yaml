@@ -63,10 +63,13 @@ operation(): |
     if ((sig & 64'hFFF) != 0) {
       set_fp_flag(FpFlag::NX);
     }
-    Bits<32> sig32 = sig[43:12];
-    # NV flag if value is out of i32 range (same as fcvt.w.d).
+    Bits<64> sig64 = sig >> 12;
+    Bits<32> sig32 = sig64[31:0];
+    # NV flag if value is out of i32 range. Must check the full 64-bit shifted
+    # significand, not just sig32: for inputs like 2^32 the overflow bit lands
+    # above bit 31 and sig32 would be zero, silently missing the NV condition.
     Bits<32> z = (sign == 1) ? -sig32 : sig32;
-    if ((sig32 != 0) && (($signed(z) < 's0) != (sign == 1))) {
+    if ((sig64 > 64'hFFFFFFFF) || ((sig32 != 0) && (($signed(z) < 's0) != (sign == 1)))) {
       set_fp_flag(FpFlag::NV);
     }
     # Modular result: take bits 31:0 of the unbounded two's-complement value.

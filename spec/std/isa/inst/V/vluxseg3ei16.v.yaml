@@ -33,7 +33,6 @@ data_independent_timing: false
 operation(): |
   check_v_ok_vtype($encoding);
   VectorState state = vector_state();
-  U32 elems_per_reg_idx  = VLEN >> 4;   # index register group
   U32 elems_per_reg_data = VLEN >> state.log2_sew;   # data register group
   XReg virtual_address = X[xs1];
   for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {

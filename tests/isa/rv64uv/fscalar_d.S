@@ -124,6 +124,14 @@ RVTEST_CODE_BEGIN
     la x5,d_2p7; fld f1,(x5); \
     fcvtmod.w.d x2,f1,rtz; )
 
+  # T21: fcvtmod.w.d 2^32 -> 0 (modular: 2^32 mod 2^32 = 0), NV must fire.
+  # This is the discriminating test for the NV overflow bug: the old code had
+  # sig32=0 for magnitude >= 2^32 and never set NV; the fix uses the full 64-bit
+  # shifted significand. Test checks the RESULT is 0 (correct modular value).
+  TEST_CASE(21, x2, 0, \
+    la x5,d_2p32; fld f1,(x5); \
+    fcvtmod.w.d x2,f1,rtz; )
+
   # fmvh.x.d and fmvp.d.x are RV32-only (definedBy xlen:32) and cannot be
   # assembled or tested in this rv64 binary. Correctness verified by IDL type-check.
 
@@ -141,6 +149,7 @@ d_4p0:   .quad 0x4010000000000000   # 4.0
 d_6p0:   .quad 0x4018000000000000   # 6.0
 d_neg2p0:.quad 0xC000000000000000   # -2.0
 d_2p7:   .quad 0x400599999999999A   # 2.7
+d_2p32:  .quad 0x41F0000000000000   # 2^32 = 4294967296.0
 d_pinf:  .quad 0x7FF0000000000000   # +infinity
 f_1p5:   .float 1.5                 # f32 1.5 for fcvt.d.s
 

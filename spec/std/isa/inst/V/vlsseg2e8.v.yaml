@@ -32,7 +32,6 @@ access:
 data_independent_timing: false
 operation(): |
   check_v_ok_vtype($encoding);
-  VectorState state = vector_state();
   U32 elems_per_reg = VLEN >> 3;
   XReg virtual_address = X[xs1];
   XReg stride = X[xs2];

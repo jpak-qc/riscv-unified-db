@@ -1909,6 +1909,15 @@ function round_f32_to_integral {
       # set invalid flag for signaling NaN
       set_fp_flag(FpFlag::NV);
       return a;
+    } else if (is_sp_nan?(a)) {
+      # quiet NaN: return unchanged without modifying flags
+      return a;
+    }
+    # If magnitude is already an integer (exp >= 0x96, i.e. |value| >= 2^23),
+    # the value has no fractional bits and must be returned unchanged.
+    Bits<8> exp = expF32UI(a);
+    if (exp >= 8'h96) {
+      return a;
     }
     # intermediate variable for storing 32-bit rounded integer
     U32 intermediate;
