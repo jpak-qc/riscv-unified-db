@@ -37,7 +37,7 @@ operation(): |
   Boolean trimmed = false;
   U32 new_vl = CSR[vl].VALUE;
 
-  for (U32 i = CSR[vstart].VALUE; (i < CSR[vl].VALUE) && !trimmed; i++) {
+  for (U32 i = CSR[vstart].VALUE; (i < CSR[vl].VALUE) && trimmed == false; i++) {
     if (v_mask_elem_active?(vm, i)) {
       XReg elem_addr = virtual_address + (i * 4);
 
@@ -61,7 +61,7 @@ operation(): |
         tr.paddr = elem_addr;
       }
 
-      if (!faulted) {
+      if (faulted == false) {
         TranslationFaultResult aprobe = access_check_probe(tr.paddr, 32, elem_addr, MemoryOperation::Read, ExceptionCode::LoadAccessFault, effective_ldst_mode());
         if (aprobe.has_fault) {
           faulted = true;

@@ -35,8 +35,10 @@ operation(): |
   check_f_ok($encoding);
   VectorState state = vector_state();
   if (CSR[vstart].VALUE != 0) { raise(ExceptionCode::IllegalInstruction, mode(), $encoding); }
-  if (CSR[vl].VALUE == 0) { return; }
-  if (state.log2_sew == 6) {
+  if (CSR[vl].VALUE == 0) {
+    CSR[vstart].VALUE = 0;
+  } else {
+    if (state.log2_sew == 6) {
       Bits<64> acc = V[vs1][63:0];
       for (U32 i = 0; i < CSR[vl].VALUE; i++) {
         if (v_mask_elem_active?(vm, i)) {
@@ -78,3 +80,4 @@ operation(): |
     CSR[vstart].VALUE = 0;
     mark_f_state_dirty();
     mark_v_state_dirty();
+  }

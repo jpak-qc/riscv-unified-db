@@ -29,6 +29,8 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
+  VectorState state = vector_state();
+  U32 emul_reg = (state.lmul_type == VectorLmulType::Multiply) ? (32'b1 << state.log2_lmul) : 1;
   check_v_ok_vtype($encoding);
   U32 elems_per_reg = VLEN >> 4;
   XReg virtual_address = X[xs1];

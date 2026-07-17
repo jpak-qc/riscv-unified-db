@@ -35,7 +35,7 @@ operation(): |
   XReg first_idx = 0;
   for (U32 i = 0; i < CSR[vl].VALUE; i++) {
     if (v_mask_elem_active?(vm, i)) {
-      if (!found && V[vs2][i] == 1'b1) {
+      if (found == false && V[vs2][i] == 1'b1) {
         first_idx = i;
         found = true;
       }

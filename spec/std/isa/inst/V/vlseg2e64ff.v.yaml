@@ -36,9 +36,11 @@ operation(): |
   XReg virtual_address = X[xs1];
   PrivilegeMode ldst_mode = effective_ldst_mode();
   Boolean trimmed = false;
+  VectorState state = vector_state();
+  U32 emul_reg = (state.lmul_type == VectorLmulType::Multiply) ? (32'b1 << state.log2_lmul) : 1;
   U32 new_vl = CSR[vl].VALUE;
 
-  for (U32 i = CSR[vstart].VALUE; (i < CSR[vl].VALUE) && !trimmed; i++) {
+  for (U32 i = CSR[vstart].VALUE; (i < CSR[vl].VALUE) && trimmed == false; i++) {
     if (v_mask_elem_active?(vm, i)) {
       # Declare per-field translation result slots (populated by probe phase below)
       TranslationResult tr_0;
@@ -51,7 +53,7 @@ operation(): |
       # Probe phase: check translate + PMP/PMA for all 2 fields of this element.
       # Stop probing at the first fault but continue tracking fault info.
             # Field 0: probe translate + PMP/PMA
-            if (!element_faulted) {
+            if (element_faulted == false) {
               XReg addr_0 = virtual_address + (i * 2 + 0) * 8;
               if (CSR[misa].S == 1) {
                 TranslationFaultResult tprobe_0 = translate_probe(addr_0, MemoryOperation::Read, ldst_mode, $encoding);
@@ -61,12 +63,12 @@ operation(): |
                   fmode = tprobe_0.from_mode;
                   ftval = tprobe_0.tval;
                 } else {
-                  tr_0.paddr = tprobe_0.result.paddr;
+                  tr_0 = tprobe_0.result;
                 }
               } else {
                 tr_0.paddr = addr_0;
               }
-              if (!element_faulted) {
+              if (element_faulted == false) {
                 TranslationFaultResult aprobe_0 = access_check_probe(tr_0.paddr, 64, addr_0, MemoryOperation::Read, ExceptionCode::LoadAccessFault, ldst_mode);
                 if (aprobe_0.has_fault) {
                   element_faulted = true;
@@ -77,7 +79,7 @@ operation(): |
               }
             }
             # Field 1: probe translate + PMP/PMA
-            if (!element_faulted) {
+            if (element_faulted == false) {
               XReg addr_1 = virtual_address + (i * 2 + 1) * 8;
               if (CSR[misa].S == 1) {
                 TranslationFaultResult tprobe_1 = translate_probe(addr_1, MemoryOperation::Read, ldst_mode, $encoding);
@@ -87,12 +89,12 @@ operation(): |
                   fmode = tprobe_1.from_mode;
                   ftval = tprobe_1.tval;
                 } else {
-                  tr_1.paddr = tprobe_1.result.paddr;
+                  tr_1 = tprobe_1.result;
                 }
               } else {
                 tr_1.paddr = addr_1;
               }
-              if (!element_faulted) {
+              if (element_faulted == false) {
                 TranslationFaultResult aprobe_1 = access_check_probe(tr_1.paddr, 64, addr_1, MemoryOperation::Read, ExceptionCode::LoadAccessFault, ldst_mode);
                 if (aprobe_1.has_fault) {
                   element_faulted = true;

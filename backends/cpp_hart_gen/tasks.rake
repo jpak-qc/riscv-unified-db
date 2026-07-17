@@ -558,4 +558,64 @@ namespace :test do
     _, build_name = configs_build_name
     sh "#{CPP_HART_GEN_DST}/#{build_name}/build/test_softfloat_fp"
   end
+
+  # Golden-model cross-check against sail-riscv-tests prebuilt ELFs.
+  #
+  # Requires the sail-riscv-tests release archive to be extracted locally.
+  # Download instructions: https://github.com/riscv-software-src/sail-riscv-tests/releases/tag/2026-06-10
+  #   mkdir -p ~/.local/share/riscv-vector-tests/v128x64
+  #   curl -L -o /tmp/rv.tar.gz https://github.com/riscv-software-src/sail-riscv-tests/releases/download/2026-06-10/riscv-vector-tests-v128x64.tar.gz
+  #   tar -xzf /tmp/rv.tar.gz -C ~/.local/share/riscv-vector-tests/v128x64
+  #
+  # Run with: ./do test:riscv_vector_sail CONFIG=rv64-vector IGNOREUNDEFINED=YES
+  #
+  # The ELFs use the standard HTIF tohost pass/fail convention (same as riscv-tests):
+  #   tohost payload & 1 == 1 && payload >> 1 == 0  =>  Pass
+  #   tohost payload & 1 == 1 && payload >> 1 != 0  =>  Fail (test number in upper bits)
+  task riscv_vector_sail: ["build:iss"] do
+    configs_name, build_name = configs_build_name
+
+    vlen = YAML.load_file("#{$root}/cfgs/#{configs_name[0]}.yaml").dig("params", "VLEN") || 128
+    mxlen = YAML.load_file("#{$root}/cfgs/#{configs_name[0]}.yaml").dig("params", "MXLEN") || 64
+    sail_dir = File.expand_path("~/.local/share/riscv-vector-tests/v#{vlen}x#{mxlen}")
+
+    unless Dir.exist?(sail_dir)
+      puts ""
+      puts "sail-riscv-tests not found at #{sail_dir}"
+      puts "Download and extract the v#{vlen}x#{mxlen} archive from:"
+      puts "  https://github.com/riscv-software-src/sail-riscv-tests/releases/tag/2026-06-10"
+      puts "  mkdir -p #{sail_dir}"
+      puts "  curl -L -o /tmp/rv.tar.gz https://github.com/riscv-software-src/sail-riscv-tests/releases/download/2026-06-10/riscv-vector-tests-v#{vlen}x#{mxlen}.tar.gz"
+      puts "  tar -xzf /tmp/rv.tar.gz -C #{sail_dir}"
+      puts ""
+      next
+    end
+
+    iss_bin = "#{CPP_HART_GEN_DST}/#{build_name}/build/iss"
+    cfg_yaml = "#{$root}/cfgs/#{configs_name[0]}.yaml"
+    elfs = Dir.glob("#{sail_dir}/*").select { |f| File.file?(f) }.sort
+
+    puts "Running #{elfs.size} sail-riscv-tests ELFs against #{configs_name[0]} ISS..."
+    passed = 0
+    failed = 0
+    failed_names = []
+
+    elfs.each do |elf|
+      name = File.basename(elf)
+      begin
+        sh "#{iss_bin} -m #{configs_name[0]} -c #{cfg_yaml} #{elf}", verbose: false
+        passed += 1
+      rescue RuntimeError
+        failed += 1
+        failed_names << name
+      end
+    end
+
+    puts "sail-riscv-tests: #{passed} passed, #{failed} failed out of #{elfs.size}"
+    unless failed_names.empty?
+      puts "Failed tests:"
+      failed_names.each { |n| puts "  #{n}" }
+      raise "#{failed} sail-riscv-tests ELF(s) failed"
+    end
+  end
 end
