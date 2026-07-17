@@ -40,11 +40,12 @@ operation(): |
   for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
     if (v_mask_elem_active?(vm, i)) {
       XReg idx = v_elem_read(vs2, i, 6)[63:0];
+      U32 reg_off = i / elems_per_reg_data;
       U32 start_bit_f = (i % elems_per_reg_data) * state.sew;
       CSR[vstart].VALUE = i;
       for (U32 j = 0; j < 4; j++) {
         XReg addr = virtual_address + idx + j * (state.sew / 8);
-        Bits<64> data = V[vs3 + j * emul_reg][start_bit_f + state.sew - 1:start_bit_f];
+        Bits<64> data = V[vs3 + j * emul_reg + reg_off][start_bit_f + state.sew - 1:start_bit_f];
         if (state.sew == 8) {
           write_memory(8, addr, data[7:0], $encoding);
         } else if (state.sew == 16) {

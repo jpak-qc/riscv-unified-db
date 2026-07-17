@@ -45,7 +45,9 @@ operation(): |
     if (v_mask_elem_active?(vm, i)) {
       U32 d_reg = i / elems_per_reg;  U32 d_bit = (i % elems_per_reg) * state.sew;
       XReg s_idx = i + offset;
-      if (s_idx < vlmax) {
+      # Guard against 64-bit overflow when offset is large (e.g. 0xFFFF...FFFF).
+      # If offset >= vlmax OR the addition wrapped (s_idx < i), treat as out-of-bounds.
+      if (offset < vlmax && s_idx >= offset && s_idx < vlmax) {
         U32 s_reg = s_idx / elems_per_reg;  U32 s_bit = (s_idx % elems_per_reg) * state.sew;
         V[vd + d_reg][d_bit + state.sew - 1:d_bit] = V[vs2 + s_reg][s_bit + state.sew - 1:s_bit];
       } else {

@@ -41,6 +41,7 @@ operation(): |
       }
     }
   }
-  # Return the index of the first set bit, or -1 (all-ones) if none found
-  X[xd] = found ? first_idx : ~0;
+  # Return the index of the first set bit, or -1 (all-ones XLEN bits) if none found.
+  # Use explicit 64-bit all-ones rather than ~0 (which would be Bits<1> NOT in IDL).
+  X[xd] = found ? first_idx : ~64'b0;
   CSR[vstart].VALUE = 0;

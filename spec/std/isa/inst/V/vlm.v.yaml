@@ -29,16 +29,17 @@ data_independent_timing: false
 operation(): |
   check_v_ok($encoding);
   XReg virtual_address = X[xs1];
-  # Load ceil(vl/8) bytes into the mask register vd, bit by bit
+  # Load ceil(vl/8) bytes into the mask register vd.
+  # Each full byte is written entirely -- the partial final byte is not bit-masked
+  # to vl (Sail writes all 8 bits of each loaded byte regardless of vl mod 8).
+  # Use read-modify-write to avoid setBit-on-copy ISS bug (V[vd] returns by value).
+  Bits<VLEN> vd_bits = V[vd];
   U32 num_bytes = (CSR[vl].VALUE + 7) / 8;
   for (U32 b = CSR[vstart].VALUE; b < num_bytes; b++) {
     Bits<8> byte_val = read_memory(8, virtual_address + b, $encoding)[7:0];
-    for (U32 bit = 0; bit < 8; bit++) {
-      U32 idx = b * 8 + bit;
-      if (idx < CSR[vl].VALUE) {
-        V[vd][idx] = byte_val[bit];
-      }
-    }
+    U32 base_idx = b * 8;
+    vd_bits[base_idx + 7:base_idx] = byte_val;
   }
+  V[vd] = vd_bits;
   CSR[vstart].VALUE = 0;
   mark_v_state_dirty();
