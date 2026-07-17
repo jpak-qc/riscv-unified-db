@@ -275,8 +275,9 @@ int InstructionSetSimulator::CreateMemoryMap(std::filesystem::path memMapPath,
     auto range = elfReader.mem_range();
     m_memMap.base = range.first;
     m_memMap.size = range.second - range.first;
-    //Round up to whole page
-    m_memMap.size = ((range.second - range.first) + 0xffful) & ~0xffful;
+    //Round up to whole page, plus one guard page so tests that access data at
+    //base+roundedSize (e.g. fault-first probe one page past the last section) don't segfault
+    m_memMap.size = (((range.second - range.first) + 0xffful) & ~0xffful) + 0x1000ul;
     return 0;
   }
 

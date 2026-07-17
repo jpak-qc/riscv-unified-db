@@ -567,7 +567,9 @@ namespace :test do
   #   curl -L -o /tmp/rv.tar.gz https://github.com/riscv-software-src/sail-riscv-tests/releases/download/2026-06-10/riscv-vector-tests-v128x64.tar.gz
   #   tar -xzf /tmp/rv.tar.gz -C ~/.local/share/riscv-vector-tests/v128x64
   #
-  # Run with: ./do test:riscv_vector_sail CONFIG=rv64-vector IGNOREUNDEFINED=YES
+  # Run with: ./do test:riscv_vector_sail CONFIG=rv64-vector
+  # (do NOT pass IGNOREUNDEFINED=YES -- the sail ELFs initialize all V registers
+  #  and must run with the strict build to get correct PossiblyUnknownBits propagation)
   #
   # The ELFs use the standard HTIF tohost pass/fail convention (same as riscv-tests):
   #   tohost payload & 1 == 1 && payload >> 1 == 0  =>  Pass
