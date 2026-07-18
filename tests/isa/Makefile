@@ -64,7 +64,7 @@ endef
 
 $(eval $(call compile_template,rv32uv,-march=rv32gv -mabi=ilp32))
 ifeq ($(XLEN),64)
-$(eval $(call compile_template,rv64uv,-march=rv64gv -mabi=lp64))
+$(eval $(call compile_template,rv64uv,-march=rv64gv_zfa -mabi=lp64))
 endif
 
 tests_dump = $(addsuffix .dump, $(tests))

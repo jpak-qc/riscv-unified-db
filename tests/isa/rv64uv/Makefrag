@@ -29,7 +29,8 @@ rv64uv_sc_tests = vadd.vv vle8 \
     vnclip \
     vavg \
     fscalar_d \
-    vff_load
+    vff_load \
+    vdiv_mf2_tail
 
 rv64uv_p_tests = $(addprefix rv64uv-p-, $(rv64uv_sc_tests))
 rv64uv_v_tests = $(addprefix rv64uv-v-, $(rv64uv_sc_tests))

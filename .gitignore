@@ -51,3 +51,34 @@ tools/ruby-gems/udb/ext/udb_download/Makefile
 .wip
 
 .tmp
+
+# Claude Code local session state (worktrees, agent scratch)
+.claude/
+
+# clangd/IDE convenience symlink into gen/
+/compile_commands.json
+
+# local doc-build / license-scan output that lands in the repo root
+/idl.html
+/reuse_bom.txt
+
+# scratch ACT4 config from an abandoned Phase 15 approach (see tasks/VECTOR_IDL_PLAN.md)
+cfgs/act4/
+
+# manually-fetched riscv-arch-test checkout (not a registered submodule; ~4GB)
+/ext/riscv-arch-test/
+
+# unrelated per-session scratch logs (not part of any tracked task doc)
+/ISS_RECOVERY_LOG.md
+/TASK_LOG_CSR_WARNINGS.md
+/tasks/CSR_WARNING_CLEANUP.md
+/tasks/masking_explainer.pdf
+
+# personal Claude Code guidance (references local machine paths/preferences,
+# not neutral contributor docs) -- see AGENTS.md for the shared reference
+/CLAUDE.md
+
+# local-only vector IDL project planning/log docs -- not part of the upstream PR
+/tasks/VECTOR_IDL_PLAN.md
+/tasks/VECTOR_EXECUTION_LOG.md
+/tasks/COMPILER_MASKING_PLAN.md

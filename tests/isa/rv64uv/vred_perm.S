@@ -23,6 +23,16 @@
 RVTEST_RV64UV
 RVTEST_CODE_BEGIN
 
+  # Zero all vector registers used as reduction/permutation destinations below.
+  # Reduction ops (vredsum.vs etc.) only write the bottom SEW bits of vd per spec
+  # (the rest of vd is UNSPECIFIED) -- the ISS's strict unknown-bit tracking still
+  # requires the full destination register to be known during the read-modify-write.
+  vsetvli x7, x0, e8, m8, ta, ma
+  vmv.v.i v0, 0
+  vmv.v.i v8, 0
+  vmv.v.i v16, 0
+  vmv.v.i v24, 0
+
   TEST_CASE(1, x2, 0x1A, \
     li x6,4; vsetvli x7,x6,e8,m1; la x5,src4; vle8.v v2,(x5); \
     la x5,acc10; vle8.v v1,(x5); \

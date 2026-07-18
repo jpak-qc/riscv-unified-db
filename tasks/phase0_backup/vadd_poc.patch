@@ -1,0 +1,16 @@
+diff --git a/spec/std/isa/inst/V/vadd.vv.yaml b/spec/std/isa/inst/V/vadd.vv.yaml
+index c337ffec..1a276f01 100644
+--- a/spec/std/isa/inst/V/vadd.vv.yaml
++++ b/spec/std/isa/inst/V/vadd.vv.yaml
+@@ -47,7 +47,10 @@ operation(): |
+   for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
+     U32 start_bit_pos = i * state.sew;
+     U32 end_bit_pos = start_bit_pos + state.sew - 1;
+-    V[vd][end_bit_pos:start_bit_pos] = V[vs2][end_bit_pos:start_bit_pos] + V[vs1][end_bit_pos:start_bit_pos];
++
++    if (vm == 1'b1 || V[0][i] == 1'b1) {
++      V[vd][end_bit_pos:start_bit_pos] = V[vs2][end_bit_pos:start_bit_pos] + V[vs1][end_bit_pos:start_bit_pos];
++    }
+   }
+
+   CSR[vstart].VALUE = 0;

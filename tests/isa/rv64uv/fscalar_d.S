@@ -93,20 +93,17 @@ RVTEST_CODE_BEGIN
     la x5,d_1p0; fld f1,(x5); la x5,d_2p0; fld f2,(x5); \
     fmin.d f3,f1,f2; la x5,result; fsd f3,(x5); lwu x2,4(x5); )
 
-  # T15: fli.d index 10 = 1.0 (0x3FF0_0000_0000_0000; upper = 0x3FF00000)
-  # xs1=10 (a0=x10) selects constant 1.0 from the 32-entry table.
+  # T15: fli.d 1.0 (xs1=16; 0x3FF0_0000_0000_0000; upper = 0x3FF00000)
   TEST_CASE(15, x2, 0x3FF00000, \
-    fli.d f1, a0; la x5,result; fsd f1,(x5); lwu x2,4(x5); )
+    fli.d f1, 1.0; la x5,result; fsd f1,(x5); lwu x2,4(x5); )
 
-  # T16: fli.d index 14 = 2.0 (0x4000_0000_0000_0000; upper = 0x40000000)
-  # xs1=14 (a4=x14).
+  # T16: fli.d 2.0 (xs1=20; 0x4000_0000_0000_0000; upper = 0x40000000)
   TEST_CASE(16, x2, 0x40000000, \
-    fli.d f1, a4; la x5,result; fsd f1,(x5); lwu x2,4(x5); )
+    fli.d f1, 2.0; la x5,result; fsd f1,(x5); lwu x2,4(x5); )
 
-  # T17: fli.d index 28 = +inf (0x7FF0_0000_0000_0000; upper = 0x7FF00000)
-  # xs1=28 (t3=x28).
+  # T17: fli.d +inf (xs1=30; 0x7FF0_0000_0000_0000; upper = 0x7FF00000)
   TEST_CASE(17, x2, 0x7FF00000, \
-    fli.d f1, t3; la x5,result; fsd f1,(x5); lwu x2,4(x5); )
+    fli.d f1, inf; la x5,result; fsd f1,(x5); lwu x2,4(x5); )
 
   # T18: fround.d 2.7 (RNE) -> 3.0 (upper = 0x40080000)
   TEST_CASE(18, x2, 0x40080000, \
