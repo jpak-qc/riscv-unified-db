@@ -60,6 +60,9 @@ operation(): |
       } else {
         Bits<32> a = v_elem_read(vs2, i, 5)[31:0];
         Bits<32> b = F[fs1][31:0];
+        if (implemented?(ExtensionName::D) && F[fs1][63:32] != 32'hffffffff) {
+          b = SP_CANONICAL_NAN;
+        }
         Bits<32> res;
         if (is_sp_nan?(a) && is_sp_nan?(b)) {
           if (is_sp_signaling_nan?(a) || is_sp_signaling_nan?(b)) { set_fp_flag(FpFlag::NV); }

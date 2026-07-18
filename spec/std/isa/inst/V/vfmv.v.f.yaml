@@ -34,7 +34,11 @@ operation(): |
     if (state.log2_sew == 6) {
       v_elem_write(vd, i, 6, {64'b0, F[fs1][63:0]});
     } else {
-      v_elem_write(vd, i, 5, {96'b0, F[fs1][31:0]});
+      Bits<32> scalar_fs1 = F[fs1][31:0];
+      if (implemented?(ExtensionName::D) && F[fs1][63:32] != 32'hffffffff) {
+        scalar_fs1 = SP_CANONICAL_NAN;
+      }
+      v_elem_write(vd, i, 5, {96'b0, scalar_fs1});
     }
   }
   CSR[vstart].VALUE = 0;

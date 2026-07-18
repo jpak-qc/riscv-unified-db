@@ -44,6 +44,9 @@ operation(): |
       } else {
         Bits<32> a = v_elem_read(vs2, i, 5)[31:0];
         Bits<32> b = F[fs1][31:0];
+        if (implemented?(ExtensionName::D) && F[fs1][63:32] != 32'hffffffff) {
+          b = SP_CANONICAL_NAN;
+        }
         vd_bits[i] = (!f32_eq?(a, b, true)) ? 1'b1 : 1'b0;
       }
     }
