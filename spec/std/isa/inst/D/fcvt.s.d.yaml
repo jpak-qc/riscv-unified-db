@@ -35,5 +35,6 @@ access:
 data_independent_timing: false
 operation(): |
   check_f_ok($encoding);
-  F[fd] = f64_to_f32(F[fs1], rm_to_mode(rm, $encoding));
+  Bits<32> sp_result = f64_to_f32(F[fs1], rm_to_mode(rm, $encoding));
+  F[fd] = nan_box(32, 64, sp_result);
   mark_f_state_dirty();

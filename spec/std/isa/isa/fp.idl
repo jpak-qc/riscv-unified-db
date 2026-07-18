@@ -144,7 +144,9 @@ function nan_box {
   body {
     assert(FROM_SIZE < TO_SIZE, "Bad arguments; FROM_SIZE must be less than TO_SIZE");
 
-    return {{TO_SIZE - FROM_SIZE{1'b1}}, from_value};
+    # Mask from_value to FROM_SIZE bits, then set all upper bits (from FROM_SIZE to 63) to 1.
+    # Using OR instead of concat avoids the 96-bit intermediate that truncation would discard.
+    return (from_value & ((64'h1 << FROM_SIZE) - 1)) | ~((64'h1 << FROM_SIZE) - 1);
   }
 }
 
