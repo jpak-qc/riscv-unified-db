@@ -41,7 +41,11 @@ operation(): |
   VectorState state = vector_state();
   RoundingMode rmode = rm_to_mode(CSR[fcsr].FRM, $encoding);
   if (CSR[vl].VALUE == 0) {
+    # V spec §14.3: when vl=0, result is vs1[0] (widened) written to vd[0]
+    v_elem_write(vd, 0, state.log2_sew + 1, {64'b0, V[vs1][63:0]});
     CSR[vstart].VALUE = 0;
+    mark_f_state_dirty();
+    mark_v_state_dirty();
   } else {
     Bits<64> acc = V[vs1][63:0];
     for (U32 i = 0; i < CSR[vl].VALUE; i++) {

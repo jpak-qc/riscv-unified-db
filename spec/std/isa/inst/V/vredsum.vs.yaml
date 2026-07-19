@@ -36,7 +36,10 @@ operation(): |
   VectorState state = vector_state();
   U32 elems_per_reg = VLEN >> state.log2_sew;
   if (CSR[vl].VALUE == 0) {
+    # V spec §14.1: when vl=0, result is vs1[0] written to vd[0]
+    V[vd][state.sew - 1:0] = V[vs1][state.sew - 1:0];
     CSR[vstart].VALUE = 0;
+    mark_v_state_dirty();
   } else {
     Bits<64> acc = V[vs1][state.sew - 1:0];
     for (U32 i = 0; i < CSR[vl].VALUE; i++) {

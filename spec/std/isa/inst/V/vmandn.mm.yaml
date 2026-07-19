@@ -32,7 +32,7 @@ operation(): |
   check_v_ok($encoding);
   # Read-modify-write: avoid setBit-on-copy ISS bug (see bits.hpp)
   Bits<VLEN> vd_bits = V[vd];
-  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
+  for (U32 i = CSR[vstart].VALUE; i < VLEN; i++) {
     vd_bits[i] = V[vs2][i] & ~V[vs1][i];
   }
   V[vd] = vd_bits;

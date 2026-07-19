@@ -36,7 +36,12 @@ operation(): |
 
   # vmv.x.s copies element 0 of vs2 to xd, sign-extending to XLEN.
   # Element 0 is always in the base register of the group (no group math needed).
-  # Scalar destination: no mask, no vstart/vl gating, no vector state dirtied.
-  X[xd] = $signed(V[vs2][state.sew-1:0]);
+  # Scalar destination: no mask, no vstart gating, no vector state dirtied.
+  # V spec §17.4: if vl=0, rd is written with 0.
+  if (CSR[vl].VALUE == 0) {
+    X[xd] = 0;
+  } else {
+    X[xd] = $signed(V[vs2][state.sew-1:0]);
+  }
 
   CSR[vstart].VALUE = 0;

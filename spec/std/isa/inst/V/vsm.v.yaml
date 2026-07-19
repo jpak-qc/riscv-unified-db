@@ -44,3 +44,4 @@ operation(): |
     write_memory(8, virtual_address + b, b0 | b1 | b2 | b3 | b4 | b5 | b6 | b7, $encoding);
   }
   CSR[vstart].VALUE = 0;
+  mark_v_state_dirty();
