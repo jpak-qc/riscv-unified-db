@@ -435,6 +435,7 @@ function f32_muladd {
     # Handle NaN/Inf in A
     if (expA == 0xFF) {
       if ((sigA != 0) || ((expB == 0xFF) && (sigB != 0))) {
+        if (is_sp_signaling_nan?(a) || is_sp_signaling_nan?(b)) { set_fp_flag(FpFlag::NV); }
         return SP_CANONICAL_NAN;
       }
       magBits = expB | sigB;
@@ -444,6 +445,7 @@ function f32_muladd {
           return zA;
         }
         if (sigC != 0) {
+          if (is_sp_signaling_nan?(c)) { set_fp_flag(FpFlag::NV); }
           return SP_CANONICAL_NAN;
         }
         if (signProd == signC) {
@@ -457,6 +459,7 @@ function f32_muladd {
     # Handle NaN/Inf in B
     if (expB == 0xFF) {
       if (sigB != 0) {
+        if (is_sp_signaling_nan?(b)) { set_fp_flag(FpFlag::NV); }
         return SP_CANONICAL_NAN;
       }
       magBits = expA | sigA;
@@ -466,6 +469,7 @@ function f32_muladd {
           return zB;
         }
         if (sigC != 0) {
+          if (is_sp_signaling_nan?(c)) { set_fp_flag(FpFlag::NV); }
           return SP_CANONICAL_NAN;
         }
         if (signProd == signC) {
@@ -479,6 +483,7 @@ function f32_muladd {
     # Handle NaN/Inf in C
     if (expC == 0xFF) {
       if (sigC != 0) {
+        if (is_sp_signaling_nan?(c)) { set_fp_flag(FpFlag::NV); }
         return SP_CANONICAL_NAN;
       }
       return c;
@@ -605,7 +610,10 @@ function f32_sqrt {
     Bits<32> fracA = fracF32UI(a);
 
     if (expA == 8'hFF) {
-      if (fracA != 0) { return SP_CANONICAL_NAN; }
+      if (fracA != 0) {
+        if (is_sp_signaling_nan?(a)) { set_fp_flag(FpFlag::NV); }
+        return SP_CANONICAL_NAN;
+      }
       if (signA == 0) { return a; }
       set_fp_flag(FpFlag::NV);
       return SP_CANONICAL_NAN;
@@ -744,16 +752,25 @@ function f32_div {
     Bits<16> expZ;
 
     if (expA == 8'hFF) {
-      if (sigA != 0) { return SP_CANONICAL_NAN; }
+      if (sigA != 0) {
+        if (is_sp_signaling_nan?(a)) { set_fp_flag(FpFlag::NV); }
+        return SP_CANONICAL_NAN;
+      }
       if (expB == 8'hFF) {
-        if (sigB != 0) { return SP_CANONICAL_NAN; }
+        if (sigB != 0) {
+          if (is_sp_signaling_nan?(b)) { set_fp_flag(FpFlag::NV); }
+          return SP_CANONICAL_NAN;
+        }
         set_fp_flag(FpFlag::NV);
         return SP_CANONICAL_NAN;
       }
       return packToF32UI(signZ, 8'hFF, 0);
     }
     if (expB == 8'hFF) {
-      if (sigB != 0) { return SP_CANONICAL_NAN; }
+      if (sigB != 0) {
+        if (is_sp_signaling_nan?(b)) { set_fp_flag(FpFlag::NV); }
+        return SP_CANONICAL_NAN;
+      }
       return packToF32UI(signZ, 0, 0);
     }
 
@@ -839,6 +856,7 @@ function f32_mul {
 
     if (expA == 8'hFF) {
       if ((fracA != 0) || ((expB == 8'hFF) && (fracB != 0))) {
+        if (is_sp_signaling_nan?(a) || is_sp_signaling_nan?(b)) { set_fp_flag(FpFlag::NV); }
         return SP_CANONICAL_NAN;
       }
       if ((expB == 0) && (fracB == 0)) {
@@ -849,6 +867,7 @@ function f32_mul {
     }
     if (expB == 8'hFF) {
       if (fracB != 0) {
+        if (is_sp_signaling_nan?(b)) { set_fp_flag(FpFlag::NV); }
         return SP_CANONICAL_NAN;
       }
       if ((expA == 0) && (fracA == 0)) {
@@ -1389,6 +1408,7 @@ function softfloat_addMagsF32 {
       if (expA == 8'hFF) {
         # A is NaN if significand is non-zero and exponent is 8'hFF
         if ((sigA != 8'd0) || (sigB != 8'd0)) {
+          if (is_sp_signaling_nan?(a) || is_sp_signaling_nan?(b)) { set_fp_flag(FpFlag::NV); }
           return SP_CANONICAL_NAN;
         }
         # return infinity if A is infinity
@@ -1421,6 +1441,7 @@ function softfloat_addMagsF32 {
         if (expB == 8'hFF) {
           # B is NaN if exponent is 8'hFF and significand is non-zero
           if (sigB != 0) {
+            if (is_sp_signaling_nan?(a) || is_sp_signaling_nan?(b)) { set_fp_flag(FpFlag::NV); }
             return SP_CANONICAL_NAN;
           }
           # return infinity with same sign as A
@@ -1435,6 +1456,7 @@ function softfloat_addMagsF32 {
         if (expA == 8'hFF) {
           # A is NaN if exponent is 8'hFF and significand is non-zero
           if (sigA != 0) {
+            if (is_sp_signaling_nan?(a) || is_sp_signaling_nan?(b)) { set_fp_flag(FpFlag::NV); }
             return SP_CANONICAL_NAN;
           }
             # return infinity with same sign as A
@@ -1546,6 +1568,7 @@ function softfloat_subMagsF32 {
         signZ = ~signZ;
         if (expB == 0xFF) {
           if (sigB != 0) {
+            if (is_sp_signaling_nan?(a) || is_sp_signaling_nan?(b)) { set_fp_flag(FpFlag::NV); }
             return SP_CANONICAL_NAN;
           }
           return packToF32UI(signZ, expB, 0);
@@ -1557,6 +1580,7 @@ function softfloat_subMagsF32 {
       } else {
         if (expA == 0xFF) {
           if (sigA != 0) {
+            if (is_sp_signaling_nan?(a) || is_sp_signaling_nan?(b)) { set_fp_flag(FpFlag::NV); }
             return SP_CANONICAL_NAN;
           }
           return a;
@@ -2447,6 +2471,7 @@ function softfloat_addMagsF64 {
       # A is Inf or NaN when exponent is all-ones
       if (expA == 11'h7FF) {
         if ((sigA != 0) || (sigB != 0)) {
+          if (is_dp_signaling_nan?(a) || is_dp_signaling_nan?(b)) { set_fp_flag(FpFlag::NV); }
           return DP_CANONICAL_NAN;
         }
         return a; # infinity
@@ -2466,6 +2491,7 @@ function softfloat_addMagsF64 {
       if ($signed(expDiff) < 16's0) {
         if (expB == 11'h7FF) {
           if (sigB != 0) {
+            if (is_dp_signaling_nan?(a) || is_dp_signaling_nan?(b)) { set_fp_flag(FpFlag::NV); }
             return DP_CANONICAL_NAN;
           }
           return packToF64UI(signZ, 11'h7FF, 0);
@@ -2476,6 +2502,7 @@ function softfloat_addMagsF64 {
       } else {
         if (expA == 11'h7FF) {
           if (sigA != 0) {
+            if (is_dp_signaling_nan?(a) || is_dp_signaling_nan?(b)) { set_fp_flag(FpFlag::NV); }
             return DP_CANONICAL_NAN;
           }
           return a;
@@ -2551,6 +2578,7 @@ function softfloat_subMagsF64 {
         signZ = ~signZ;
         if (expB == 11'h7FF) {
           if (sigB != 0) {
+            if (is_dp_signaling_nan?(a) || is_dp_signaling_nan?(b)) { set_fp_flag(FpFlag::NV); }
             return DP_CANONICAL_NAN;
           }
           return packToF64UI(signZ, 11'h7FF, 0);
@@ -2562,6 +2590,7 @@ function softfloat_subMagsF64 {
       } else {
         if (expA == 11'h7FF) {
           if (sigA != 0) {
+            if (is_dp_signaling_nan?(a) || is_dp_signaling_nan?(b)) { set_fp_flag(FpFlag::NV); }
             return DP_CANONICAL_NAN;
           }
           return a;
@@ -2639,6 +2668,7 @@ function f64_mul {
 
     if (expA == 16'h7FF) {
       if ((sigA != 0) || ((expB == 16'h7FF) && (sigB != 0))) {
+        if (is_dp_signaling_nan?(a) || is_dp_signaling_nan?(b)) { set_fp_flag(FpFlag::NV); }
         return DP_CANONICAL_NAN;
       }
       if ((expB == 0) && (sigB == 0)) {
@@ -2649,6 +2679,7 @@ function f64_mul {
     }
     if (expB == 16'h7FF) {
       if (sigB != 0) {
+        if (is_dp_signaling_nan?(b)) { set_fp_flag(FpFlag::NV); }
         return DP_CANONICAL_NAN;
       }
       if ((expA == 0) && (sigA == 0)) {
@@ -2717,16 +2748,25 @@ function f64_div {
     Bits<16> expZ;
 
     if (expA == 16'h7FF) {
-      if (sigA != 0) { return DP_CANONICAL_NAN; }
+      if (sigA != 0) {
+        if (is_dp_signaling_nan?(a)) { set_fp_flag(FpFlag::NV); }
+        return DP_CANONICAL_NAN;
+      }
       if (expB == 16'h7FF) {
-        if (sigB != 0) { return DP_CANONICAL_NAN; }
+        if (sigB != 0) {
+          if (is_dp_signaling_nan?(b)) { set_fp_flag(FpFlag::NV); }
+          return DP_CANONICAL_NAN;
+        }
         set_fp_flag(FpFlag::NV);        # inf / inf
         return DP_CANONICAL_NAN;
       }
       return packToF64UI(signZ, 11'h7FF, 0);   # inf / finite = inf
     }
     if (expB == 16'h7FF) {
-      if (sigB != 0) { return DP_CANONICAL_NAN; }
+      if (sigB != 0) {
+        if (is_dp_signaling_nan?(b)) { set_fp_flag(FpFlag::NV); }
+        return DP_CANONICAL_NAN;
+      }
       return packToF64UI(signZ, 0, 0);         # finite / inf = 0
     }
 
@@ -2814,7 +2854,10 @@ function f64_sqrt {
     Bits<64> sigA  = fracF64UI(a);
 
     if (expA == 16'h7FF) {
-      if (sigA != 0) { return DP_CANONICAL_NAN; }
+      if (sigA != 0) {
+        if (is_dp_signaling_nan?(a)) { set_fp_flag(FpFlag::NV); }
+        return DP_CANONICAL_NAN;
+      }
       if (signA == 0) { return a; }        # sqrt(+inf) = +inf
       set_fp_flag(FpFlag::NV);             # sqrt(-inf)
       return DP_CANONICAL_NAN;
@@ -3390,6 +3433,7 @@ function f32_to_f64 {
     if (exp == 8'hFF) {
       if (frac != 0) {
         # NaN -> canonical f64 NaN
+        if (is_sp_signaling_nan?(a)) { set_fp_flag(FpFlag::NV); }
         return DP_CANONICAL_NAN;
       }
       # infinity
@@ -3432,6 +3476,7 @@ function f64_to_f32 {
 
     if (exp == 16'h7FF) {
       if (frac != 0) {
+        if (is_dp_signaling_nan?(a)) { set_fp_flag(FpFlag::NV); }
         return SP_CANONICAL_NAN;
       }
       return packToF32UI(sign, 8'hFF, 0);
@@ -3521,13 +3566,17 @@ function f64_muladd {
     # Handle NaN/Inf in A
     if (expA == 16'h7FF) {
       if ((sigA != 0) || ((expB == 16'h7FF) && (sigB != 0))) {
+        if (is_dp_signaling_nan?(a) || is_dp_signaling_nan?(b)) { set_fp_flag(FpFlag::NV); }
         return DP_CANONICAL_NAN;
       }
       magBits = expB | sigB;
       if (magBits != 0) {
         Bits<64> zA = packToF64UI(signProd, 11'h7FF, 0);
         if (expC != 16'h7FF) { return zA; }
-        if (sigC != 0) { return DP_CANONICAL_NAN; }
+        if (sigC != 0) {
+          if (is_dp_signaling_nan?(c)) { set_fp_flag(FpFlag::NV); }
+          return DP_CANONICAL_NAN;
+        }
         if (signProd == signC) { return zA; }
       }
       set_fp_flag(FpFlag::NV);
@@ -3536,12 +3585,18 @@ function f64_muladd {
 
     # Handle NaN/Inf in B
     if (expB == 16'h7FF) {
-      if (sigB != 0) { return DP_CANONICAL_NAN; }
+      if (sigB != 0) {
+        if (is_dp_signaling_nan?(b)) { set_fp_flag(FpFlag::NV); }
+        return DP_CANONICAL_NAN;
+      }
       magBits = expA | sigA;
       if (magBits != 0) {
         Bits<64> zB = packToF64UI(signProd, 11'h7FF, 0);
         if (expC != 16'h7FF) { return zB; }
-        if (sigC != 0) { return DP_CANONICAL_NAN; }
+        if (sigC != 0) {
+          if (is_dp_signaling_nan?(c)) { set_fp_flag(FpFlag::NV); }
+          return DP_CANONICAL_NAN;
+        }
         if (signProd == signC) { return zB; }
       }
       set_fp_flag(FpFlag::NV);
@@ -3550,7 +3605,10 @@ function f64_muladd {
 
     # Handle NaN/Inf in C
     if (expC == 16'h7FF) {
-      if (sigC != 0) { return DP_CANONICAL_NAN; }
+      if (sigC != 0) {
+        if (is_dp_signaling_nan?(c)) { set_fp_flag(FpFlag::NV); }
+        return DP_CANONICAL_NAN;
+      }
       return c;
     }
 
