@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfmv.s.f
-long_name: "Vector scalar to floating-point move"
+long_name: "Vector floating-point scalar move from FP register"
 description: |
-  Moves scalar floating-point value from register fs1 to all elements of vector register vd, using vector mask vm. This operation broadcasts a scalar to a vector.
+  Copies the scalar FP register fs1 into element 0 of vector register vd. No masking; writes element 0 unconditionally regardless of vl or vm. vstart is reset to 0 after execution.
 definedBy:
   extension:
     name: Zve32f

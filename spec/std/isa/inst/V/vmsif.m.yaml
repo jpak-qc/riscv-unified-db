@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmsif.m
-long_name: No synopsis available
+long_name: "mask set-including-first set bit"
 description: |
-  No description available.
+  Scans mask register vs2 from element 0 to vl-1 and writes 1 to each active element of vd at or before the position of the first set bit in vs2, and 0 to all active elements after it. Inactive elements (determined by vm) are undisturbed; vstart must be 0.
 definedBy:
   extension:
     name: Zve32x

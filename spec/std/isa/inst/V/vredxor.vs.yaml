@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vredxor.vs
-long_name: No synopsis available
+long_name: "vector integer bitwise-XOR reduction into scalar"
 description: |
-  No description available.
+  Reduces active elements of vs2 by bitwise XOR at SEW width, initializing the accumulator from element 0 of vs1, and writing the result to element 0 of vd. Inactive elements (vm-masked) are skipped; when vl=0, vd is undisturbed. vstart must be 0.
 definedBy:
   extension:
     name: Zve32x

@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmin.vv
-long_name: No synopsis available
+long_name: "vector signed integer minimum, vector-vector"
 description: |
-  No description available.
+  Writes min(vs2[i], vs1[i]) into vd[i] for each active SEW-wide element using signed comparison. Both operands are treated as two's-complement integers of SEW bits. Inactive elements are undisturbed.
 definedBy:
   extension:
     name: Zve32x

@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vnmsac.vx
-long_name: No synopsis available
+long_name: "vector integer negating multiply-subtract from accumulator, vector-scalar"
 description: |
-  No description available.
+  Computes vd[i] = vd[i] - xs1 * vs2[i] for each active SEW-wide element; xs1 is the scalar multiplicand (low SEW bits). Inactive elements are undisturbed.
 definedBy:
   extension:
     name: Zve32x

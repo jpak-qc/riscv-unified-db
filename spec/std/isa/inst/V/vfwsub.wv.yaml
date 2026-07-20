@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfwsub.wv
-long_name: No synopsis available
+long_name: "vector FP widening subtract, wide-source vector-vector"
 description: |
-  No description available.
+  Subtracts SEW-wide elements of vs1 (each widened to 2*SEW) from the 2*SEW-wide elements of vs2, storing 2*SEW results in vd. vs2 is the wide minuend; vs1 is the narrow subtrahend, promoted to 2*SEW before the subtraction. Inactive elements are undisturbed.
 definedBy:
   extension:
     name: Zve64d

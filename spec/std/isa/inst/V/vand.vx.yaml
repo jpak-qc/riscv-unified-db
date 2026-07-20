@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vand.vx
-long_name: No synopsis available
+long_name: "bitwise AND of vector elements and scalar register"
 description: |
-  No description available.
+  Computes the bitwise AND of each SEW-wide element of vs2 with the low SEW bits of integer register xs1, writing the result to vd. The scalar is truncated to SEW width before the operation. Masked per vm bit; inactive elements are undisturbed.
 definedBy:
   extension:
     name: Zve32x

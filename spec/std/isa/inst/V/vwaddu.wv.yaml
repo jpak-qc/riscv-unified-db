@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vwaddu.wv
-long_name: No synopsis available
+long_name: "widening unsigned add: 2xSEW vector plus SEW vector"
 description: |
-  No description available.
+  Adds each 2*SEW-wide element of vs2 to the zero-extended SEW-wide element of vs1, writing the 2*SEW result to vd. vs2 is treated as already holding 2*SEW elements; vs1 elements are zero-extended before the add. Masked per vm bit; inactive elements are undisturbed.
 definedBy:
   extension:
     name: Zve32x

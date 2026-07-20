@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfirst.m
-long_name: No synopsis available
+long_name: "find index of first set bit in mask"
 description: |
-  No description available.
+  Searches mask register vs2 for the lowest-indexed active set bit among elements 0 to vl-1, optionally masked by vm, and writes that index to scalar integer register xd. Writes -1 (all-ones, XLEN wide) if no active set bit is found; vstart must be 0.
 definedBy:
   extension:
     name: Zve32x

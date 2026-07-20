@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfrsub.vf
-long_name: No synopsis available
+long_name: "vector FP reverse subtract, scalar minus vector"
 description: |
-  No description available.
+  Computes fs1 - vs2[i] for each active element and writes the result to vd, reversing the operand order of a conventional vector subtract. Rounding uses the FRM field of fcsr, and NaN-boxing of fs1 applies when SEW=32 and D is present.
 definedBy:
   extension:
     name: Zve32f

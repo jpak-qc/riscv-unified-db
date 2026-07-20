@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmaxu.vv
-long_name: No synopsis available
+long_name: "vector unsigned integer maximum, vector-vector"
 description: |
-  No description available.
+  Writes max(vs2[i], vs1[i]) into vd[i] for each active SEW-wide element using unsigned comparison. Both operands are treated as unsigned integers of SEW bits. Inactive elements are undisturbed.
 definedBy:
   extension:
     name: Zve32x

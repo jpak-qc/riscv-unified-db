@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmacc.vv
-long_name: No synopsis available
+long_name: "vector integer multiply-accumulate, vector-vector"
 description: |
-  No description available.
+  Computes vd[i] = vd[i] + vs1[i] * vs2[i] for each active SEW-wide element. Inactive elements are undisturbed.
 definedBy:
   extension:
     name: Zve32x

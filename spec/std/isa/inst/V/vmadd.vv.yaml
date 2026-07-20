@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmadd.vv
-long_name: No synopsis available
+long_name: "vector integer multiply-add, vector-vector"
 description: |
-  No description available.
+  Computes vd[i] = vs1[i] * vd[i] + vs2[i] for each active SEW-wide element, where vd is one multiplicand and vs2 is the addend. Differs from vmacc in that vd is a multiplicand rather than the accumulator. Inactive elements are undisturbed.
 definedBy:
   extension:
     name: Zve32x

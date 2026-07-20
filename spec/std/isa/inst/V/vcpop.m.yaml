@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vcpop.m
-long_name: No synopsis available
+long_name: "count set bits in mask register"
 description: |
-  No description available.
+  Counts the number of set bits in mask register vs2 across active elements 0 to vl-1, optionally masked by vm, and writes the resulting unsigned count to scalar integer register xd. vstart must be 0.
 definedBy:
   extension:
     name: Zve32x

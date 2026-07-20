@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmulh.vv
-long_name: No synopsis available
+long_name: "vector signed multiply high half, vv"
 description: |
-  No description available.
+  Multiplies signed SEW-wide elements of vs2 and vs1, writing the upper SEW bits of the 2*SEW product into vd. Both operands sign-extend to 2*SEW before multiplication. Inactive elements under vm mask control are undisturbed.
 definedBy:
   extension:
     name: Zve32x

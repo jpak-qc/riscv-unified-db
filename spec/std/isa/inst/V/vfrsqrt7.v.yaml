@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfrsqrt7.v
-long_name: No synopsis available
+long_name: "vector FP 7-bit reciprocal square-root approximation"
 description: |
-  No description available.
+  Computes a 7-bit-significant reciprocal square-root approximation (1/sqrt(x)) for each active element of vs2, writing results to vd. Results follow the RISC-V V spec rsqrt7 table; negative operands, negative zero, positive zero, infinity, and NaN are treated as special cases per spec, with NV raised for negative inputs and DZ raised for negative-zero.
 definedBy:
   extension:
     name: Zve32f

@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmv.s.x
-long_name: No synopsis available
+long_name: "move integer scalar to vector element 0"
 description: |
-  No description available.
+  Writes element 0 of vd with the SEW-wide value from integer register xs1. The write occurs only when vl > 0 and vstart == 0; if vl == 0, element 0 is unchanged. Masking does not apply; all other elements are unaffected.
 definedBy:
   extension:
     name: Zve32x

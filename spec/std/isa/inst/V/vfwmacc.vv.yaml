@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfwmacc.vv
-long_name: No synopsis available
+long_name: "vector FP widening multiply-accumulate, vector-vector"
 description: |
-  No description available.
+  Computes vd[i] += vs1[i] * vs2[i] for each active element, widening SEW-wide operands from vs1 and vs2 to a 2*SEW product before accumulating into the 2*SEW destination vd. The accumulator in vd is read and written at 2*SEW; sources are read at SEW. Inactive elements (vm=0) are left undisturbed in vd.
 definedBy:
   extension:
     name: Zve64d

@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmacc.vx
-long_name: No synopsis available
+long_name: "vector integer multiply-accumulate, vector-scalar"
 description: |
-  No description available.
+  Computes vd[i] = vd[i] + xs1 * vs2[i] for each active SEW-wide element; xs1 is the low SEW bits of the integer register. Inactive elements are undisturbed.
 definedBy:
   extension:
     name: Zve32x

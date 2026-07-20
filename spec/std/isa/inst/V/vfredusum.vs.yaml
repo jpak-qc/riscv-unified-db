@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfredusum.vs
-long_name: No synopsis available
+long_name: "vector FP unordered reduction sum into scalar"
 description: |
-  No description available.
+  Reduces active elements of vs2 by floating-point addition seeded with vs1[0], writing the sum to vd[0]; unlike vfredosum, the implementation may evaluate additions in any order (tree reduction, etc.) for increased parallelism, so rounding results may differ from left-to-right evaluation. When vl=0, vs1[0] is copied to vd[0].
 definedBy:
   extension:
     name: Zve32f

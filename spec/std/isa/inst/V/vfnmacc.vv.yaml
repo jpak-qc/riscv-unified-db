@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfnmacc.vv
-long_name: No synopsis available
+long_name: "vector fp negated multiply-accumulate, vector-vector"
 description: |
-  No description available.
+  Performs element-wise negated fused multiply-add vd[i] = -(vs1[i] * vs2[i]) - vd[i] in SEW-wide floating-point for active elements (vm-masked). Both the product and vd are negated; vd's sign bit is flipped before use as the addend. Inactive elements are undisturbed; rounding uses fcsr.FRM.
 definedBy:
   extension:
     name: Zve32f

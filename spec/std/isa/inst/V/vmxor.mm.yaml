@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmxor.mm
-long_name: No synopsis available
+long_name: "mask register bitwise XOR"
 description: |
-  No description available.
+  Computes the bitwise XOR of mask registers vs2 and vs1 across all VLEN bits starting from vstart, writing the result to vd. Not bounded by vl; the vm bit has no masking effect. When vs1 == vs2 == vd, encodes the vmclr.m pseudoinstruction.
 definedBy:
   extension:
     name: Zve32x

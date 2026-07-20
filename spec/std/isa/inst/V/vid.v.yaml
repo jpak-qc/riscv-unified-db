@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vid.v
-long_name: No synopsis available
+long_name: "write element index into each vector element"
 description: |
-  No description available.
+  Writes the zero-based element index i as a SEW-wide value into each active element i of vd for elements 0 to vl-1. Masking is controlled by the vm bit; inactive elements are undisturbed.
 definedBy:
   extension:
     name: Zve32x

@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vwsubu.wx
-long_name: No synopsis available
+long_name: "widening unsigned subtract: 2xSEW vector minus scalar"
 description: |
-  No description available.
+  Subtracts the zero-extended low-SEW bits of integer register xs1 from each 2*SEW-wide element of vs2, writing the 2*SEW result to vd. Both operands are treated as unsigned; xs1 is zero-extended to 2*SEW before each subtraction. Masked per vm bit; inactive elements are undisturbed.
 definedBy:
   extension:
     name: Zve32x

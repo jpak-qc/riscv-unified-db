@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vredminu.vs
-long_name: No synopsis available
+long_name: "vector unsigned integer minimum reduction into scalar"
 description: |
-  No description available.
+  Reduces active elements of vs2 by unsigned integer minimum at SEW width, initializing the accumulator from element 0 of vs1, and writing the result to element 0 of vd. Elements compare as unsigned integers; inactive elements (vm-masked) are skipped. vstart must be 0.
 definedBy:
   extension:
     name: Zve32x

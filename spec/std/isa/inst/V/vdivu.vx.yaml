@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vdivu.vx
-long_name: No synopsis available
+long_name: "vector unsigned integer divide by scalar, vx"
 description: |
-  No description available.
+  Divides each unsigned SEW-wide vs2 element by the zero-extended scalar xs1, writing the truncated quotient into vd. Divide-by-zero returns all-ones (maximum unsigned value for SEW). Inactive elements are undisturbed.
 definedBy:
   extension:
     name: Zve32x

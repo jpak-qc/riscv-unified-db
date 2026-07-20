@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfmsub.vf
-long_name: No synopsis available
+long_name: "vector fp multiply-subtract, vector-scalar"
 description: |
-  No description available.
+  Performs element-wise fused multiply-subtract vd[i] = fs1 * vd[i] - vs2[i] in SEW-wide floating-point for active elements (vm-masked). vd is both multiplicand and destination; fs1 is NaN-boxed when D is implemented; vs2 is negated and used as the addend. Inactive elements are undisturbed; rounding uses fcsr.FRM.
 definedBy:
   extension:
     name: Zve32f

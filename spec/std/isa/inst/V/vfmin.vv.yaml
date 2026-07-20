@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfmin.vv
-long_name: No synopsis available
+long_name: "vector FP minimum, vector-vector"
 description: |
-  No description available.
+  Computes the IEEE 754-2019 minimum of corresponding elements from vs2 and vs1, writing to vd. When one operand is NaN, the non-NaN value is used; when both are NaN, the instruction writes canonical NaN and raises NV only if either input is a signaling NaN. Signed-zero tie-breaking follows the V-spec rule: min(-0, +0) = -0.
 definedBy:
   extension:
     name: Zve32f

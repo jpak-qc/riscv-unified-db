@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmfle.vf
-long_name: No synopsis available
+long_name: "vector FP less-than-or-equal, vector-scalar"
 description: |
-  No description available.
+  Compares each SEW-wide element of vs2 against scalar FP register fs1 using IEEE 754 signaling less-than-or-equal, writing a 1-bit result into bit i of mask register vd. Any NaN operand raises NV and returns false; when SEW=32 with D present, fs1 is NaN-boxed and treated as canonical NaN if its upper 32 bits are not all-ones. Masked-off elements leave vd undisturbed.
 definedBy:
   extension:
     name: Zve32f

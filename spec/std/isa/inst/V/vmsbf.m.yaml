@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmsbf.m
-long_name: No synopsis available
+long_name: "mask set-before-first set bit"
 description: |
-  No description available.
+  Scans mask register vs2 from element 0 to vl-1, writing 1 to each active element of vd strictly before the first set bit in vs2 and 0 to the first set bit position and all subsequent active elements. Inactive elements (determined by vm) are undisturbed; vstart must be 0.
 definedBy:
   extension:
     name: Zve32x

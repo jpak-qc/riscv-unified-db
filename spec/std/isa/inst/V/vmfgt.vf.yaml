@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmfgt.vf
-long_name: No synopsis available
+long_name: "vector FP greater-than, vector-scalar"
 description: |
-  No description available.
+  Compares each SEW-wide element of vs2 against scalar FP register fs1 using IEEE 754 signaling greater-than, writing a 1-bit result into bit i of mask register vd. Implemented as f_lt(fs1, vs2[i]): returns true when fs1 is strictly less than the vector element. Any NaN operand raises NV and returns false; when SEW=32 with D present, fs1 is NaN-boxed.
 definedBy:
   extension:
     name: Zve32f

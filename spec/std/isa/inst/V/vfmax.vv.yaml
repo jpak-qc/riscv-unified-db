@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfmax.vv
-long_name: No synopsis available
+long_name: "vector FP maximum, vector-vector"
 description: |
-  No description available.
+  Computes the IEEE 754-2019 maximum of corresponding elements from vs2 and vs1, writing to vd. A single NaN operand returns the non-NaN value; both NaN yields canonical NaN; any sNaN input raises NV. Signed-zero: max(-0, +0) = +0.
 definedBy:
   extension:
     name: Zve32f

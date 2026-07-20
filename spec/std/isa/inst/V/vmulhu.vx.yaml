@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmulhu.vx
-long_name: No synopsis available
+long_name: "vector unsigned multiply high half, scalar, vx"
 description: |
-  No description available.
+  Multiplies each unsigned SEW-wide vs2 element by the scalar xs1 (zero-extended to SEW), writing the upper SEW bits of the 2*SEW product into vd. Both operands zero-extend to 2*SEW for the multiplication. Inactive elements under vm mask control are undisturbed.
 definedBy:
   extension:
     name: Zve32x

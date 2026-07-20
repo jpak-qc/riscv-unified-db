@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfwmul.vf
-long_name: No synopsis available
+long_name: "vector FP widening multiply, scalar-vector"
 description: |
-  No description available.
+  Multiplies SEW-wide elements of vs2 by scalar fs1 (NaN-boxed, taken from the low SEW bits of the FP register file), producing 2*SEW-wide results in vd. When D is present, fs1 values with invalid NaN-box encoding are replaced with the canonical NaN before widening. Inactive elements are undisturbed.
 definedBy:
   extension:
     name: Zve64d

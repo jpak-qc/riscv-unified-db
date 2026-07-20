@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vwadd.wx
-long_name: No synopsis available
+long_name: "widening signed add: 2xSEW vector plus scalar"
 description: |
-  No description available.
+  Adds each 2*SEW-wide element of vs2 to the sign-extended low-SEW bits of xs1, writing the 2*SEW result to vd. vs2 holds 2*SEW-wide elements. Masked per vm bit; inactive elements are undisturbed.
 definedBy:
   extension:
     name: Zve32x

@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfsqrt.v
-long_name: No synopsis available
+long_name: "vector FP square root"
 description: |
-  No description available.
+  Computes the IEEE 754 square root of each active element in vs2 and writes the result to vd, using the rounding mode from fcsr.FRM. No second source register is used; only vs2 and an optional mask operand are read.
 definedBy:
   extension:
     name: Zve32f

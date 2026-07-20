@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmv8r.v
-long_name: No synopsis available
+long_name: "move 8 vector registers as a unit"
 description: |
-  No description available.
+  Copies the full VLEN-bit contents of vs2 through vs2+7 into vd through vd+7 as a contiguous 8-register whole-register move. Bypasses vtype validity; vd and vs2 must each be aligned to a multiple of 8. No masking applies.
 definedBy:
   extension:
     name: Zve32x

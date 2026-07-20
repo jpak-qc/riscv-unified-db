@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmfeq.vv
-long_name: No synopsis available
+long_name: "vector FP equal, vector-vector"
 description: |
-  No description available.
+  Compares each SEW-wide FP element of vs2 against the corresponding element of vs1 using an IEEE 754 quiet equality test, writing the 1-bit result into bit i of mask destination vd. Quiet NaN inputs return false without raising NV; only sNaN inputs raise the NV flag. Masked-off elements (when vm=0 for a given lane) leave the corresponding bit in vd undisturbed.
 definedBy:
   extension:
     name: Zve32f

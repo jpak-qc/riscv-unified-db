@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfmerge.vfm
-long_name: No synopsis available
+long_name: "vector FP merge, vector and scalar with mask"
 description: |
-  No description available.
+  Merges vs2 and scalar fs1 element-wise using the v0 mask register as a per-element selector: vd[i] = v0[i] ? fs1 : vs2[i] for all i in [vstart, vl). Unlike typical masked instructions, the vm encoding bit is fixed and v0 is the explicit merge selector rather than an enable predicate, so all elements in [vstart, vl) are written. NaN-boxing of fs1 applies when SEW=32 and D is implemented.
 definedBy:
   extension:
     name: Zve32f

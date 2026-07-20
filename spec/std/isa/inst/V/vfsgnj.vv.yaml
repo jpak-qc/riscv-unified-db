@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfsgnj.vv
-long_name: No synopsis available
+long_name: "vector FP sign injection, vector-vector"
 description: |
-  No description available.
+  Copies each element of vs2 with its sign bit replaced by the sign bit of the corresponding vs1 element, writing the result to vd. Sign injection is purely bitwise: no arithmetic rounding occurs and no FP exceptions are raised. Masked inactive elements are undisturbed.
 definedBy:
   extension:
     name: Zve32f

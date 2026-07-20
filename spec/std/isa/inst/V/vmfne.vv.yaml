@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmfne.vv
-long_name: No synopsis available
+long_name: "vector FP not-equal, vector-vector"
 description: |
-  No description available.
+  Compares each SEW-wide FP element of vs2 against the corresponding element of vs1 for IEEE 754 inequality, writing the logical negation of the quiet-equal result into bit i of mask register vd. Quiet NaN inputs return true (unordered) without raising NV; only sNaN inputs raise the NV flag. Masked-off elements leave vd undisturbed.
 definedBy:
   extension:
     name: Zve32f

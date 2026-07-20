@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmfne.vf
-long_name: No synopsis available
+long_name: "vector FP not-equal, vector-scalar"
 description: |
-  No description available.
+  Compares each SEW-wide FP element of vs2 against scalar FP register fs1 for IEEE 754 inequality, writing the 1-bit not-equal result into bit i of mask register vd. Quiet NaN inputs return true without raising NV; only sNaN inputs raise the NV flag. When SEW=32 with D present, fs1 is NaN-boxed: invalid upper bits force the scalar to canonical NaN.
 definedBy:
   extension:
     name: Zve32f

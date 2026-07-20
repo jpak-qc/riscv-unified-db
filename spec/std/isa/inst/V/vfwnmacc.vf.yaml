@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfwnmacc.vf
-long_name: No synopsis available
+long_name: "vector FP widening negated multiply-accumulate, scalar-vector"
 description: |
-  No description available.
+  Computes vd[i] = -(fs1 * vs2[i]) - vd[i] for each active element, where fs1 is NaN-boxed from the FP register file at SEW width. A single widening FMA combines the negated product and the sign-bit-flipped 2*SEW accumulator from vd. Inactive elements are undisturbed.
 definedBy:
   extension:
     name: Zve64d
