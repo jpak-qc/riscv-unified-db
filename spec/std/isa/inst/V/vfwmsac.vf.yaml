@@ -41,8 +41,8 @@ operation(): |
       if (implemented?(ExtensionName::D) && F[fs1][63:32] != 32'hffffffff) {
         scalar_fs1 = SP_CANONICAL_NAN;
       }
-      Bits<64> a = f32_to_f64(scalar_fs1, rmode);
-      Bits<64> b = f32_to_f64(v_elem_read(vs2, i, state.log2_sew)[31:0], rmode);
+      Bits<64> a = f32_to_f64(scalar_fs1, rmode);  # rmode unused: f32->f64 widening is exact
+      Bits<64> b = f32_to_f64(v_elem_read(vs2, i, state.log2_sew)[31:0], rmode);  # rmode unused: f32->f64 widening is exact
       Bits<64> c = v_elem_read(vd, i, state.log2_sew + 1)[63:0];
       v_elem_write(vd, i, state.log2_sew + 1, {64'b0, f64_muladd(a, b, c, F64MulAddOp::Softfloat_f64_mulAdd_subC, rmode)});
     }

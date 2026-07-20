@@ -37,13 +37,17 @@ operation(): |
   RoundingMode rmode = rm_to_mode(CSR[fcsr].FRM, $encoding);
   for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
     if (v_mask_elem_active?(vm, i)) {
+      # SEW=32 uses f32; SEW=64 uses f64 (legal because Zve64d requires Zve32f).
       if (state.log2_sew == 6) {
         Bits<64> vs1v = v_elem_read(vs1, i, 6)[63:0];
         Bits<64> vs2v = v_elem_read(vs2, i, 6)[63:0];
         Bits<64> vdv  = v_elem_read(vd,  i, 6)[63:0];
         v_elem_write(vd, i, 6, {64'b0, f64_muladd(vs1v, vs2v, vdv, F64MulAddOp::Softfloat_f64_mulAdd_subC, rmode)});
       } else {
-        v_elem_write(vd, i, 5, {96'b0, f32_muladd(v_elem_read(vs1, i, 5)[31:0], v_elem_read(vs2, i, 5)[31:0], v_elem_read(vd, i, 5)[31:0], F32MulAddOp::Softfloat_mulAdd_subC, rmode)});
+        Bits<32> vs1v = v_elem_read(vs1, i, 5)[31:0];
+        Bits<32> vs2v = v_elem_read(vs2, i, 5)[31:0];
+        Bits<32> vdv  = v_elem_read(vd,  i, 5)[31:0];
+        v_elem_write(vd, i, 5, {96'b0, f32_muladd(vs1v, vs2v, vdv, F32MulAddOp::Softfloat_mulAdd_subC, rmode)});
       }
     }
   }

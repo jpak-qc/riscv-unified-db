@@ -39,7 +39,7 @@ operation(): |
     if (v_mask_elem_active?(vm, i)) {
       Bits<32> a = v_elem_read(vs2, i, state.log2_sew)[31:0];
       Bits<32> b = v_elem_read(vs1, i, state.log2_sew)[31:0];
-      Bits<64> res = f64_mul(f32_to_f64(a, rmode), f32_to_f64(b, rmode), rmode);
+      Bits<64> res = f64_mul(f32_to_f64(a, rmode), f32_to_f64(b, rmode), rmode);  # rmode unused: f32->f64 widening is exact
       v_elem_write(vd, i, state.log2_sew + 1, {64'b0, res});
     }
   }

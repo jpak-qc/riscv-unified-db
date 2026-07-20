@@ -42,6 +42,7 @@ operation(): |
   RoundingMode rmode = rm_to_mode(CSR[fcsr].FRM, $encoding);
   if (CSR[vl].VALUE == 0) {
     # V spec §14.3: when vl=0, result is vs1[0] written to vd[0]
+    # SEW=32 uses f32; SEW=64 uses f64 (legal because Zve64d requires Zve32f).
     if (state.log2_sew == 6) {
       v_elem_write(vd, 0, 6, {64'b0, V[vs1][63:0]});
     } else {
@@ -51,6 +52,7 @@ operation(): |
     mark_f_state_dirty();
     mark_v_state_dirty();
   } else {
+    # SEW=32 uses f32; SEW=64 uses f64 (legal because Zve64d requires Zve32f).
     if (state.log2_sew == 6) {
       Bits<64> acc = V[vs1][63:0];
       for (U32 i = 0; i < CSR[vl].VALUE; i++) {

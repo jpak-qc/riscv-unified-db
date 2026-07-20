@@ -34,6 +34,7 @@ operation(): |
   VectorState state = vector_state();
   for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
     if (v_mask_elem_active?(vm, i)) {
+      # SEW=32 uses f32; SEW=64 uses f64 (legal because Zve64d requires Zve32f).
       if (state.log2_sew == 6) {
         Bits<64> a = v_elem_read(vs2, i, 6)[63:0];
         v_elem_write(vd, i, 6, {64'b0, f64_to_i64(a, RoundingMode::RTZ)});

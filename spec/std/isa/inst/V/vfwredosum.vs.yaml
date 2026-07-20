@@ -48,7 +48,7 @@ operation(): |
     for (U32 i = 0; i < CSR[vl].VALUE; i++) {
       if (v_mask_elem_active?(vm, i)) {
         Bits<32> elem32 = v_elem_read(vs2, i, state.log2_sew)[31:0];
-        acc = f64_add(acc, f32_to_f64(elem32, rmode), rmode);
+        acc = f64_add(acc, f32_to_f64(elem32, rmode), rmode);  # rmode unused: f32->f64 widening is exact
       }
     }
     v_elem_write(vd, 0, state.log2_sew + 1, {64'b0, acc});

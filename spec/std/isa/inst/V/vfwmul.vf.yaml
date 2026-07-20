@@ -42,7 +42,7 @@ operation(): |
       if (implemented?(ExtensionName::D) && F[fs1][63:32] != 32'hffffffff) {
         b = SP_CANONICAL_NAN;
       }
-      Bits<64> res = f64_mul(f32_to_f64(a, rmode), f32_to_f64(b, rmode), rmode);
+      Bits<64> res = f64_mul(f32_to_f64(a, rmode), f32_to_f64(b, rmode), rmode);  # rmode unused: f32->f64 widening is exact
       v_elem_write(vd, i, state.log2_sew + 1, {64'b0, res});
     }
   }
