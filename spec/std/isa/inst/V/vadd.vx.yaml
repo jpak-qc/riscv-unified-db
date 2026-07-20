@@ -11,7 +11,7 @@ description: |
   Adds elements from vector register vs2 to scalar register rs1 according to mask vm and stores results in vector register vd. Element width is determined by SEW setting.
 definedBy:
   extension:
-    name: Zvl32b
+    name: Zve32x
 assembly: vd, vs2, xs1, vm
 encoding:
   match: 000000-----------100-----1010111

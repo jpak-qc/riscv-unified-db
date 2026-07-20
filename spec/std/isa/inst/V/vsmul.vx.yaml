@@ -11,7 +11,7 @@ description: |
   Performs signed fixed-point fractional multiplication of elements from vector register vs2 by scalar register xs1: the full 2*SEW product is rounded (per vxrm) and shifted right by SEW-1 to keep the high SEW bits, storing results in vector register vd using vector mask vm. Only the INT_MIN*INT_MIN case saturates (to INT_MAX), setting the vxsat flag.
 definedBy:
   extension:
-    name: Zvl32b
+    name: Zve32x
 assembly: vd, vs2, xs1, vm
 encoding:
   match: 100111-----------100-----1010111

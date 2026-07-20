@@ -11,7 +11,7 @@ description: |
   Subtracts scalar rs1 from elements of vs2 according to mask vm and stores results in vd. Element width is determined by SEW setting.
 definedBy:
   extension:
-    name: Zvl32b
+    name: Zve32x
 assembly: vd, vs2, xs1, vm
 encoding:
   match: 000010-----------100-----1010111

@@ -11,7 +11,7 @@ description: |
   Performs signed saturating subtraction (vs2 - xs1) on elements from vector register vs2 and scalar register xs1 and stores results in vector register vd, using vector mask vm. Results that overflow the signed SEW-bit range are clamped and the vxsat flag is set.
 definedBy:
   extension:
-    name: Zvl32b
+    name: Zve32x
 assembly: vd, vs2, xs1, vm
 encoding:
   match: 100011-----------100-----1010111

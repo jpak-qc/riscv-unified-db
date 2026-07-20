@@ -11,7 +11,7 @@ description: |
   Loads 8 segments of 32-bit elements from memory starting at address in xs1 register with stride in xs2, using vector mask vm, and stores results in vector register vd. The effective element width is 32 bits.
 definedBy:
   extension:
-    name: Zvl32b
+    name: Zve32x
 assembly: vd, (xs1)
 encoding:
   match: 111000101000-----110-----0000111

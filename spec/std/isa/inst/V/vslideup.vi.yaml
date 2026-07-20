@@ -11,7 +11,7 @@ description: |
   Slides elements in vector register vs2 up by 1 position, inserting immediate value at the bottom, and stores results in vector register vd, using vector mask vm.
 definedBy:
   extension:
-    name: Zvl32b
+    name: Zve32x
 assembly: vd, vs2, imm, vm
 encoding:
   match: 001110-----------011-----1010111

@@ -11,7 +11,7 @@ description: |
   Zero-extends elements from vector register vs2 by a factor of 2 and stores results in vector register vd, using vector mask vm. The operation extends SEW to 2×SEW.
 definedBy:
   extension:
-    name: Zvl32b
+    name: Zve32x
 assembly: vd, vs2, vm
 encoding:
   match: 010010------00110010-----1010111

@@ -15,7 +15,7 @@ description: |
   regardless of vstart. The vstart CSR is reset to 0 after execution.
 definedBy:
   extension:
-    name: Zvl32b
+    name: Zve32x
 assembly: xd, vs2
 encoding:
   match: 0100001-----00000010-----1010111

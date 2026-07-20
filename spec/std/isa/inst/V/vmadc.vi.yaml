@@ -11,7 +11,7 @@ description: |
   Performs multiply-add operation on elements from vector register vs2 and immediate value, adds the carry-in from vector register vs3, and stores results in vector register vd, using vector mask vm.
 definedBy:
   extension:
-    name: Zvl32b
+    name: Zve32x
 assembly: vd, vs2, imm
 encoding:
   match: 0100011----------011-----1010111

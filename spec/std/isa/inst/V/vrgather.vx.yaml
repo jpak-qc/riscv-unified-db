@@ -11,7 +11,7 @@ description: |
   Gathers elements from vector register vs2 using scalar index from register xs1 and stores results in vector register vd, using vector mask vm. This operation performs indexed element selection.
 definedBy:
   extension:
-    name: Zvl32b
+    name: Zve32x
 assembly: vd, vs2, xs1, vm
 encoding:
   match: 001100-----------100-----1010111

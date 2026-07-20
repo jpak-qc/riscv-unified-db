@@ -11,7 +11,7 @@ description: |
   Performs widening signed-unsigned multiplication on elements from vector registers vs1 (signed) and vs2 (unsigned), adds the result to elements from vector register vd, and stores the final results in vector register vd, using vector mask vm.
 definedBy:
   extension:
-    name: Zvl32b
+    name: Zve32x
 assembly: vd, vs1, vs2, vm
 encoding:
   match: 111111-----------010-----1010111

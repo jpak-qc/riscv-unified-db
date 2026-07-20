@@ -11,7 +11,7 @@ description: |
   Sets the vector length register vl and vector type register vtype based on immediate values. Configures SEW, LMUL, and other vector parameters for subsequent vector operations.
 definedBy:
   extension:
-    name: Zvl32b
+    name: Zve32x
 assembly: xd, xs1, vtypei
 encoding:
   match: 0----------------111-----1010111

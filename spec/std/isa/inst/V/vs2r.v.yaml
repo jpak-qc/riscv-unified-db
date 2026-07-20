@@ -11,7 +11,7 @@ description: |
   Stores 2 elements from vector register vs2 to memory starting at address in xs1 register, using vector mask vm. This operation stores elements with register stride.
 definedBy:
   extension:
-    name: Zvl32b
+    name: Zve32x
 assembly: vs3, (xs1)
 encoding:
   match: 001000101000-----000-----0100111

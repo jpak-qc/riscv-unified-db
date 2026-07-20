@@ -11,7 +11,7 @@ description: |
   Loads a vector mask from memory starting at address in xs1 register and stores it in vector register vd. This operation is used to load previously saved vector masks.
 definedBy:
   extension:
-    name: Zvl32b
+    name: Zve32x
 assembly: vd, (xs1)
 encoding:
   match: 000000101011-----000-----0000111

@@ -11,7 +11,7 @@ description: |
   Subtracts scalar register xs1 from elements of vector register vs2 (sign-extended), rounds per vxrm, and shifts right by 1, storing the SEW-wide signed average in vd using vector mask vm. Does not affect vxsat.
 definedBy:
   extension:
-    name: Zvl32b
+    name: Zve32x
 assembly: vd, vs2, xs1, vm
 encoding:
   match: 001011-----------110-----1010111

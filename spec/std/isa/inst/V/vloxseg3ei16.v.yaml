@@ -11,7 +11,7 @@ description: |
   Loads 3 segments of 16-bit elements from memory using ordered access pattern with index register vs1, starting at address in xs1 register, using vector mask vm, and stores results in vector register vd. The effective element width is 16 bits.
 definedBy:
   extension:
-    name: Zvl32b
+    name: Zve32x
 assembly: vd, (xs1), vs2, vm
 encoding:
   match: 010011-----------101-----0000111

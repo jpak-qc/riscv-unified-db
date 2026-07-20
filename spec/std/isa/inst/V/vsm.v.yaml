@@ -11,7 +11,7 @@ description: |
   Stores a vector mask from vector register vs2 to memory starting at address in xs1 register. This operation is used to save vector masks for later restoration.
 definedBy:
   extension:
-    name: Zvl32b
+    name: Zve32x
 assembly: vs3, (xs1)
 encoding:
   match: 000000101011-----000-----0100111

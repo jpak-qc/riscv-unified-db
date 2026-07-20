@@ -11,7 +11,7 @@ description: |
   Performs logical left shift on elements from vs2 using shift amount from rs1, according to mask vm, and stores results in vd. Only the low lg2(SEW) bits of the shift amount are used. Supports vector masking and follows vector tail policy.
 definedBy:
   extension:
-    name: Zvl32b
+    name: Zve32x
 assembly: vd, vs2, xs1, vm
 encoding:
   match: 100101-----------100-----1010111

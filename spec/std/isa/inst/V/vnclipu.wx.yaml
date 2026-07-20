@@ -11,7 +11,7 @@ description: |
   Rounds and logically right-shifts the 2*SEW-wide elements of vector register vs2 by the shift amount in scalar register xs1 (masked to log2(2*SEW) bits), then clips the result to the unsigned SEW-bit range, storing in vector register vd using vector mask vm. Sets vxsat if any element is clamped.
 definedBy:
   extension:
-    name: Zvl32b
+    name: Zve32x
 assembly: vd, vs2, xs1, vm
 encoding:
   match: 101110-----------100-----1010111

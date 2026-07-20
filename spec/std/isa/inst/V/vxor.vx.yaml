@@ -11,7 +11,7 @@ description: |
   Performs bitwise XOR operation on elements from vector register vs2 and scalar register xs1 and stores results in vector register vd, using vector mask vm.
 definedBy:
   extension:
-    name: Zvl32b
+    name: Zve32x
 assembly: vd, vs2, xs1, vm
 encoding:
   match: 001011-----------100-----1010111

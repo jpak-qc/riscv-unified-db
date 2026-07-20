@@ -14,7 +14,7 @@ description: |
   to i and stops without raising. The effective element width is 64 bits.
 definedBy:
   extension:
-    name: Zvl32b
+    name: Zve32x
 assembly: vd, (xs1), vm
 encoding:
   match: 010000-10000-----111-----0000111

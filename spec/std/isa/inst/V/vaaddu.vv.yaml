@@ -11,7 +11,7 @@ description: |
   Adds elements from vector registers vs2 and vs1 (zero-extended), rounds per vxrm, and shifts right by 1, storing the SEW-wide unsigned average in vd using vector mask vm. Does not affect vxsat.
 definedBy:
   extension:
-    name: Zvl32b
+    name: Zve32x
 assembly: vd, vs2, vs1, vm
 encoding:
   match: 001000-----------010-----1010111

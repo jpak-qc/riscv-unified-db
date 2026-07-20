@@ -11,7 +11,7 @@ description: |
   Performs bitwise OR operation on elements from vector register vs2 and immediate value and stores results in vector register vd, using vector mask vm.
 definedBy:
   extension:
-    name: Zvl32b
+    name: Zve32x
 assembly: vd, vs2, imm, vm
 encoding:
   match: 001010-----------011-----1010111

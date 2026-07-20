@@ -11,7 +11,7 @@ description: |
   Performs signed saturating addition on elements from vector registers vs2 and vs1 and stores results in vector register vd, using vector mask vm. Results that overflow the signed SEW-bit range are clamped to the range endpoint and the vxsat flag is set.
 definedBy:
   extension:
-    name: Zvl32b
+    name: Zve32x
 assembly: vd, vs2, vs1, vm
 encoding:
   match: 100001-----------000-----1010111

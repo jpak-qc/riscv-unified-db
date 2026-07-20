@@ -11,7 +11,7 @@ description: |
   Performs a rounding arithmetic right shift on each element of vector register vs2 by the shift amount in the low log2(SEW) bits of vs1, sign-preserving, rounding the discarded bits per vxrm, storing results in vector register vd using vector mask vm. This is a fixed-point scaling shift and does not affect vxsat.
 definedBy:
   extension:
-    name: Zvl32b
+    name: Zve32x
 assembly: vd, vs2, vs1, vm
 encoding:
   match: 101011-----------000-----1010111
