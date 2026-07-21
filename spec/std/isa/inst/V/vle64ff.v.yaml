@@ -47,7 +47,13 @@ operation(): |
       PrivilegeMode fmode;
       XReg ftval;
 
-      if (CSR[misa].S == 1) {
+      if (!VECTOR_LS_MISALIGNED_LEGAL && !is_naturally_aligned(64, elem_addr)) {
+        faulted = true;
+        fcode = ExceptionCode::LoadAddressMisaligned;
+        fmode = mode();
+        ftval = elem_addr;
+      }
+      if (!faulted && CSR[misa].S == 1) {
         TranslationFaultResult tprobe = translate_probe(elem_addr, MemoryOperation::Read, effective_ldst_mode(), $encoding);
         if (tprobe.has_fault) {
           faulted = true;
@@ -57,7 +63,7 @@ operation(): |
         } else {
           tr = tprobe.result;
         }
-      } else {
+      } else if (!faulted) {
         tr.paddr = elem_addr;
       }
 

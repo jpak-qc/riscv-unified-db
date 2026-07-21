@@ -43,7 +43,9 @@ operation(): |
       for (U32 j = 0; j < 8; j++) {
         U32 reg_off = i / elems_per_reg;
         U32 start_bit_f = (i % elems_per_reg) * 32;
-        V[vd + j * emul_reg + reg_off][start_bit_f + 31:start_bit_f] = read_memory(32, virtual_address + i * stride + j * 4, $encoding)[31:0];
+        XReg elem_addr = virtual_address + i * stride + j * 4;
+        v_check_load_alignment(32, elem_addr);
+        V[vd + j * emul_reg + reg_off][start_bit_f + 31:start_bit_f] = read_memory(32, elem_addr, $encoding)[31:0];
       }
     }
   }

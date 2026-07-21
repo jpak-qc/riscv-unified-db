@@ -36,7 +36,9 @@ operation(): |
   XReg stride = X[xs2];
   for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
     if (v_mask_elem_active?(vm, i)) {
-      v_elem_write(vd, i, 5, {96'b0, read_memory(32, virtual_address + i * stride, $encoding)[31:0]});
+      XReg elem_addr = virtual_address + i * stride;
+      v_check_load_alignment(32, elem_addr);
+      v_elem_write(vd, i, 5, {96'b0, read_memory(32, elem_addr, $encoding)[31:0]});
     }
   }
   CSR[vstart].VALUE = 0;

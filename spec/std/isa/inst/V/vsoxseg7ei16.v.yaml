@@ -49,10 +49,13 @@ operation(): |
         if (state.sew == 8) {
           write_memory(8, addr, data[7:0], $encoding);
         } else if (state.sew == 16) {
+          v_check_store_alignment(16, addr);
           write_memory(16, addr, data[15:0], $encoding);
         } else if (state.sew == 32) {
+          v_check_store_alignment(32, addr);
           write_memory(32, addr, data[31:0], $encoding);
         } else {
+          v_check_store_alignment(64, addr);
           write_memory(64, addr, data[63:0], $encoding);
         }
       }

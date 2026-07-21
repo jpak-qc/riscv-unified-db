@@ -59,7 +59,13 @@ operation(): |
             # Field 0: probe translate + PMP/PMA
             if (element_faulted == false) {
               XReg addr_0 = virtual_address + (i * 6 + 0) * 8;
-              if (CSR[misa].S == 1) {
+              if (!VECTOR_LS_MISALIGNED_LEGAL && !is_naturally_aligned(64, addr_0)) {
+                element_faulted = true;
+                fcode = ExceptionCode::LoadAddressMisaligned;
+                fmode = mode();
+                ftval = addr_0;
+              }
+              if (!element_faulted && CSR[misa].S == 1) {
                 TranslationFaultResult tprobe_0 = translate_probe(addr_0, MemoryOperation::Read, ldst_mode, $encoding);
                 if (tprobe_0.has_fault) {
                   element_faulted = true;
@@ -69,7 +75,7 @@ operation(): |
                 } else {
                   tr_0 = tprobe_0.result;
                 }
-              } else {
+              } else if (!element_faulted) {
                 tr_0.paddr = addr_0;
               }
               if (element_faulted == false) {
@@ -85,7 +91,13 @@ operation(): |
             # Field 1: probe translate + PMP/PMA
             if (element_faulted == false) {
               XReg addr_1 = virtual_address + (i * 6 + 1) * 8;
-              if (CSR[misa].S == 1) {
+              if (!VECTOR_LS_MISALIGNED_LEGAL && !is_naturally_aligned(64, addr_1)) {
+                element_faulted = true;
+                fcode = ExceptionCode::LoadAddressMisaligned;
+                fmode = mode();
+                ftval = addr_1;
+              }
+              if (!element_faulted && CSR[misa].S == 1) {
                 TranslationFaultResult tprobe_1 = translate_probe(addr_1, MemoryOperation::Read, ldst_mode, $encoding);
                 if (tprobe_1.has_fault) {
                   element_faulted = true;
@@ -95,7 +107,7 @@ operation(): |
                 } else {
                   tr_1 = tprobe_1.result;
                 }
-              } else {
+              } else if (!element_faulted) {
                 tr_1.paddr = addr_1;
               }
               if (element_faulted == false) {
@@ -111,7 +123,13 @@ operation(): |
             # Field 2: probe translate + PMP/PMA
             if (element_faulted == false) {
               XReg addr_2 = virtual_address + (i * 6 + 2) * 8;
-              if (CSR[misa].S == 1) {
+              if (!VECTOR_LS_MISALIGNED_LEGAL && !is_naturally_aligned(64, addr_2)) {
+                element_faulted = true;
+                fcode = ExceptionCode::LoadAddressMisaligned;
+                fmode = mode();
+                ftval = addr_2;
+              }
+              if (!element_faulted && CSR[misa].S == 1) {
                 TranslationFaultResult tprobe_2 = translate_probe(addr_2, MemoryOperation::Read, ldst_mode, $encoding);
                 if (tprobe_2.has_fault) {
                   element_faulted = true;
@@ -121,7 +139,7 @@ operation(): |
                 } else {
                   tr_2 = tprobe_2.result;
                 }
-              } else {
+              } else if (!element_faulted) {
                 tr_2.paddr = addr_2;
               }
               if (element_faulted == false) {
@@ -137,7 +155,13 @@ operation(): |
             # Field 3: probe translate + PMP/PMA
             if (element_faulted == false) {
               XReg addr_3 = virtual_address + (i * 6 + 3) * 8;
-              if (CSR[misa].S == 1) {
+              if (!VECTOR_LS_MISALIGNED_LEGAL && !is_naturally_aligned(64, addr_3)) {
+                element_faulted = true;
+                fcode = ExceptionCode::LoadAddressMisaligned;
+                fmode = mode();
+                ftval = addr_3;
+              }
+              if (!element_faulted && CSR[misa].S == 1) {
                 TranslationFaultResult tprobe_3 = translate_probe(addr_3, MemoryOperation::Read, ldst_mode, $encoding);
                 if (tprobe_3.has_fault) {
                   element_faulted = true;
@@ -147,7 +171,7 @@ operation(): |
                 } else {
                   tr_3 = tprobe_3.result;
                 }
-              } else {
+              } else if (!element_faulted) {
                 tr_3.paddr = addr_3;
               }
               if (element_faulted == false) {
@@ -163,7 +187,13 @@ operation(): |
             # Field 4: probe translate + PMP/PMA
             if (element_faulted == false) {
               XReg addr_4 = virtual_address + (i * 6 + 4) * 8;
-              if (CSR[misa].S == 1) {
+              if (!VECTOR_LS_MISALIGNED_LEGAL && !is_naturally_aligned(64, addr_4)) {
+                element_faulted = true;
+                fcode = ExceptionCode::LoadAddressMisaligned;
+                fmode = mode();
+                ftval = addr_4;
+              }
+              if (!element_faulted && CSR[misa].S == 1) {
                 TranslationFaultResult tprobe_4 = translate_probe(addr_4, MemoryOperation::Read, ldst_mode, $encoding);
                 if (tprobe_4.has_fault) {
                   element_faulted = true;
@@ -173,7 +203,7 @@ operation(): |
                 } else {
                   tr_4 = tprobe_4.result;
                 }
-              } else {
+              } else if (!element_faulted) {
                 tr_4.paddr = addr_4;
               }
               if (element_faulted == false) {
@@ -189,7 +219,13 @@ operation(): |
             # Field 5: probe translate + PMP/PMA
             if (element_faulted == false) {
               XReg addr_5 = virtual_address + (i * 6 + 5) * 8;
-              if (CSR[misa].S == 1) {
+              if (!VECTOR_LS_MISALIGNED_LEGAL && !is_naturally_aligned(64, addr_5)) {
+                element_faulted = true;
+                fcode = ExceptionCode::LoadAddressMisaligned;
+                fmode = mode();
+                ftval = addr_5;
+              }
+              if (!element_faulted && CSR[misa].S == 1) {
                 TranslationFaultResult tprobe_5 = translate_probe(addr_5, MemoryOperation::Read, ldst_mode, $encoding);
                 if (tprobe_5.has_fault) {
                   element_faulted = true;
@@ -199,7 +235,7 @@ operation(): |
                 } else {
                   tr_5 = tprobe_5.result;
                 }
-              } else {
+              } else if (!element_faulted) {
                 tr_5.paddr = addr_5;
               }
               if (element_faulted == false) {

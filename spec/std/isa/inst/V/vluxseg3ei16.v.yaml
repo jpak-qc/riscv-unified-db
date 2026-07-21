@@ -47,10 +47,13 @@ operation(): |
         if (state.sew == 8) {
           V[vd + j * emul_reg + reg_off][start_bit_f + 7:start_bit_f] = read_memory(8, addr, $encoding)[7:0];
         } else if (state.sew == 16) {
+          v_check_load_alignment(16, addr);
           V[vd + j * emul_reg + reg_off][start_bit_f + 15:start_bit_f] = read_memory(16, addr, $encoding)[15:0];
         } else if (state.sew == 32) {
+          v_check_load_alignment(32, addr);
           V[vd + j * emul_reg + reg_off][start_bit_f + 31:start_bit_f] = read_memory(32, addr, $encoding)[31:0];
         } else {
+          v_check_load_alignment(64, addr);
           V[vd + j * emul_reg + reg_off][start_bit_f + 63:start_bit_f] = read_memory(64, addr, $encoding)[63:0];
         }
       }

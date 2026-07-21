@@ -265,3 +265,35 @@ function v_mask_elem_active? {
     return (vm == 1'b1) || (V[0][idx] == 1'b1);
   }
 }
+
+function v_check_load_alignment {
+  arguments
+    U32 eew,
+    XReg addr
+  description {
+    Raises LoadAddressMisaligned if the element address is not naturally
+    aligned to eew bits and VECTOR_LS_MISALIGNED_LEGAL is false.
+    EEW=8 is always naturally aligned (byte addresses are always aligned).
+  }
+  body {
+    if (!VECTOR_LS_MISALIGNED_LEGAL && !is_naturally_aligned(eew, addr)) {
+      raise(ExceptionCode::LoadAddressMisaligned, mode(), addr);
+    }
+  }
+}
+
+function v_check_store_alignment {
+  arguments
+    U32 eew,
+    XReg addr
+  description {
+    Raises StoreAmoAddressMisaligned if the element address is not naturally
+    aligned to eew bits and VECTOR_LS_MISALIGNED_LEGAL is false.
+    EEW=8 is always naturally aligned (byte addresses are always aligned).
+  }
+  body {
+    if (!VECTOR_LS_MISALIGNED_LEGAL && !is_naturally_aligned(eew, addr)) {
+      raise(ExceptionCode::StoreAmoAddressMisaligned, mode(), addr);
+    }
+  }
+}
