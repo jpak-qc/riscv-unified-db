@@ -1525,7 +1525,11 @@ function softfloat_subMagsF32 {
 
       # check if A is infinity or NaN
       if (expA == 8'hFF) {
-        set_fp_flag(FpFlag::NV);
+        if ((sigA != 8'd0) || (sigB != 8'd0)) {
+          if (is_sp_signaling_nan?(a) || is_sp_signaling_nan?(b)) { set_fp_flag(FpFlag::NV); }
+          return SP_CANONICAL_NAN;
+        }
+        set_fp_flag(FpFlag::NV);   # inf - inf is always invalid
         return SP_CANONICAL_NAN;
       }
 
@@ -2547,7 +2551,11 @@ function softfloat_subMagsF64 {
 
     if (expDiff == 16'd0) {
       if (expA == 11'h7FF) {
-        set_fp_flag(FpFlag::NV);
+        if ((sigA != 0) || (sigB != 0)) {
+          if (is_dp_signaling_nan?(a) || is_dp_signaling_nan?(b)) { set_fp_flag(FpFlag::NV); }
+          return DP_CANONICAL_NAN;
+        }
+        set_fp_flag(FpFlag::NV);   # inf - inf is always invalid
         return DP_CANONICAL_NAN;
       }
 
