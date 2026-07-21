@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmulhu.vv
-long_name: "vector unsigned multiply high half, vv"
+long_name: "Vector unsigned multiply high half, vv"
 description: |
   Multiplies unsigned SEW-wide elements of vs2 and vs1, writing the upper SEW bits of the 2*SEW product into vd. Both operands zero-extend to 2*SEW before multiplication. Inactive elements under vm mask control are undisturbed.
 definedBy:

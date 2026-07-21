@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vwredsumu.vs
-long_name: "vector widening unsigned integer sum reduction into scalar"
+long_name: "Vector widening unsigned integer sum reduction into scalar"
 description: |
   Reduces active SEW-wide elements of vs2 by unsigned addition into a 2*SEW accumulator, zero-extending each vs2 element before adding. The lower 2*SEW bits of vs1[0] initialize the accumulator; the 2*SEW result writes to element 0 of vd. Inactive elements (vm-masked) are skipped; vstart must be 0.
 definedBy:

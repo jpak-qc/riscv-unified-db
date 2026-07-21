@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfmacc.vv
-long_name: "vector fp multiply-accumulate, vector-vector"
+long_name: "Vector fp multiply-accumulate, vector-vector"
 description: |
   Performs element-wise fused multiply-add vd[i] = vs1[i] * vs2[i] + vd[i] in SEW-wide floating-point for active elements (vm-masked). vd is both accumulator and destination; rounding uses fcsr.FRM; inactive elements are undisturbed.
 definedBy:

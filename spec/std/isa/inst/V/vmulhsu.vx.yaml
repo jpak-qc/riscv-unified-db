@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmulhsu.vx
-long_name: "vector signed-by-unsigned multiply high half, scalar, vx"
+long_name: "Vector signed-by-unsigned multiply high half, scalar, vx"
 description: |
   Multiplies each signed vs2 element by the unsigned scalar xs1 (zero-extended to SEW), writing the upper SEW bits of the 2*SEW product into vd. vs2 sign-extends and xs1 zero-extends for the mixed-sign multiplication. Inactive elements under vm mask control are undisturbed.
 definedBy:

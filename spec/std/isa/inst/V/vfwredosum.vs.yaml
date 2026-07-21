@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfwredosum.vs
-long_name: "vector FP widening ordered reduction sum"
+long_name: "Vector FP widening ordered reduction sum"
 description: |
   Performs an ordered widening FP reduction over SEW-wide elements of vs2, accumulating into a 2*SEW running sum initialized from vs1[0] and writing the final result to vd[0]. The strict left-to-right evaluation order prohibits reassociation that would alter IEEE 754 rounding results. Masked elements are excluded; when vl=0, vs1[0] passes through unchanged to vd[0].
 definedBy:

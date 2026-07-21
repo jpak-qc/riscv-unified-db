@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmax.vv
-long_name: "vector signed integer maximum, vector-vector"
+long_name: "Vector signed integer maximum, vector-vector"
 description: |
   Writes max(vs2[i], vs1[i]) into vd[i] for each active SEW-wide element using signed comparison. Both operands are treated as two's-complement integers of SEW bits. Inactive elements are undisturbed.
 definedBy:

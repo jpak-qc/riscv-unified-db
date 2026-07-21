@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmacc.vx
-long_name: "vector integer multiply-accumulate, vector-scalar"
+long_name: "Vector integer multiply-accumulate, vector-scalar"
 description: |
   Computes vd[i] = vd[i] + xs1 * vs2[i] for each active SEW-wide element; xs1 is the low SEW bits of the integer register. Inactive elements are undisturbed.
 definedBy:

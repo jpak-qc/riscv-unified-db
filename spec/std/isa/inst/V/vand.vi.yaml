@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vand.vi
-long_name: "bitwise AND of vector elements and sign-extended immediate"
+long_name: "Bitwise AND of vector elements and sign-extended immediate"
 description: |
   Computes the bitwise AND of each SEW-wide element of vs2 with a 5-bit sign-extended immediate, writing the result to vd. The immediate is sign-extended to SEW width before the operation. Masked per vm bit; inactive elements are undisturbed.
 definedBy:

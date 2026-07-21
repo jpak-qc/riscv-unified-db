@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfredmin.vs
-long_name: "vector FP reduction minimum into scalar"
+long_name: "Vector FP reduction minimum into scalar"
 description: |
   Reduces active elements of vs2 by IEEE 754 fmin, seeded with vs1[0], and writes the result to vd[0]. NaN propagation mirrors vfredmax: a single NaN operand yields the other operand, dual NaN yields canonical NaN, and any sNaN sets NV.
 definedBy:

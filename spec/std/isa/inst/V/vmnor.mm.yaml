@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmnor.mm
-long_name: "mask register bitwise NOR"
+long_name: "Mask register bitwise NOR"
 description: |
   Computes the bitwise complement of OR of mask registers vs2 and vs1 across all VLEN bits starting from vstart, writing the result to vd. Not bounded by vl; the vm bit has no masking effect.
 definedBy:

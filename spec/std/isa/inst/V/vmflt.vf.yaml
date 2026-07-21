@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmflt.vf
-long_name: "vector FP less-than, vector-scalar"
+long_name: "Vector FP less-than, vector-scalar"
 description: |
   Compares each SEW-wide element of vs2 against scalar FP register fs1 using IEEE 754 signaling less-than, writing a 1-bit result into bit i of mask register vd. Any NaN operand raises NV and returns false; when SEW=32 with D present, fs1 is NaN-boxed and treated as canonical NaN if its upper 32 bits are not all-ones. Masked-off elements leave vd undisturbed.
 definedBy:

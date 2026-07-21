@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmv2r.v
-long_name: "move 2 vector registers as a unit"
+long_name: "Move 2 vector registers as a unit"
 description: |
   Copies the full VLEN-bit contents of vs2 and vs2+1 into vd and vd+1 as a contiguous 2-register whole-register move. Bypasses vtype validity; vd and vs2 must each be aligned to a multiple of 2. No masking applies.
 definedBy:

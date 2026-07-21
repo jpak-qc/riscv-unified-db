@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmsof.m
-long_name: "mask set-only-first set bit"
+long_name: "Mask set-only-first set bit"
 description: |
   Scans mask register vs2 from element 0 to vl-1 and writes 1 only to the active element of vd at the index of the first set bit in vs2; all other active elements are written 0. Inactive elements (determined by vm) are undisturbed; vstart must be 0.
 definedBy:

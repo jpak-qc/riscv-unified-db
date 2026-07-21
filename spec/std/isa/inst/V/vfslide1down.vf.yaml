@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfslide1down.vf
-long_name: "vector FP slide down by one and insert scalar"
+long_name: "Vector FP slide down by one and insert scalar"
 description: |
   Shifts active elements of vs2 toward lower indices by one, writing vs2[i+1] into vd[i] for i < vl-1; the last active element (vd[vl-1]) receives the scalar value from FP register fs1. The same NaN-boxing rule as vfslide1up applies to fs1 when SEW=32 and D is implemented.
 definedBy:

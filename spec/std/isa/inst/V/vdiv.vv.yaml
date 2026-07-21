@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vdiv.vv
-long_name: "vector signed integer divide, vv"
+long_name: "Vector signed integer divide, vv"
 description: |
   Divides each signed SEW-wide vs2 element by the corresponding signed vs1 element, writing the truncated-toward-zero quotient into vd. Divide-by-zero produces all-ones (-1 in two's complement); signed overflow (INT_MIN divided by -1) saturates to INT_MIN. Inactive elements under vm mask control are undisturbed.
 definedBy:

@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: viota.m
-long_name: "exclusive prefix popcount of mask register"
+long_name: "Exclusive prefix popcount of mask register"
 description: |
   For each active element i of vd (0 to vl-1), writes the count of set bits in vs2[0..i-1] (the exclusive prefix popcount) as a SEW-wide integer. Active elements are optionally masked by vm; inactive elements are undisturbed. vstart must be 0.
 definedBy:

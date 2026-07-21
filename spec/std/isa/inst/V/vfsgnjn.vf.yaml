@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfsgnjn.vf
-long_name: "vector FP negated sign injection, vector-scalar"
+long_name: "Vector FP negated sign injection, vector-scalar"
 description: |
   Copies each element of vs2 with its sign bit replaced by the logical NOT of scalar fs1's sign bit, writing to vd. NaN-boxing of fs1 applies when SEW=32 and D is implemented; an improperly boxed fs1 yields canonical NaN as the sign source. No FP exceptions are raised.
 definedBy:

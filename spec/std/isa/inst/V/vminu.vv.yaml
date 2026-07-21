@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vminu.vv
-long_name: "vector unsigned integer minimum, vector-vector"
+long_name: "Vector unsigned integer minimum, vector-vector"
 description: |
   Writes min(vs2[i], vs1[i]) into vd[i] for each active SEW-wide element using unsigned comparison. Both operands are treated as unsigned integers of SEW bits. Inactive elements are undisturbed.
 definedBy:

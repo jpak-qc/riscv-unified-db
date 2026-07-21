@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfwmsac.vf
-long_name: "vector FP widening multiply-subtract accumulator, scalar-vector"
+long_name: "Vector FP widening multiply-subtract accumulator, scalar-vector"
 description: |
   Computes vd[i] = fs1 * vs2[i] - vd[i] for each active element, where fs1 is NaN-boxed from the low SEW bits of the FP register file. The existing 2*SEW accumulator in vd is subtracted from the widened product; the result is stored at 2*SEW width. Inactive elements are undisturbed.
 definedBy:

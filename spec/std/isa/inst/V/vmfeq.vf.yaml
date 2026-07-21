@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmfeq.vf
-long_name: "vector FP equal, vector-scalar"
+long_name: "Vector FP equal, vector-scalar"
 description: |
   Compares each SEW-wide FP element of vs2 against scalar FP register fs1 using an IEEE 754 quiet equality test, writing the 1-bit result into bit i of mask register vd. When SEW=32 and the D extension is present, fs1 is NaN-boxed: if bits [63:32] are not all-ones, fs1 is treated as the canonical NaN. Masked-off elements leave vd undisturbed.
 definedBy:

@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmv1r.v
-long_name: "move 1 vector register as a unit"
+long_name: "Move 1 vector register as a unit"
 description: |
   Copies all VLEN bits of vs2 into vd as a whole-register move. Bypasses vtype validity checks (vill-exempt) and operates independently of vl, vstart, SEW, and LMUL. No masking applies.
 definedBy:

@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfwnmsac.vf
-long_name: "vector FP widening negated multiply-subtract accumulator, scalar-vector"
+long_name: "Vector FP widening negated multiply-subtract accumulator, scalar-vector"
 description: |
   Computes vd[i] = -(fs1 * vs2[i]) + vd[i] for each active element, where fs1 is a NaN-boxed SEW-wide scalar. The negated widened product of fs1 and each vs2 element adds to the 2*SEW accumulator in vd. Inactive elements are undisturbed.
 definedBy:

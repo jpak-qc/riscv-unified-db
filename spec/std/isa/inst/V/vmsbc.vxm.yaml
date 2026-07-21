@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmsbc.vxm
-long_name: "vector subtract borrow out, scalar operand with carry-in v0"
+long_name: "Vector subtract borrow out, scalar operand with carry-in v0"
 description: |
   Produces the borrow bit of vs2[i] - xs1 - v0[i] for each element, writing a single result bit per element into vd. vd[i] = 1 if vs2[i] < xs1, or if vs2[i] == xs1 and v0[i] == 1; otherwise 0. Used for chained multi-word unsigned subtraction; always operates on the full [vstart, vl) range without vm masking.
 definedBy:

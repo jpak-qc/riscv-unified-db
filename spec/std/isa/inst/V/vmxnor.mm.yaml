@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmxnor.mm
-long_name: "mask register bitwise XNOR"
+long_name: "Mask register bitwise XNOR"
 description: |
   Computes the bitwise complement of XOR of mask registers vs2 and vs1 across all VLEN bits starting from vstart, writing the result to vd. Not bounded by vl; the vm bit has no masking effect. When vs1 == vs2 == vd, encodes the vmset.m pseudoinstruction.
 definedBy:

@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfwmul.vv
-long_name: "vector FP widening multiply, vector-vector"
+long_name: "Vector FP widening multiply, vector-vector"
 description: |
   Multiplies corresponding SEW-wide elements of vs2 and vs1, widening both to 2*SEW before the multiply and writing the 2*SEW results to vd. No accumulator is used. Inactive elements in vd are undisturbed.
 definedBy:

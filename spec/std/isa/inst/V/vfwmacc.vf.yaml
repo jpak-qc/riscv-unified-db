@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfwmacc.vf
-long_name: "vector FP widening multiply-accumulate, scalar-vector"
+long_name: "Vector FP widening multiply-accumulate, scalar-vector"
 description: |
   Computes vd[i] += fs1 * vs2[i] for each active element, where fs1 is NaN-boxed (replaced with canonical NaN if D is implemented and the upper bits are not all-ones). Widening converts both the scalar and vs2 elements from SEW to 2*SEW before the fused multiply-accumulate into vd. Inactive elements are undisturbed.
 definedBy:

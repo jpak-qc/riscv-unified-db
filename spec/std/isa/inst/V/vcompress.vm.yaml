@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vcompress.vm
-long_name: "compress active mask elements into consecutive positions"
+long_name: "Compress active mask elements into consecutive positions"
 description: |
   Packs elements of vs2 selected by the mask register vs1 into consecutive positions in vd starting at element 0. For each element i in 0..vl-1 where vs1[i]==1, vs2[i] is written to vd[out_idx++]; tail elements of vd beyond out_idx are unmodified. Requires vstart==0; uses vs1 as an explicit mask operand rather than the vm bit.
 definedBy:

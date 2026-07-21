@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfwadd.wf
-long_name: "vector FP widening add, wide-source scalar-vector"
+long_name: "Vector FP widening add, wide-source scalar-vector"
 description: |
   Adds a SEW-wide scalar fs1 (NaN-boxed, widened to 2*SEW) to 2*SEW-wide elements of vs2, storing 2*SEW results in vd. vs2 is the wide source; fs1 is the narrow scalar addend, promoted to 2*SEW before the add, with canonical-NaN substitution if the D-extension NaN-box check fails. Inactive elements are undisturbed.
 definedBy:

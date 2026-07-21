@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfnmsub.vf
-long_name: "vector fp negated multiply-subtract, vector-scalar"
+long_name: "Vector fp negated multiply-subtract, vector-scalar"
 description: |
   Performs element-wise negated fused multiply-subtract vd[i] = -(fs1 * vd[i]) + vs2[i] in SEW-wide floating-point for active elements (vm-masked). fs1 is NaN-boxed when D is implemented; vd is both multiplicand and destination; the product is negated before adding vs2. Inactive elements are undisturbed; rounding uses fcsr.FRM.
 definedBy:

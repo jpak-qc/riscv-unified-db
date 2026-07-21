@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfrdiv.vf
-long_name: "vector FP reverse divide, scalar by vector"
+long_name: "Vector FP reverse divide, scalar by vector"
 description: |
   Computes fs1 / vs2[i] for each active element and writes the result to vd, reversing the dividend-divisor roles of vfdiv.vf. Rounding uses the FRM field of fcsr. NaN-boxing of fs1 applies when SEW=32 and D is present.
 definedBy:

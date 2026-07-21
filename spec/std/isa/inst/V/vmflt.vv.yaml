@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmflt.vv
-long_name: "vector FP less-than, vector-vector"
+long_name: "Vector FP less-than, vector-vector"
 description: |
   Performs an IEEE 754 signaling less-than comparison of each SEW-wide element of vs2 against the corresponding element of vs1, writing a 1-bit result into bit i of mask register vd. Any NaN operand, quiet or signaling, returns false and raises the NV flag. vmfgt.vv assembles as vmflt.vv with source operands swapped; masked-off elements leave vd undisturbed.
 definedBy:

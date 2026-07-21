@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vdiv.vx
-long_name: "vector signed integer divide by scalar, vx"
+long_name: "Vector signed integer divide by scalar, vx"
 description: |
   Divides each signed SEW-wide vs2 element by the sign-extended scalar xs1, writing the truncated-toward-zero quotient into vd. Divide-by-zero produces all-ones (-1); signed overflow (INT_MIN divided by -1) returns INT_MIN. Inactive elements under vm mask control are undisturbed.
 definedBy:

@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfredosum.vs
-long_name: "vector FP ordered reduction sum into scalar"
+long_name: "Vector FP ordered reduction sum into scalar"
 description: |
   Reduces active elements of vs2 by floating-point addition in strict left-to-right order, seeded with vs1[0], and writes the result to vd[0]; elements 1..VLMAX-1 of vd are undisturbed. The mandatory evaluation order prevents reassociation and yields deterministic rounding; use vfredusum when ordering does not matter. When vl=0, vs1[0] is copied directly to vd[0].
 definedBy:

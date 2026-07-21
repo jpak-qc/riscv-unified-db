@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfsgnj.vf
-long_name: "vector FP sign injection, vector-scalar"
+long_name: "Vector FP sign injection, vector-scalar"
 description: |
   Copies each element of vs2 with its sign bit replaced by the sign bit of scalar FP register fs1, writing to vd. When SEW=32 and the D extension is present, fs1 is subject to NaN-boxing validation; an improperly boxed value is treated as canonical NaN for sign extraction. No FP exceptions are raised.
 definedBy:

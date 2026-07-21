@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfnmadd.vv
-long_name: "vector fp negated multiply-add, vector-vector"
+long_name: "Vector fp negated multiply-add, vector-vector"
 description: |
   Performs element-wise negated fused multiply-add vd[i] = -(vs1[i] * vd[i]) - vs2[i] in SEW-wide floating-point for active elements (vm-masked). vs2's sign bit is flipped before use as the addend; vd is both multiplicand and destination. Inactive elements are undisturbed; rounding uses fcsr.FRM.
 definedBy:

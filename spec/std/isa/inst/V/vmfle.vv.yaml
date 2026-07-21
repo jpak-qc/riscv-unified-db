@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmfle.vv
-long_name: "vector FP less-than-or-equal, vector-vector"
+long_name: "Vector FP less-than-or-equal, vector-vector"
 description: |
   Compares each SEW-wide element of vs2 against the corresponding element of vs1 using IEEE 754 signaling less-than-or-equal, writing a 1-bit result into bit i of mask register vd. Any NaN operand, quiet or signaling, returns false and raises the NV flag. vmfge.vv assembles as vmfle.vv with the source operands swapped; masked-off elements leave vd undisturbed.
 definedBy:

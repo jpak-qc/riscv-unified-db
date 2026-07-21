@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmul.vx
-long_name: "vector integer multiply scalar, return low half, vx"
+long_name: "Vector integer multiply scalar, return low half, vx"
 description: |
   Multiplies each SEW-wide element of vs2 by the scalar xs1 (sign-extended to SEW), writing the low SEW bits of each product into vd; the upper bits are discarded. Inactive elements under vm mask control are undisturbed.
 definedBy:

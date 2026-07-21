@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vwaddu.wx
-long_name: "widening unsigned add: 2xSEW vector plus scalar"
+long_name: "Widening unsigned add: 2xSEW vector plus scalar"
 description: |
   Adds each 2*SEW-wide element of vs2 to the zero-extended low-SEW bits of integer register xs1, writing the 2*SEW result to vd. The scalar xs1 is zero-extended to 2*SEW before each addition. Masked per vm bit; inactive elements are undisturbed.
 definedBy:

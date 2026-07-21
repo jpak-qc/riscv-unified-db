@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmandn.mm
-long_name: "mask register AND with complement of vs1"
+long_name: "Mask register AND with complement of vs1"
 description: |
   Computes vs2 AND (NOT vs1) across all VLEN mask bits and writes the result to vd. Operates from vstart to VLEN-1, independent of vl and the vm masking bit.
 definedBy:

@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfmacc.vf
-long_name: "vector fp multiply-accumulate, vector-scalar"
+long_name: "Vector fp multiply-accumulate, vector-scalar"
 description: |
   Performs element-wise fused multiply-add vd[i] = fs1 * vs2[i] + vd[i] in SEW-wide floating-point for active elements (vm-masked). The scalar fs1 is NaN-boxed: when D is implemented and the upper 32 bits are not all-ones, the canonical SP NaN is substituted. Inactive elements are undisturbed; rounding uses fcsr.FRM.
 definedBy:

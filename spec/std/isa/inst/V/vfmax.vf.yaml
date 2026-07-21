@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfmax.vf
-long_name: "vector FP maximum, vector-scalar"
+long_name: "Vector FP maximum, vector-scalar"
 description: |
   Computes the IEEE 754-2019 maximum of each active vs2 element against scalar fs1, writing to vd. NaN handling follows the same rules as vfmax.vv; fs1 is NaN-boxed when SEW=32 and D is present. Signed-zero: max(-0, +0) = +0.
 definedBy:

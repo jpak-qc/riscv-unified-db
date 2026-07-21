@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vrgatherei16.vv
-long_name: "vector gather using 16-bit indices regardless of SEW"
+long_name: "Vector gather using 16-bit indices regardless of SEW"
 description: |
   Gathers SEW-wide elements from vs2 using 16-bit unsigned indices read from vs1, writing vd[i] = vs2[vs1[i]] for each active element; writes 0 when the index is >= VLMAX. The index EEW is always 16 bits regardless of SEW; when SEW < 16, this allows indices to address the full element range where SEW-wide indices would be too narrow. Masked per vm bit; inactive elements are undisturbed.
 definedBy:

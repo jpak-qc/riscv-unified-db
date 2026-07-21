@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfwadd.wv
-long_name: "vector FP widening add, wide-source vector-vector"
+long_name: "Vector FP widening add, wide-source vector-vector"
 description: |
   Adds SEW-wide elements of vs1, each widened to 2*SEW, to the already-2*SEW-wide elements of vs2, storing 2*SEW results in vd. vs2 is the wide source; vs1 is the narrow source, promoted to 2*SEW before the add. Inactive elements are undisturbed.
 definedBy:

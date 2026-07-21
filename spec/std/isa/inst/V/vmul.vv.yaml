@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmul.vv
-long_name: "vector integer multiply, return low half, vv"
+long_name: "Vector integer multiply, return low half, vv"
 description: |
   Multiplies corresponding SEW-wide elements of vs2 and vs1, writing the low SEW bits of each full-width product into vd; the upper half of each product is discarded. Inactive elements under vm mask control are undisturbed.
 definedBy:

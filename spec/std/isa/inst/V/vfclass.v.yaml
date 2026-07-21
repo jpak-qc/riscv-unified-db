@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfclass.v
-long_name: "vector FP classify elements"
+long_name: "Vector FP classify elements"
 description: |
   Writes a 10-bit one-hot classification of each active vs2 FP element into the corresponding vd element, using the same bit encoding as the scalar fclass instruction: bits 0-9 represent negative infinity, negative normal, negative subnormal, negative zero, positive zero, positive subnormal, positive normal, positive infinity, quiet NaN, and signaling NaN. The result is stored as an integer bit pattern at SEW width; no FP exceptions are raised.
 definedBy:

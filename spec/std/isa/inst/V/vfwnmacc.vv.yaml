@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfwnmacc.vv
-long_name: "vector FP widening negated multiply-accumulate, vector-vector"
+long_name: "Vector FP widening negated multiply-accumulate, vector-vector"
 description: |
   Computes vd[i] = -(vs1[i] * vs2[i]) - vd[i] for each active element, negating both the widened SEW-to-2*SEW product and the 2*SEW accumulator in a single fused operation. Inactive elements are undisturbed.
 definedBy:

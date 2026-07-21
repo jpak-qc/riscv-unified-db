@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfwsub.wf
-long_name: "vector FP widening subtract, wide-source scalar-vector"
+long_name: "Vector FP widening subtract, wide-source scalar-vector"
 description: |
   Subtracts a SEW-wide scalar fs1 (NaN-boxed, widened to 2*SEW) from 2*SEW-wide elements of vs2, storing 2*SEW results in vd. Canonical-NaN substitution applies to fs1 when D is implemented and the NaN-box is invalid. Inactive elements are undisturbed.
 definedBy:

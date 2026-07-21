@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vwsub.wv
-long_name: "widening signed subtract: 2xSEW vector minus SEW vector"
+long_name: "Widening signed subtract: 2xSEW vector minus SEW vector"
 description: |
   Subtracts the sign-extended SEW-wide element of vs1 from each 2*SEW-wide element of vs2, writing the 2*SEW result to vd. Both operands are treated as signed; vs1 is sign-extended to 2*SEW before the subtract. Masked per vm bit; inactive elements are undisturbed.
 definedBy:

@@ -6,7 +6,7 @@
 $schema: inst_schema.json#
 kind: instruction
 name: vluxseg2ei16.v
-long_name: "unordered indexed segment load, 2-field, 16-bit indices"
+long_name: "Unordered indexed segment load, 2-field, 16-bit indices"
 description: |
   Loads a 2-field segment of SEW-wide elements for each active element using unordered indexed addressing: for element i, the instruction adds the 16-bit unsigned byte offset in vs2[i] to the base address in xs1 and loads two consecutive SEW-wide values from that address and address+(SEW/8) into vd[i] and vd+emul_reg[i]. Indices are interpreted as EEW=16 regardless of SEW. Masked-off elements (vm=0) leave the destination undisturbed.
 definedBy:

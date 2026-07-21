@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfmsac.vv
-long_name: "vector fp multiply-subtract-accumulator, vector-vector"
+long_name: "Vector fp multiply-subtract-accumulator, vector-vector"
 description: |
   Performs element-wise fused multiply-subtract vd[i] = vs1[i] * vs2[i] - vd[i] in SEW-wide floating-point for active elements (vm-masked). vd is negated and used as the subtrahend. Inactive elements are undisturbed; rounding uses fcsr.FRM.
 definedBy:

@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfslide1up.vf
-long_name: "vector FP slide up by one and insert scalar"
+long_name: "Vector FP slide up by one and insert scalar"
 description: |
   Shifts active elements of vs2 toward higher indices by one, writing vs2[i-1] into vd[i] for i >= 1; position 0 receives the scalar value from FP register fs1. For SEW=32 when the D extension is present, fs1 must be NaN-boxed (upper 32 bits all-ones); a non-boxed value is replaced by the canonical NaN. vs2 and vd must be distinct registers.
 definedBy:

@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfmin.vf
-long_name: "vector FP minimum, vector-scalar"
+long_name: "Vector FP minimum, vector-scalar"
 description: |
   Computes the IEEE 754-2019 minimum of each active vs2 element against scalar fs1, writing to vd. NaN semantics are identical to vfmin.vv; fs1 is NaN-boxed when SEW=32 and D is present. Signed-zero: min(-0, +0) = -0.
 definedBy:

@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmerge.vim
-long_name: "merge vector and sign-extended immediate using mask v0"
+long_name: "Merge vector and sign-extended immediate using mask v0"
 description: |
   Selects between vs2 and a 5-bit sign-extended immediate for each element using mask register v0 as the selector: where v0[i]=1, vd[i] = sext(imm); where v0[i]=0, vd[i] = vs2[i]. Always unmasked (vm=0 is implicit); all active elements in [vstart, vl) are written.
 definedBy:

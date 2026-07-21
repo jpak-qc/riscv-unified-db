@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfsgnjx.vv
-long_name: "vector FP XOR sign injection, vector-vector"
+long_name: "Vector FP XOR sign injection, vector-vector"
 description: |
   Copies each element of vs2 with its sign bit replaced by the XOR of the vs2 and vs1 sign bits for that element position. When vs2 and vs1 name the same register, the XOR zeroes the sign bit; the encoding serves as the vfabs.v pseudoinstruction. No FP exceptions are raised.
 definedBy:

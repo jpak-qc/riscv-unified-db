@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfwredusum.vs
-long_name: "vector FP widening unordered reduction sum"
+long_name: "Vector FP widening unordered reduction sum"
 description: |
   Performs an unordered widening FP reduction over SEW-wide elements of vs2, accumulating into a 2*SEW sum initialized from vs1[0] and writing the result to vd[0]. Unlike vfwredosum, implementations may reassociate the additions (e.g., tree reduction) for parallelism; rounding outcomes may differ as a result. Masked elements are excluded; when vl=0, vs1[0] passes through unchanged to vd[0].
 definedBy:

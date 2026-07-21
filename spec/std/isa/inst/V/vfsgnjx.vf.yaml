@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfsgnjx.vf
-long_name: "vector FP XOR sign injection, vector-scalar"
+long_name: "Vector FP XOR sign injection, vector-scalar"
 description: |
   Copies each element of vs2 with its sign bit replaced by the XOR of the vs2 element's sign bit and scalar fs1's sign bit, writing to vd. NaN-boxing of fs1 applies when SEW=32 and D is implemented. No FP exceptions are raised.
 definedBy:

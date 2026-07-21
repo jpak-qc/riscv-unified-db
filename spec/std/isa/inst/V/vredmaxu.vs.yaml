@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vredmaxu.vs
-long_name: "vector unsigned integer maximum reduction into scalar"
+long_name: "Vector unsigned integer maximum reduction into scalar"
 description: |
   Reduces active elements of vs2 by unsigned integer maximum at SEW width, initializing the accumulator from element 0 of vs1, and writing the result to element 0 of vd. Elements compare as unsigned integers; inactive elements (vm-masked) are skipped. vstart must be 0.
 definedBy:

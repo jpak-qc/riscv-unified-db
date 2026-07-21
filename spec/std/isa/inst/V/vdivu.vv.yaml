@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vdivu.vv
-long_name: "vector unsigned integer divide, vv"
+long_name: "Vector unsigned integer divide, vv"
 description: |
   Divides each unsigned SEW-wide vs2 element by the corresponding unsigned vs1 element, writing the truncated quotient into vd. Divide-by-zero returns all-ones (the maximum unsigned value for SEW). Inactive elements are undisturbed.
 definedBy:

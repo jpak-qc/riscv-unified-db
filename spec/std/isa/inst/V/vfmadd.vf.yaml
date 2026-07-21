@@ -6,7 +6,7 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfmadd.vf
-long_name: "vector fp multiply-add, vector-scalar"
+long_name: "Vector fp multiply-add, vector-scalar"
 description: |
   Performs element-wise fused multiply-add vd[i] = fs1 * vd[i] + vs2[i] in SEW-wide floating-point for active elements (vm-masked). vd is both multiplicand and destination; fs1 is NaN-boxed when D is implemented. Inactive elements are undisturbed; rounding uses fcsr.FRM.
 definedBy:

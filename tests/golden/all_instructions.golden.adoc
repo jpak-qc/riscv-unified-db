@@ -38630,7 +38630,7 @@ xlen+++()+++ == 32
 == vaadd.vv
 
 Synopsis::
-No synopsis available
+Vector signed averaging add
 
 Base::
 
@@ -38652,7 +38652,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Adds elements from vector registers vs2 and vs1 (sign-extended to one extra bit to avoid overflow), rounds the sum per vxrm, and shifts right by 1, storing the SEW-wide average in vd using vector mask vm. Does not affect vxsat.
 
 
 Decode Variables::
@@ -38672,7 +38672,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -38683,7 +38683,7 @@ Included in::
 == vaadd.vx
 
 Synopsis::
-No synopsis available
+Vector signed averaging add with scalar
 
 Base::
 
@@ -38705,7 +38705,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Adds elements of vector register vs2 and scalar register xs1 (sign-extended), rounds per vxrm, and shifts right by 1, storing the SEW-wide average in vd using vector mask vm. Does not affect vxsat.
 
 
 Decode Variables::
@@ -38725,7 +38725,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -38736,7 +38736,7 @@ Included in::
 == vaaddu.vv
 
 Synopsis::
-No synopsis available
+Vector unsigned averaging add
 
 Base::
 
@@ -38758,7 +38758,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Adds elements from vector registers vs2 and vs1 (zero-extended), rounds per vxrm, and shifts right by 1, storing the SEW-wide unsigned average in vd using vector mask vm. Does not affect vxsat.
 
 
 Decode Variables::
@@ -38778,7 +38778,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -38789,7 +38789,7 @@ Included in::
 == vaaddu.vx
 
 Synopsis::
-No synopsis available
+Vector unsigned averaging add with scalar
 
 Base::
 
@@ -38811,7 +38811,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Adds elements of vector register vs2 and scalar register xs1 (zero-extended to SEW), rounds per vxrm, and shifts right by 1, storing the SEW-wide unsigned average in vd using vector mask vm. Does not affect vxsat.
 
 
 Decode Variables::
@@ -38831,7 +38831,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -38883,7 +38883,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -38935,7 +38935,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -38987,7 +38987,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -39040,7 +39040,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -39093,7 +39093,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -39146,7 +39146,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -39720,7 +39720,7 @@ Included in::
 == vand.vi
 
 Synopsis::
-No synopsis available
+Bitwise AND of vector elements and sign-extended immediate
 
 Base::
 
@@ -39742,7 +39742,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Computes the bitwise AND of each SEW-wide element of vs2 with a 5-bit sign-extended immediate, writing the result to vd. The immediate is sign-extended to SEW width before the operation. Masked per vm bit; inactive elements are undisturbed.
 
 
 Decode Variables::
@@ -39762,7 +39762,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -39815,7 +39815,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -39826,7 +39826,7 @@ Included in::
 == vand.vx
 
 Synopsis::
-No synopsis available
+Bitwise AND of vector elements and scalar register
 
 Base::
 
@@ -39848,7 +39848,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Computes the bitwise AND of each SEW-wide element of vs2 with the low SEW bits of integer register xs1, writing the result to vd. The scalar is truncated to SEW width before the operation. Masked per vm bit; inactive elements are undisturbed.
 
 
 Decode Variables::
@@ -39868,7 +39868,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -39985,7 +39985,7 @@ Included in::
 == vasub.vv
 
 Synopsis::
-No synopsis available
+Vector signed averaging subtract
 
 Base::
 
@@ -40007,7 +40007,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Subtracts elements of vector register vs1 from vs2 (sign-extended), rounds per vxrm, and shifts right by 1, storing the SEW-wide signed average in vd using vector mask vm. Does not affect vxsat.
 
 
 Decode Variables::
@@ -40027,7 +40027,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -40038,7 +40038,7 @@ Included in::
 == vasub.vx
 
 Synopsis::
-No synopsis available
+Vector signed averaging subtract with scalar
 
 Base::
 
@@ -40060,7 +40060,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Subtracts scalar register xs1 from elements of vector register vs2 (sign-extended), rounds per vxrm, and shifts right by 1, storing the SEW-wide signed average in vd using vector mask vm. Does not affect vxsat.
 
 
 Decode Variables::
@@ -40080,7 +40080,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -40091,7 +40091,7 @@ Included in::
 == vasubu.vv
 
 Synopsis::
-No synopsis available
+Vector unsigned averaging subtract
 
 Base::
 
@@ -40113,7 +40113,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Subtracts elements of vector register vs1 from vs2 (zero-extended), rounds per vxrm, and shifts right by 1, storing the SEW-wide unsigned average in vd using vector mask vm. Does not affect vxsat.
 
 
 Decode Variables::
@@ -40133,7 +40133,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -40144,7 +40144,7 @@ Included in::
 == vasubu.vx
 
 Synopsis::
-No synopsis available
+Vector unsigned averaging subtract with scalar
 
 Base::
 
@@ -40166,7 +40166,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Subtracts scalar register xs1 from elements of vector register vs2 (zero-extended to SEW), rounds per vxrm, and shifts right by 1, storing the SEW-wide unsigned average in vd using vector mask vm. Does not affect vxsat.
 
 
 Decode Variables::
@@ -40186,7 +40186,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -40565,7 +40565,7 @@ Included in::
 == vcompress.vm
 
 Synopsis::
-No synopsis available
+Compress active mask elements into consecutive positions
 
 Base::
 
@@ -40587,7 +40587,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Packs elements of vs2 selected by the mask register vs1 into consecutive positions in vd starting at element 0. For each element i in 0..vl-1 where vs1[i]==1, vs2[i] is written to vd[out_idx++]; tail elements of vd beyond out_idx are unmodified. Requires vstart==0; uses vs1 as an explicit mask operand rather than the vm bit.
 
 
 Decode Variables::
@@ -40606,7 +40606,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -40617,7 +40617,7 @@ Included in::
 == vcpop.m
 
 Synopsis::
-No synopsis available
+Count set bits in mask register
 
 Base::
 
@@ -40639,7 +40639,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Counts the number of set bits in mask register vs2 across active elements 0 to vl-1, optionally masked by vm, and writes the resulting unsigned count to scalar integer register xd. vstart must be 0.
 
 
 Decode Variables::
@@ -40658,7 +40658,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -40773,7 +40773,7 @@ Included in::
 == vdiv.vv
 
 Synopsis::
-No synopsis available
+Vector signed integer divide, vv
 
 Base::
 
@@ -40795,7 +40795,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Divides each signed SEW-wide vs2 element by the corresponding signed vs1 element, writing the truncated-toward-zero quotient into vd. Divide-by-zero produces all-ones (-1 in two's complement); signed overflow (INT_MIN divided by -1) saturates to INT_MIN. Inactive elements under vm mask control are undisturbed.
 
 
 Decode Variables::
@@ -40815,7 +40815,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -40826,7 +40826,7 @@ Included in::
 == vdiv.vx
 
 Synopsis::
-No synopsis available
+Vector signed integer divide by scalar, vx
 
 Base::
 
@@ -40848,7 +40848,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Divides each signed SEW-wide vs2 element by the sign-extended scalar xs1, writing the truncated-toward-zero quotient into vd. Divide-by-zero produces all-ones (-1); signed overflow (INT_MIN divided by -1) returns INT_MIN. Inactive elements under vm mask control are undisturbed.
 
 
 Decode Variables::
@@ -40868,7 +40868,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -40879,7 +40879,7 @@ Included in::
 == vdivu.vv
 
 Synopsis::
-No synopsis available
+Vector unsigned integer divide, vv
 
 Base::
 
@@ -40901,7 +40901,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Divides each unsigned SEW-wide vs2 element by the corresponding unsigned vs1 element, writing the truncated quotient into vd. Divide-by-zero returns all-ones (the maximum unsigned value for SEW). Inactive elements are undisturbed.
 
 
 Decode Variables::
@@ -40921,7 +40921,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -40932,7 +40932,7 @@ Included in::
 == vdivu.vx
 
 Synopsis::
-No synopsis available
+Vector unsigned integer divide by scalar, vx
 
 Base::
 
@@ -40954,7 +40954,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Divides each unsigned SEW-wide vs2 element by the zero-extended scalar xs1, writing the truncated quotient into vd. Divide-by-zero returns all-ones (maximum unsigned value for SEW). Inactive elements are undisturbed.
 
 
 Decode Variables::
@@ -40974,7 +40974,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -41027,7 +41027,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -41080,7 +41080,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -41091,7 +41091,7 @@ Included in::
 == vfclass.v
 
 Synopsis::
-No synopsis available
+Vector FP classify elements
 
 Base::
 
@@ -41113,7 +41113,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Writes a 10-bit one-hot classification of each active vs2 FP element into the corresponding vd element, using the same bit encoding as the scalar fclass instruction: bits 0-9 represent negative infinity, negative normal, negative subnormal, negative zero, positive zero, positive subnormal, positive normal, positive infinity, quiet NaN, and signaling NaN. The result is stored as an integer bit pattern at SEW width; no FP exceptions are raised.
 
 
 Decode Variables::
@@ -41132,7 +41132,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -41184,7 +41184,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -41236,7 +41236,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -41288,7 +41288,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -41340,7 +41340,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -41392,7 +41392,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -41444,7 +41444,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -41497,7 +41497,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -41550,7 +41550,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -41561,7 +41561,7 @@ Included in::
 == vfirst.m
 
 Synopsis::
-No synopsis available
+Find index of first set bit in mask
 
 Base::
 
@@ -41583,7 +41583,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Searches mask register vs2 for the lowest-indexed active set bit among elements 0 to vl-1, optionally masked by vm, and writes that index to scalar integer register xd. Writes -1 (all-ones, XLEN wide) if no active set bit is found; vstart must be 0.
 
 
 Decode Variables::
@@ -41602,7 +41602,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -41613,7 +41613,7 @@ Included in::
 == vfmacc.vf
 
 Synopsis::
-No synopsis available
+Vector fp multiply-accumulate, vector-scalar
 
 Base::
 
@@ -41635,7 +41635,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Performs element-wise fused multiply-add vd[i] = fs1 * vs2[i] + vd[i] in SEW-wide floating-point for active elements (vm-masked). The scalar fs1 is NaN-boxed: when D is implemented and the upper 32 bits are not all-ones, the canonical SP NaN is substituted. Inactive elements are undisturbed; rounding uses fcsr.FRM.
 
 
 Decode Variables::
@@ -41655,7 +41655,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -41666,7 +41666,7 @@ Included in::
 == vfmacc.vv
 
 Synopsis::
-No synopsis available
+Vector fp multiply-accumulate, vector-vector
 
 Base::
 
@@ -41688,7 +41688,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Performs element-wise fused multiply-add vd[i] = vs1[i] * vs2[i] + vd[i] in SEW-wide floating-point for active elements (vm-masked). vd is both accumulator and destination; rounding uses fcsr.FRM; inactive elements are undisturbed.
 
 
 Decode Variables::
@@ -41708,7 +41708,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -41719,7 +41719,7 @@ Included in::
 == vfmadd.vf
 
 Synopsis::
-No synopsis available
+Vector fp multiply-add, vector-scalar
 
 Base::
 
@@ -41741,7 +41741,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Performs element-wise fused multiply-add vd[i] = fs1 * vd[i] + vs2[i] in SEW-wide floating-point for active elements (vm-masked). vd is both multiplicand and destination; fs1 is NaN-boxed when D is implemented. Inactive elements are undisturbed; rounding uses fcsr.FRM.
 
 
 Decode Variables::
@@ -41761,7 +41761,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -41772,7 +41772,7 @@ Included in::
 == vfmadd.vv
 
 Synopsis::
-No synopsis available
+Vector fp multiply-add, vector-vector
 
 Base::
 
@@ -41794,7 +41794,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Performs element-wise fused multiply-add vd[i] = vs1[i] * vd[i] + vs2[i] in SEW-wide floating-point for active elements (vm-masked). vd is both multiplicand and destination; vs2 is the addend. Inactive elements are undisturbed; rounding uses fcsr.FRM.
 
 
 Decode Variables::
@@ -41814,7 +41814,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -41825,7 +41825,7 @@ Included in::
 == vfmax.vf
 
 Synopsis::
-No synopsis available
+Vector FP maximum, vector-scalar
 
 Base::
 
@@ -41847,7 +41847,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Computes the IEEE 754-2019 maximum of each active vs2 element against scalar fs1, writing to vd. NaN handling follows the same rules as vfmax.vv; fs1 is NaN-boxed when SEW=32 and D is present. Signed-zero: max(-0, +0) = +0.
 
 
 Decode Variables::
@@ -41867,7 +41867,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -41878,7 +41878,7 @@ Included in::
 == vfmax.vv
 
 Synopsis::
-No synopsis available
+Vector FP maximum, vector-vector
 
 Base::
 
@@ -41900,7 +41900,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Computes the IEEE 754-2019 maximum of corresponding elements from vs2 and vs1, writing to vd. A single NaN operand returns the non-NaN value; both NaN yields canonical NaN; any sNaN input raises NV. Signed-zero: max(-0, +0) = +0.
 
 
 Decode Variables::
@@ -41920,7 +41920,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -41931,7 +41931,7 @@ Included in::
 == vfmerge.vfm
 
 Synopsis::
-No synopsis available
+Vector FP merge, vector and scalar with mask
 
 Base::
 
@@ -41953,7 +41953,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Merges vs2 and scalar fs1 element-wise using the v0 mask register as a per-element selector: vd[i] = v0[i] ? fs1 : vs2[i] for all i in [vstart, vl). Unlike typical masked instructions, the vm encoding bit is fixed and v0 is the explicit merge selector rather than an enable predicate, so all elements in [vstart, vl) are written. NaN-boxing of fs1 applies when SEW=32 and D is implemented.
 
 
 Decode Variables::
@@ -41972,7 +41972,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -41983,7 +41983,7 @@ Included in::
 == vfmin.vf
 
 Synopsis::
-No synopsis available
+Vector FP minimum, vector-scalar
 
 Base::
 
@@ -42005,7 +42005,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Computes the IEEE 754-2019 minimum of each active vs2 element against scalar fs1, writing to vd. NaN semantics are identical to vfmin.vv; fs1 is NaN-boxed when SEW=32 and D is present. Signed-zero: min(-0, +0) = -0.
 
 
 Decode Variables::
@@ -42025,7 +42025,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -42036,7 +42036,7 @@ Included in::
 == vfmin.vv
 
 Synopsis::
-No synopsis available
+Vector FP minimum, vector-vector
 
 Base::
 
@@ -42058,7 +42058,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Computes the IEEE 754-2019 minimum of corresponding elements from vs2 and vs1, writing to vd. When one operand is NaN, the non-NaN value is used; when both are NaN, the instruction writes canonical NaN and raises NV only if either input is a signaling NaN. Signed-zero tie-breaking follows the V-spec rule: min(-0, +0) = -0.
 
 
 Decode Variables::
@@ -42078,7 +42078,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -42089,7 +42089,7 @@ Included in::
 == vfmsac.vf
 
 Synopsis::
-No synopsis available
+Vector fp multiply-subtract-accumulator, vector-scalar
 
 Base::
 
@@ -42111,7 +42111,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Performs element-wise fused multiply-subtract vd[i] = fs1 * vs2[i] - vd[i] in SEW-wide floating-point for active elements (vm-masked). fs1 is NaN-boxed when D is implemented; vd is negated and used as the subtrahend. Inactive elements are undisturbed; rounding uses fcsr.FRM.
 
 
 Decode Variables::
@@ -42131,7 +42131,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -42142,7 +42142,7 @@ Included in::
 == vfmsac.vv
 
 Synopsis::
-No synopsis available
+Vector fp multiply-subtract-accumulator, vector-vector
 
 Base::
 
@@ -42164,7 +42164,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Performs element-wise fused multiply-subtract vd[i] = vs1[i] * vs2[i] - vd[i] in SEW-wide floating-point for active elements (vm-masked). vd is negated and used as the subtrahend. Inactive elements are undisturbed; rounding uses fcsr.FRM.
 
 
 Decode Variables::
@@ -42184,7 +42184,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -42195,7 +42195,7 @@ Included in::
 == vfmsub.vf
 
 Synopsis::
-No synopsis available
+Vector fp multiply-subtract, vector-scalar
 
 Base::
 
@@ -42217,7 +42217,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Performs element-wise fused multiply-subtract vd[i] = fs1 * vd[i] - vs2[i] in SEW-wide floating-point for active elements (vm-masked). vd is both multiplicand and destination; fs1 is NaN-boxed when D is implemented; vs2 is negated and used as the addend. Inactive elements are undisturbed; rounding uses fcsr.FRM.
 
 
 Decode Variables::
@@ -42237,7 +42237,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -42248,7 +42248,7 @@ Included in::
 == vfmsub.vv
 
 Synopsis::
-No synopsis available
+Vector fp multiply-subtract, vector-vector
 
 Base::
 
@@ -42270,7 +42270,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Performs element-wise fused multiply-subtract vd[i] = vs1[i] * vd[i] - vs2[i] in SEW-wide floating-point for active elements (vm-masked). vd is both multiplicand and destination; vs2 is negated and used as the addend. Inactive elements are undisturbed; rounding uses fcsr.FRM.
 
 
 Decode Variables::
@@ -42290,7 +42290,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -42343,7 +42343,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -42396,7 +42396,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -42407,7 +42407,7 @@ Included in::
 == vfmv.f.s
 
 Synopsis::
-Vector floating-point to scalar move
+Vector floating-point move to scalar FP register
 
 Base::
 
@@ -42429,7 +42429,7 @@ Encoding::
 ....
 
 Description::
-Moves floating-point element from vector register vs2 to scalar floating-point register fd, using vector mask vm. This operation extracts a single element from the vector.
+Copies element 0 of vector register vs2 into scalar FP register fd, NaN-boxing the result for SP values when D is implemented. No masking; reads element 0 unconditionally. vstart is reset to 0 after execution.
 
 
 Decode Variables::
@@ -42447,7 +42447,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -42458,7 +42458,7 @@ Included in::
 == vfmv.s.f
 
 Synopsis::
-Vector scalar to floating-point move
+Vector floating-point scalar move from FP register
 
 Base::
 
@@ -42480,7 +42480,7 @@ Encoding::
 ....
 
 Description::
-Moves scalar floating-point value from register fs1 to all elements of vector register vd, using vector mask vm. This operation broadcasts a scalar to a vector.
+Copies the scalar FP register fs1 into element 0 of vector register vd. No masking; writes element 0 unconditionally regardless of vl or vm. vstart is reset to 0 after execution.
 
 
 Decode Variables::
@@ -42498,7 +42498,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -42549,7 +42549,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -42560,7 +42560,7 @@ Included in::
 == vfncvt.f.f.w
 
 Synopsis::
-Vector floating-point widening conversion
+Vector floating-point narrowing conversion
 
 Base::
 
@@ -42582,7 +42582,7 @@ Encoding::
 ....
 
 Description::
-Converts floating-point elements from vector register vs2 to a wider floating-point format and stores results in vector register vd, using vector mask vm. The conversion follows IEEE 754 standards.
+Converts floating-point elements from vector register vs2 to a narrower floating-point format and stores results in vector register vd, using vector mask vm. The conversion follows IEEE 754 standards.
 
 
 Decode Variables::
@@ -42601,7 +42601,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve64d*
 | any
 |===
 
@@ -42612,7 +42612,7 @@ Included in::
 == vfncvt.f.x.w
 
 Synopsis::
-Vector integer to floating-point widening conversion
+Vector integer to floating-point narrowing conversion
 
 Base::
 
@@ -42634,7 +42634,7 @@ Encoding::
 ....
 
 Description::
-Converts signed integer elements from vector register vs2 to a wider floating-point format and stores results in vector register vd, using vector mask vm. The conversion follows IEEE 754 standards.
+Converts signed integer elements from vector register vs2 to a narrower floating-point format and stores results in vector register vd, using vector mask vm. The conversion follows IEEE 754 standards.
 
 
 Decode Variables::
@@ -42653,7 +42653,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve64f*
 | any
 |===
 
@@ -42664,7 +42664,7 @@ Included in::
 == vfncvt.f.xu.w
 
 Synopsis::
-Vector unsigned integer to floating-point widening conversion
+Vector unsigned integer to floating-point narrowing conversion
 
 Base::
 
@@ -42686,7 +42686,7 @@ Encoding::
 ....
 
 Description::
-Converts unsigned integer elements from vector register vs2 to a wider floating-point format and stores results in vector register vd, using vector mask vm. The conversion follows IEEE 754 standards.
+Converts unsigned integer elements from vector register vs2 to a narrower floating-point format and stores results in vector register vd, using vector mask vm. The conversion follows IEEE 754 standards.
 
 
 Decode Variables::
@@ -42705,7 +42705,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve64f*
 | any
 |===
 
@@ -42716,7 +42716,7 @@ Included in::
 == vfncvt.rod.f.f.w
 
 Synopsis::
-Vector floating-point format conversion with round-to-odd (widening)
+Vector floating-point format conversion with round-to-odd (narrowing)
 
 Base::
 
@@ -42738,7 +42738,7 @@ Encoding::
 ....
 
 Description::
-Converts floating-point elements from vector register vs2 to a wider floating-point format using round-to-odd mode and stores results in vector register vd, using vector mask vm.
+Converts floating-point elements from vector register vs2 to a narrower floating-point format using round-to-odd mode and stores results in vector register vd, using vector mask vm.
 
 
 Decode Variables::
@@ -42757,7 +42757,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve64d*
 | any
 |===
 
@@ -42768,7 +42768,7 @@ Included in::
 == vfncvt.rtz.x.f.w
 
 Synopsis::
-Vector floating-point to integer widening conversion with truncation
+Vector floating-point to integer narrowing conversion with truncation
 
 Base::
 
@@ -42790,7 +42790,7 @@ Encoding::
 ....
 
 Description::
-Converts floating-point elements from vector register vs2 to a wider integer format using round-toward-zero mode and stores results in vector register vd, using vector mask vm.
+Converts floating-point elements from vector register vs2 to a narrower integer format using round-toward-zero mode and stores results in vector register vd, using vector mask vm.
 
 
 Decode Variables::
@@ -42809,7 +42809,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve64d*
 | any
 |===
 
@@ -42820,7 +42820,7 @@ Included in::
 == vfncvt.rtz.xu.f.w
 
 Synopsis::
-Vector floating-point to unsigned integer widening conversion with truncation
+Vector floating-point to unsigned integer narrowing conversion with truncation
 
 Base::
 
@@ -42842,7 +42842,7 @@ Encoding::
 ....
 
 Description::
-Converts floating-point elements from vector register vs2 to a wider unsigned integer format using round-toward-zero mode and stores results in vector register vd, using vector mask vm.
+Converts floating-point elements from vector register vs2 to a narrower unsigned integer format using round-toward-zero mode and stores results in vector register vd, using vector mask vm.
 
 
 Decode Variables::
@@ -42861,7 +42861,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve64d*
 | any
 |===
 
@@ -42872,7 +42872,7 @@ Included in::
 == vfncvt.x.f.w
 
 Synopsis::
-Vector floating-point to integer widening conversion
+Vector floating-point to integer narrowing conversion
 
 Base::
 
@@ -42894,7 +42894,7 @@ Encoding::
 ....
 
 Description::
-Converts floating-point elements from vector register vs2 to a wider integer format and stores results in vector register vd, using vector mask vm. The conversion follows IEEE 754 rounding rules.
+Converts floating-point elements from vector register vs2 to a narrower integer format and stores results in vector register vd, using vector mask vm. The conversion follows IEEE 754 rounding rules.
 
 
 Decode Variables::
@@ -42913,7 +42913,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve64d*
 | any
 |===
 
@@ -42924,7 +42924,7 @@ Included in::
 == vfncvt.xu.f.w
 
 Synopsis::
-Vector floating-point to unsigned integer widening conversion
+Vector floating-point to unsigned integer narrowing conversion
 
 Base::
 
@@ -42946,7 +42946,7 @@ Encoding::
 ....
 
 Description::
-Converts floating-point elements from vector register vs2 to a wider unsigned integer format and stores results in vector register vd, using vector mask vm. The conversion follows IEEE 754 rounding rules.
+Converts floating-point elements from vector register vs2 to a narrower unsigned integer format and stores results in vector register vd, using vector mask vm. The conversion follows IEEE 754 rounding rules.
 
 
 Decode Variables::
@@ -42965,7 +42965,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve64d*
 | any
 |===
 
@@ -43028,7 +43028,7 @@ Included in::
 == vfnmacc.vf
 
 Synopsis::
-No synopsis available
+Vector fp negated multiply-accumulate, vector-scalar
 
 Base::
 
@@ -43050,7 +43050,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Performs element-wise negated fused multiply-add vd[i] = -(fs1 * vs2[i]) - vd[i] in SEW-wide floating-point for active elements (vm-masked). fs1 is NaN-boxed when D is implemented; vd's sign bit is flipped before use as the addend. Inactive elements are undisturbed; rounding uses fcsr.FRM.
 
 
 Decode Variables::
@@ -43070,7 +43070,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -43081,7 +43081,7 @@ Included in::
 == vfnmacc.vv
 
 Synopsis::
-No synopsis available
+Vector fp negated multiply-accumulate, vector-vector
 
 Base::
 
@@ -43103,7 +43103,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Performs element-wise negated fused multiply-add vd[i] = -(vs1[i] * vs2[i]) - vd[i] in SEW-wide floating-point for active elements (vm-masked). Both the product and vd are negated; vd's sign bit is flipped before use as the addend. Inactive elements are undisturbed; rounding uses fcsr.FRM.
 
 
 Decode Variables::
@@ -43123,7 +43123,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -43134,7 +43134,7 @@ Included in::
 == vfnmadd.vf
 
 Synopsis::
-No synopsis available
+Vector fp negated multiply-add, vector-scalar
 
 Base::
 
@@ -43156,7 +43156,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Performs element-wise negated fused multiply-add vd[i] = -(fs1 * vd[i]) - vs2[i] in SEW-wide floating-point for active elements (vm-masked). fs1 is NaN-boxed when D is implemented; vs2's sign bit is flipped before use as the addend; vd is both multiplicand and destination. Inactive elements are undisturbed; rounding uses fcsr.FRM.
 
 
 Decode Variables::
@@ -43176,7 +43176,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -43187,7 +43187,7 @@ Included in::
 == vfnmadd.vv
 
 Synopsis::
-No synopsis available
+Vector fp negated multiply-add, vector-vector
 
 Base::
 
@@ -43209,7 +43209,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Performs element-wise negated fused multiply-add vd[i] = -(vs1[i] * vd[i]) - vs2[i] in SEW-wide floating-point for active elements (vm-masked). vs2's sign bit is flipped before use as the addend; vd is both multiplicand and destination. Inactive elements are undisturbed; rounding uses fcsr.FRM.
 
 
 Decode Variables::
@@ -43229,7 +43229,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -43240,7 +43240,7 @@ Included in::
 == vfnmsac.vf
 
 Synopsis::
-No synopsis available
+Vector fp negated multiply-subtract-accumulator, vector-scalar
 
 Base::
 
@@ -43262,7 +43262,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Performs element-wise negated fused multiply-subtract vd[i] = -(fs1 * vs2[i]) + vd[i] in SEW-wide floating-point for active elements (vm-masked). fs1 is NaN-boxed when D is implemented; only the product is negated; vd is added without sign change. Inactive elements are undisturbed; rounding uses fcsr.FRM.
 
 
 Decode Variables::
@@ -43282,7 +43282,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -43293,7 +43293,7 @@ Included in::
 == vfnmsac.vv
 
 Synopsis::
-No synopsis available
+Vector fp negated multiply-subtract-accumulator, vector-vector
 
 Base::
 
@@ -43315,7 +43315,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Performs element-wise negated fused multiply-subtract vd[i] = -(vs1[i] * vs2[i]) + vd[i] in SEW-wide floating-point for active elements (vm-masked). Only the product is negated; vd is added without sign change, making this the complement of vfmsac. Inactive elements are undisturbed; rounding uses fcsr.FRM.
 
 
 Decode Variables::
@@ -43335,7 +43335,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -43346,7 +43346,7 @@ Included in::
 == vfnmsub.vf
 
 Synopsis::
-No synopsis available
+Vector fp negated multiply-subtract, vector-scalar
 
 Base::
 
@@ -43368,7 +43368,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Performs element-wise negated fused multiply-subtract vd[i] = -(fs1 * vd[i]) + vs2[i] in SEW-wide floating-point for active elements (vm-masked). fs1 is NaN-boxed when D is implemented; vd is both multiplicand and destination; the product is negated before adding vs2. Inactive elements are undisturbed; rounding uses fcsr.FRM.
 
 
 Decode Variables::
@@ -43388,7 +43388,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -43399,7 +43399,7 @@ Included in::
 == vfnmsub.vv
 
 Synopsis::
-No synopsis available
+Vector fp negated multiply-subtract, vector-vector
 
 Base::
 
@@ -43421,7 +43421,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Performs element-wise negated fused multiply-subtract vd[i] = -(vs1[i] * vd[i]) + vs2[i] in SEW-wide floating-point for active elements (vm-masked). vd is both multiplicand and destination; vs2 is the addend after product negation. Inactive elements are undisturbed; rounding uses fcsr.FRM.
 
 
 Decode Variables::
@@ -43441,7 +43441,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -43452,7 +43452,7 @@ Included in::
 == vfrdiv.vf
 
 Synopsis::
-No synopsis available
+Vector FP reverse divide, scalar by vector
 
 Base::
 
@@ -43474,7 +43474,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Computes fs1 / vs2[i] for each active element and writes the result to vd, reversing the dividend-divisor roles of vfdiv.vf. Rounding uses the FRM field of fcsr. NaN-boxing of fs1 applies when SEW=32 and D is present.
 
 
 Decode Variables::
@@ -43494,7 +43494,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -43505,7 +43505,7 @@ Included in::
 == vfrec7.v
 
 Synopsis::
-No synopsis available
+Vector FP 7-bit reciprocal approximation
 
 Base::
 
@@ -43527,7 +43527,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Computes a 7-bit-significant reciprocal approximation (1/x) for each active element of vs2, writing results to vd using the fcsr.FRM rounding mode. The approximation follows the lookup-table semantics in the RISC-V V extension (Section 13.9); special inputs such as zero, infinity, and NaN are handled per spec with defined exception flags.
 
 
 Decode Variables::
@@ -43546,7 +43546,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -43557,7 +43557,7 @@ Included in::
 == vfredmax.vs
 
 Synopsis::
-No synopsis available
+Vector FP reduction maximum into scalar
 
 Base::
 
@@ -43579,7 +43579,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Reduces active elements of vs2 by IEEE 754 fmax, seeded with vs1[0], and writes the result to vd[0]. When exactly one operand is NaN the non-NaN value is selected; when both are NaN the canonical NaN is written; any sNaN input sets the NV flag.
 
 
 Decode Variables::
@@ -43599,7 +43599,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -43610,7 +43610,7 @@ Included in::
 == vfredmin.vs
 
 Synopsis::
-No synopsis available
+Vector FP reduction minimum into scalar
 
 Base::
 
@@ -43632,7 +43632,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Reduces active elements of vs2 by IEEE 754 fmin, seeded with vs1[0], and writes the result to vd[0]. NaN propagation mirrors vfredmax: a single NaN operand yields the other operand, dual NaN yields canonical NaN, and any sNaN sets NV.
 
 
 Decode Variables::
@@ -43652,7 +43652,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -43663,7 +43663,7 @@ Included in::
 == vfredosum.vs
 
 Synopsis::
-No synopsis available
+Vector FP ordered reduction sum into scalar
 
 Base::
 
@@ -43685,7 +43685,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Reduces active elements of vs2 by floating-point addition in strict left-to-right order, seeded with vs1[0], and writes the result to vd[0]; elements 1..VLMAX-1 of vd are undisturbed. The mandatory evaluation order prevents reassociation and yields deterministic rounding; use vfredusum when ordering does not matter. When vl=0, vs1[0] is copied directly to vd[0].
 
 
 Decode Variables::
@@ -43705,7 +43705,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -43716,7 +43716,7 @@ Included in::
 == vfredusum.vs
 
 Synopsis::
-No synopsis available
+Vector FP unordered reduction sum into scalar
 
 Base::
 
@@ -43738,7 +43738,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Reduces active elements of vs2 by floating-point addition seeded with vs1[0], writing the sum to vd[0]; unlike vfredosum, the implementation may evaluate additions in any order (tree reduction, etc.) for increased parallelism, so rounding results may differ from left-to-right evaluation. When vl=0, vs1[0] is copied to vd[0].
 
 
 Decode Variables::
@@ -43758,7 +43758,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -43769,7 +43769,7 @@ Included in::
 == vfrsqrt7.v
 
 Synopsis::
-No synopsis available
+Vector FP 7-bit reciprocal square-root approximation
 
 Base::
 
@@ -43791,7 +43791,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Computes a 7-bit-significant reciprocal square-root approximation (1/sqrt(x)) for each active element of vs2, writing results to vd. Results follow the RISC-V V spec rsqrt7 table; negative operands, negative zero, positive zero, infinity, and NaN are treated as special cases per spec, with NV raised for negative inputs and DZ raised for negative-zero.
 
 
 Decode Variables::
@@ -43810,7 +43810,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -43821,7 +43821,7 @@ Included in::
 == vfrsub.vf
 
 Synopsis::
-No synopsis available
+Vector FP reverse subtract, scalar minus vector
 
 Base::
 
@@ -43843,7 +43843,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Computes fs1 - vs2[i] for each active element and writes the result to vd, reversing the operand order of a conventional vector subtract. Rounding uses the FRM field of fcsr, and NaN-boxing of fs1 applies when SEW=32 and D is present.
 
 
 Decode Variables::
@@ -43863,7 +43863,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -43874,7 +43874,7 @@ Included in::
 == vfsgnj.vf
 
 Synopsis::
-No synopsis available
+Vector FP sign injection, vector-scalar
 
 Base::
 
@@ -43896,7 +43896,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Copies each element of vs2 with its sign bit replaced by the sign bit of scalar FP register fs1, writing to vd. When SEW=32 and the D extension is present, fs1 is subject to NaN-boxing validation; an improperly boxed value is treated as canonical NaN for sign extraction. No FP exceptions are raised.
 
 
 Decode Variables::
@@ -43916,7 +43916,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -43927,7 +43927,7 @@ Included in::
 == vfsgnj.vv
 
 Synopsis::
-No synopsis available
+Vector FP sign injection, vector-vector
 
 Base::
 
@@ -43949,7 +43949,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Copies each element of vs2 with its sign bit replaced by the sign bit of the corresponding vs1 element, writing the result to vd. Sign injection is purely bitwise: no arithmetic rounding occurs and no FP exceptions are raised. Masked inactive elements are undisturbed.
 
 
 Decode Variables::
@@ -43969,7 +43969,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -43980,7 +43980,7 @@ Included in::
 == vfsgnjn.vf
 
 Synopsis::
-No synopsis available
+Vector FP negated sign injection, vector-scalar
 
 Base::
 
@@ -44002,7 +44002,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Copies each element of vs2 with its sign bit replaced by the logical NOT of scalar fs1's sign bit, writing to vd. NaN-boxing of fs1 applies when SEW=32 and D is implemented; an improperly boxed fs1 yields canonical NaN as the sign source. No FP exceptions are raised.
 
 
 Decode Variables::
@@ -44022,7 +44022,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -44033,7 +44033,7 @@ Included in::
 == vfsgnjn.vv
 
 Synopsis::
-No synopsis available
+Vector FP negated sign injection, vector-vector
 
 Base::
 
@@ -44055,7 +44055,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Copies each element of vs2 with its sign bit replaced by the logical NOT of the corresponding vs1 element's sign bit. When vs2 and vs1 name the same register, the encoding serves as the vfneg.v pseudoinstruction. No FP exceptions are raised.
 
 
 Decode Variables::
@@ -44075,7 +44075,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -44086,7 +44086,7 @@ Included in::
 == vfsgnjx.vf
 
 Synopsis::
-No synopsis available
+Vector FP XOR sign injection, vector-scalar
 
 Base::
 
@@ -44108,7 +44108,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Copies each element of vs2 with its sign bit replaced by the XOR of the vs2 element's sign bit and scalar fs1's sign bit, writing to vd. NaN-boxing of fs1 applies when SEW=32 and D is implemented. No FP exceptions are raised.
 
 
 Decode Variables::
@@ -44128,7 +44128,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -44139,7 +44139,7 @@ Included in::
 == vfsgnjx.vv
 
 Synopsis::
-No synopsis available
+Vector FP XOR sign injection, vector-vector
 
 Base::
 
@@ -44161,7 +44161,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Copies each element of vs2 with its sign bit replaced by the XOR of the vs2 and vs1 sign bits for that element position. When vs2 and vs1 name the same register, the XOR zeroes the sign bit; the encoding serves as the vfabs.v pseudoinstruction. No FP exceptions are raised.
 
 
 Decode Variables::
@@ -44181,7 +44181,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -44192,7 +44192,7 @@ Included in::
 == vfslide1down.vf
 
 Synopsis::
-No synopsis available
+Vector FP slide down by one and insert scalar
 
 Base::
 
@@ -44214,7 +44214,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Shifts active elements of vs2 toward lower indices by one, writing vs2[i+1] into vd[i] for i < vl-1; the last active element (vd[vl-1]) receives the scalar value from FP register fs1. The same NaN-boxing rule as vfslide1up applies to fs1 when SEW=32 and D is implemented.
 
 
 Decode Variables::
@@ -44234,7 +44234,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -44245,7 +44245,7 @@ Included in::
 == vfslide1up.vf
 
 Synopsis::
-No synopsis available
+Vector FP slide up by one and insert scalar
 
 Base::
 
@@ -44267,7 +44267,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Shifts active elements of vs2 toward higher indices by one, writing vs2[i-1] into vd[i] for i >= 1; position 0 receives the scalar value from FP register fs1. For SEW=32 when the D extension is present, fs1 must be NaN-boxed (upper 32 bits all-ones); a non-boxed value is replaced by the canonical NaN. vs2 and vd must be distinct registers.
 
 
 Decode Variables::
@@ -44287,7 +44287,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -44298,7 +44298,7 @@ Included in::
 == vfsqrt.v
 
 Synopsis::
-No synopsis available
+Vector FP square root
 
 Base::
 
@@ -44320,7 +44320,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Computes the IEEE 754 square root of each active element in vs2 and writes the result to vd, using the rounding mode from fcsr.FRM. No second source register is used; only vs2 and an optional mask operand are read.
 
 
 Decode Variables::
@@ -44339,7 +44339,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -44392,7 +44392,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -44445,7 +44445,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -44498,7 +44498,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve64d*
 | any
 |===
 
@@ -44551,7 +44551,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve64d*
 | any
 |===
 
@@ -44562,7 +44562,7 @@ Included in::
 == vfwadd.wf
 
 Synopsis::
-No synopsis available
+Vector FP widening add, wide-source scalar-vector
 
 Base::
 
@@ -44584,7 +44584,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Adds a SEW-wide scalar fs1 (NaN-boxed, widened to 2*SEW) to 2*SEW-wide elements of vs2, storing 2*SEW results in vd. vs2 is the wide source; fs1 is the narrow scalar addend, promoted to 2*SEW before the add, with canonical-NaN substitution if the D-extension NaN-box check fails. Inactive elements are undisturbed.
 
 
 Decode Variables::
@@ -44604,7 +44604,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve64d*
 | any
 |===
 
@@ -44615,7 +44615,7 @@ Included in::
 == vfwadd.wv
 
 Synopsis::
-No synopsis available
+Vector FP widening add, wide-source vector-vector
 
 Base::
 
@@ -44637,7 +44637,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Adds SEW-wide elements of vs1, each widened to 2*SEW, to the already-2*SEW-wide elements of vs2, storing 2*SEW results in vd. vs2 is the wide source; vs1 is the narrow source, promoted to 2*SEW before the add. Inactive elements are undisturbed.
 
 
 Decode Variables::
@@ -44657,7 +44657,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve64d*
 | any
 |===
 
@@ -44709,7 +44709,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve64d*
 | any
 |===
 
@@ -44761,7 +44761,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve64d*
 | any
 |===
 
@@ -44813,7 +44813,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve64d*
 | any
 |===
 
@@ -44865,7 +44865,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve64f*
 | any
 |===
 
@@ -44917,7 +44917,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve64f*
 | any
 |===
 
@@ -44969,7 +44969,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve64f*
 | any
 |===
 
@@ -45021,7 +45021,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve64f*
 | any
 |===
 
@@ -45084,7 +45084,7 @@ Included in::
 == vfwmacc.vf
 
 Synopsis::
-No synopsis available
+Vector FP widening multiply-accumulate, scalar-vector
 
 Base::
 
@@ -45106,7 +45106,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Computes vd[i] += fs1 * vs2[i] for each active element, where fs1 is NaN-boxed (replaced with canonical NaN if D is implemented and the upper bits are not all-ones). Widening converts both the scalar and vs2 elements from SEW to 2*SEW before the fused multiply-accumulate into vd. Inactive elements are undisturbed.
 
 
 Decode Variables::
@@ -45126,7 +45126,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve64d*
 | any
 |===
 
@@ -45137,7 +45137,7 @@ Included in::
 == vfwmacc.vv
 
 Synopsis::
-No synopsis available
+Vector FP widening multiply-accumulate, vector-vector
 
 Base::
 
@@ -45159,7 +45159,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Computes vd[i] += vs1[i] * vs2[i] for each active element, widening SEW-wide operands from vs1 and vs2 to a 2*SEW product before accumulating into the 2*SEW destination vd. The accumulator in vd is read and written at 2*SEW; sources are read at SEW. Inactive elements (vm=0) are left undisturbed in vd.
 
 
 Decode Variables::
@@ -45179,7 +45179,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve64d*
 | any
 |===
 
@@ -45296,7 +45296,7 @@ Included in::
 == vfwmsac.vf
 
 Synopsis::
-No synopsis available
+Vector FP widening multiply-subtract accumulator, scalar-vector
 
 Base::
 
@@ -45318,7 +45318,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Computes vd[i] = fs1 * vs2[i] - vd[i] for each active element, where fs1 is NaN-boxed from the low SEW bits of the FP register file. The existing 2*SEW accumulator in vd is subtracted from the widened product; the result is stored at 2*SEW width. Inactive elements are undisturbed.
 
 
 Decode Variables::
@@ -45338,7 +45338,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve64d*
 | any
 |===
 
@@ -45349,7 +45349,7 @@ Included in::
 == vfwmsac.vv
 
 Synopsis::
-No synopsis available
+Vector FP widening multiply-subtract accumulator, vector-vector
 
 Base::
 
@@ -45371,7 +45371,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Computes vd[i] = vs1[i] * vs2[i] - vd[i] for each active element. vs1 and vs2 are read at SEW width; the widened product minus the existing 2*SEW accumulator in vd is stored at 2*SEW width. Inactive elements are undisturbed.
 
 
 Decode Variables::
@@ -45391,7 +45391,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve64d*
 | any
 |===
 
@@ -45402,7 +45402,7 @@ Included in::
 == vfwmul.vf
 
 Synopsis::
-No synopsis available
+Vector FP widening multiply, scalar-vector
 
 Base::
 
@@ -45424,7 +45424,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Multiplies SEW-wide elements of vs2 by scalar fs1 (NaN-boxed, taken from the low SEW bits of the FP register file), producing 2*SEW-wide results in vd. When D is present, fs1 values with invalid NaN-box encoding are replaced with the canonical NaN before widening. Inactive elements are undisturbed.
 
 
 Decode Variables::
@@ -45444,7 +45444,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve64d*
 | any
 |===
 
@@ -45455,7 +45455,7 @@ Included in::
 == vfwmul.vv
 
 Synopsis::
-No synopsis available
+Vector FP widening multiply, vector-vector
 
 Base::
 
@@ -45477,7 +45477,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Multiplies corresponding SEW-wide elements of vs2 and vs1, widening both to 2*SEW before the multiply and writing the 2*SEW results to vd. No accumulator is used. Inactive elements in vd are undisturbed.
 
 
 Decode Variables::
@@ -45497,7 +45497,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve64d*
 | any
 |===
 
@@ -45508,7 +45508,7 @@ Included in::
 == vfwnmacc.vf
 
 Synopsis::
-No synopsis available
+Vector FP widening negated multiply-accumulate, scalar-vector
 
 Base::
 
@@ -45530,7 +45530,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Computes vd[i] = -(fs1 * vs2[i]) - vd[i] for each active element, where fs1 is NaN-boxed from the FP register file at SEW width. A single widening FMA combines the negated product and the sign-bit-flipped 2*SEW accumulator from vd. Inactive elements are undisturbed.
 
 
 Decode Variables::
@@ -45550,7 +45550,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve64d*
 | any
 |===
 
@@ -45561,7 +45561,7 @@ Included in::
 == vfwnmacc.vv
 
 Synopsis::
-No synopsis available
+Vector FP widening negated multiply-accumulate, vector-vector
 
 Base::
 
@@ -45583,7 +45583,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Computes vd[i] = -(vs1[i] * vs2[i]) - vd[i] for each active element, negating both the widened SEW-to-2*SEW product and the 2*SEW accumulator in a single fused operation. Inactive elements are undisturbed.
 
 
 Decode Variables::
@@ -45603,7 +45603,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve64d*
 | any
 |===
 
@@ -45614,7 +45614,7 @@ Included in::
 == vfwnmsac.vf
 
 Synopsis::
-No synopsis available
+Vector FP widening negated multiply-subtract accumulator, scalar-vector
 
 Base::
 
@@ -45636,7 +45636,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Computes vd[i] = -(fs1 * vs2[i]) + vd[i] for each active element, where fs1 is a NaN-boxed SEW-wide scalar. The negated widened product of fs1 and each vs2 element adds to the 2*SEW accumulator in vd. Inactive elements are undisturbed.
 
 
 Decode Variables::
@@ -45656,7 +45656,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve64d*
 | any
 |===
 
@@ -45667,7 +45667,7 @@ Included in::
 == vfwnmsac.vv
 
 Synopsis::
-No synopsis available
+Vector FP widening negated multiply-subtract accumulator, vector-vector
 
 Base::
 
@@ -45689,7 +45689,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Computes vd[i] = -(vs1[i] * vs2[i]) + vd[i] for each active element, negating the widened SEW-to-2*SEW product and adding it to the 2*SEW accumulator already in vd. Unlike vfwnmacc, the accumulator sign is not flipped. Inactive elements are undisturbed.
 
 
 Decode Variables::
@@ -45709,7 +45709,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve64d*
 | any
 |===
 
@@ -45720,7 +45720,7 @@ Included in::
 == vfwredosum.vs
 
 Synopsis::
-No synopsis available
+Vector FP widening ordered reduction sum
 
 Base::
 
@@ -45742,7 +45742,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Performs an ordered widening FP reduction over SEW-wide elements of vs2, accumulating into a 2*SEW running sum initialized from vs1[0] and writing the final result to vd[0]. The strict left-to-right evaluation order prohibits reassociation that would alter IEEE 754 rounding results. Masked elements are excluded; when vl=0, vs1[0] passes through unchanged to vd[0].
 
 
 Decode Variables::
@@ -45762,7 +45762,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve64d*
 | any
 |===
 
@@ -45773,7 +45773,7 @@ Included in::
 == vfwredusum.vs
 
 Synopsis::
-No synopsis available
+Vector FP widening unordered reduction sum
 
 Base::
 
@@ -45795,7 +45795,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Performs an unordered widening FP reduction over SEW-wide elements of vs2, accumulating into a 2*SEW sum initialized from vs1[0] and writing the result to vd[0]. Unlike vfwredosum, implementations may reassociate the additions (e.g., tree reduction) for parallelism; rounding outcomes may differ as a result. Masked elements are excluded; when vl=0, vs1[0] passes through unchanged to vd[0].
 
 
 Decode Variables::
@@ -45815,7 +45815,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve64d*
 | any
 |===
 
@@ -45868,7 +45868,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve64d*
 | any
 |===
 
@@ -45921,7 +45921,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve64d*
 | any
 |===
 
@@ -45932,7 +45932,7 @@ Included in::
 == vfwsub.wf
 
 Synopsis::
-No synopsis available
+Vector FP widening subtract, wide-source scalar-vector
 
 Base::
 
@@ -45954,7 +45954,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Subtracts a SEW-wide scalar fs1 (NaN-boxed, widened to 2*SEW) from 2*SEW-wide elements of vs2, storing 2*SEW results in vd. Canonical-NaN substitution applies to fs1 when D is implemented and the NaN-box is invalid. Inactive elements are undisturbed.
 
 
 Decode Variables::
@@ -45974,7 +45974,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve64d*
 | any
 |===
 
@@ -45985,7 +45985,7 @@ Included in::
 == vfwsub.wv
 
 Synopsis::
-No synopsis available
+Vector FP widening subtract, wide-source vector-vector
 
 Base::
 
@@ -46007,7 +46007,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Subtracts SEW-wide elements of vs1 (each widened to 2*SEW) from the 2*SEW-wide elements of vs2, storing 2*SEW results in vd. vs2 is the wide minuend; vs1 is the narrow subtrahend, promoted to 2*SEW before the subtraction. Inactive elements are undisturbed.
 
 
 Decode Variables::
@@ -46027,7 +46027,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve64d*
 | any
 |===
 
@@ -46141,7 +46141,7 @@ Included in::
 == vid.v
 
 Synopsis::
-No synopsis available
+Write element index into each vector element
 
 Base::
 
@@ -46163,7 +46163,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Writes the zero-based element index i as a SEW-wide value into each active element i of vd for elements 0 to vl-1. Masking is controlled by the vm bit; inactive elements are undisturbed.
 
 
 Decode Variables::
@@ -46181,7 +46181,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -46192,7 +46192,7 @@ Included in::
 == viota.m
 
 Synopsis::
-No synopsis available
+Exclusive prefix popcount of mask register
 
 Base::
 
@@ -46214,7 +46214,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+For each active element i of vd (0 to vl-1), writes the count of set bits in vs2[0..i-1] (the exclusive prefix popcount) as a SEW-wide integer. Active elements are optionally masked by vm; inactive elements are undisturbed. vstart must be 0.
 
 
 Decode Variables::
@@ -46233,7 +46233,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -46284,7 +46284,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -46335,7 +46335,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -46386,7 +46386,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -46437,7 +46437,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -46488,7 +46488,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -46539,7 +46539,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -46590,7 +46590,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -46641,7 +46641,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -46692,7 +46692,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -46743,7 +46743,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -46794,7 +46794,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -46845,7 +46845,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -46896,7 +46896,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -46947,7 +46947,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -46998,7 +46998,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -47049,7 +47049,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -47101,7 +47101,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -47153,7 +47153,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -47205,7 +47205,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -47257,7 +47257,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -47309,7 +47309,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -47361,7 +47361,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -47413,7 +47413,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -47465,7 +47465,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -47516,7 +47516,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -47569,7 +47569,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -47622,7 +47622,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -47675,7 +47675,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -47728,7 +47728,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -47781,7 +47781,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -47834,7 +47834,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -47887,7 +47887,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -47940,7 +47940,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -47993,7 +47993,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -48046,7 +48046,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -48099,7 +48099,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -48152,7 +48152,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -48205,7 +48205,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -48258,7 +48258,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -48311,7 +48311,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -48364,7 +48364,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -48417,7 +48417,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -48470,7 +48470,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -48523,7 +48523,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -48576,7 +48576,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -48629,7 +48629,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -48682,7 +48682,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -48735,7 +48735,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -48788,7 +48788,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -48841,7 +48841,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -48894,7 +48894,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -48947,7 +48947,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -49000,7 +49000,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -49053,7 +49053,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -49106,7 +49106,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -49159,7 +49159,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -49212,7 +49212,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -49265,7 +49265,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -49318,7 +49318,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -49371,7 +49371,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -49424,7 +49424,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -49476,7 +49476,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -49509,7 +49509,10 @@ Encoding::
 ....
 
 Description::
-Loads 2 segments of 16-bit elements from memory starting at address in xs1 register, using vector mask vm, and stores results in vector register vd. This is a fault-first operation that stops on the first fault. The effective element width is 16 bits.
+Loads 2 segments of 16-bit elements from memory starting at address in xs1 register,
+using vector mask vm, and stores results in vector register vd. This is a fault-first
+operation: a fault on element 0 raises normally; a fault on element i > 0 trims CSR[vl]
+to i and stops without raising. The effective element width is 16 bits.
 
 
 Decode Variables::
@@ -49528,7 +49531,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -49580,7 +49583,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -49613,7 +49616,10 @@ Encoding::
 ....
 
 Description::
-Loads 2 segments of 32-bit elements from memory starting at address in xs1 register, using vector mask vm, and stores results in vector register vd. This is a fault-first operation that stops on the first fault. The effective element width is 32 bits.
+Loads 2 segments of 32-bit elements from memory starting at address in xs1 register,
+using vector mask vm, and stores results in vector register vd. This is a fault-first
+operation: a fault on element 0 raises normally; a fault on element i > 0 trims CSR[vl]
+to i and stops without raising. The effective element width is 32 bits.
 
 
 Decode Variables::
@@ -49632,7 +49638,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -49684,7 +49690,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -49717,7 +49723,10 @@ Encoding::
 ....
 
 Description::
-Loads 2 segments of 64-bit elements from memory starting at address in xs1 register, using vector mask vm, and stores results in vector register vd. This is a fault-first operation that stops on the first fault. The effective element width is 64 bits.
+Loads 2 segments of 64-bit elements from memory starting at address in xs1 register,
+using vector mask vm, and stores results in vector register vd. This is a fault-first
+operation: a fault on element 0 raises normally; a fault on element i > 0 trims CSR[vl]
+to i and stops without raising. The effective element width is 64 bits.
 
 
 Decode Variables::
@@ -49736,7 +49745,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -49788,7 +49797,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -49821,7 +49830,10 @@ Encoding::
 ....
 
 Description::
-Loads 2 segments of 8-bit elements from memory starting at address in xs1 register, using vector mask vm, and stores results in vector register vd. This is a fault-first operation that stops on the first fault. The effective element width is 8 bits.
+Loads 2 segments of 8-bit elements from memory starting at address in xs1 register,
+using vector mask vm, and stores results in vector register vd. This is a fault-first
+operation: a fault on element 0 raises normally; a fault on element i > 0 trims CSR[vl]
+to i and stops without raising. The effective element width is 8 bits.
 
 
 Decode Variables::
@@ -49840,7 +49852,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -49892,7 +49904,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -49925,7 +49937,10 @@ Encoding::
 ....
 
 Description::
-Loads 3 segments of 16-bit elements from memory starting at address in xs1 register, using vector mask vm, and stores results in vector register vd. This is a fault-first operation that stops on the first fault. The effective element width is 16 bits.
+Loads 3 segments of 16-bit elements from memory starting at address in xs1 register,
+using vector mask vm, and stores results in vector register vd. This is a fault-first
+operation: a fault on element 0 raises normally; a fault on element i > 0 trims CSR[vl]
+to i and stops without raising. The effective element width is 16 bits.
 
 
 Decode Variables::
@@ -49944,7 +49959,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -49996,7 +50011,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -50029,7 +50044,10 @@ Encoding::
 ....
 
 Description::
-Loads 3 segments of 32-bit elements from memory starting at address in xs1 register, using vector mask vm, and stores results in vector register vd. This is a fault-first operation that stops on the first fault. The effective element width is 32 bits.
+Loads 3 segments of 32-bit elements from memory starting at address in xs1 register,
+using vector mask vm, and stores results in vector register vd. This is a fault-first
+operation: a fault on element 0 raises normally; a fault on element i > 0 trims CSR[vl]
+to i and stops without raising. The effective element width is 32 bits.
 
 
 Decode Variables::
@@ -50048,7 +50066,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -50100,7 +50118,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -50133,7 +50151,10 @@ Encoding::
 ....
 
 Description::
-Loads 3 segments of 64-bit elements from memory starting at address in xs1 register, using vector mask vm, and stores results in vector register vd. This is a fault-first operation that stops on the first fault. The effective element width is 64 bits.
+Loads 3 segments of 64-bit elements from memory starting at address in xs1 register,
+using vector mask vm, and stores results in vector register vd. This is a fault-first
+operation: a fault on element 0 raises normally; a fault on element i > 0 trims CSR[vl]
+to i and stops without raising. The effective element width is 64 bits.
 
 
 Decode Variables::
@@ -50152,7 +50173,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -50204,7 +50225,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -50237,7 +50258,10 @@ Encoding::
 ....
 
 Description::
-Loads 3 segments of 8-bit elements from memory starting at address in xs1 register, using vector mask vm, and stores results in vector register vd. This is a fault-first operation that stops on the first fault. The effective element width is 8 bits.
+Loads 3 segments of 8-bit elements from memory starting at address in xs1 register,
+using vector mask vm, and stores results in vector register vd. This is a fault-first
+operation: a fault on element 0 raises normally; a fault on element i > 0 trims CSR[vl]
+to i and stops without raising. The effective element width is 8 bits.
 
 
 Decode Variables::
@@ -50256,7 +50280,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -50308,7 +50332,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -50341,7 +50365,10 @@ Encoding::
 ....
 
 Description::
-Loads 4 segments of 16-bit elements from memory starting at address in xs1 register, using vector mask vm, and stores results in vector register vd. This is a fault-first operation that stops on the first fault. The effective element width is 16 bits.
+Loads 4 segments of 16-bit elements from memory starting at address in xs1 register,
+using vector mask vm, and stores results in vector register vd. This is a fault-first
+operation: a fault on element 0 raises normally; a fault on element i > 0 trims CSR[vl]
+to i and stops without raising. The effective element width is 16 bits.
 
 
 Decode Variables::
@@ -50360,7 +50387,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -50412,7 +50439,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -50445,7 +50472,10 @@ Encoding::
 ....
 
 Description::
-Loads 4 segments of 32-bit elements from memory starting at address in xs1 register, using vector mask vm, and stores results in vector register vd. This is a fault-first operation that stops on the first fault. The effective element width is 32 bits.
+Loads 4 segments of 32-bit elements from memory starting at address in xs1 register,
+using vector mask vm, and stores results in vector register vd. This is a fault-first
+operation: a fault on element 0 raises normally; a fault on element i > 0 trims CSR[vl]
+to i and stops without raising. The effective element width is 32 bits.
 
 
 Decode Variables::
@@ -50464,7 +50494,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -50516,7 +50546,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -50549,7 +50579,10 @@ Encoding::
 ....
 
 Description::
-Loads 4 segments of 64-bit elements from memory starting at address in xs1 register, using vector mask vm, and stores results in vector register vd. This is a fault-first operation that stops on the first fault. The effective element width is 64 bits.
+Loads 4 segments of 64-bit elements from memory starting at address in xs1 register,
+using vector mask vm, and stores results in vector register vd. This is a fault-first
+operation: a fault on element 0 raises normally; a fault on element i > 0 trims CSR[vl]
+to i and stops without raising. The effective element width is 64 bits.
 
 
 Decode Variables::
@@ -50568,7 +50601,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -50620,7 +50653,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -50653,7 +50686,10 @@ Encoding::
 ....
 
 Description::
-Loads 4 segments of 8-bit elements from memory starting at address in xs1 register, using vector mask vm, and stores results in vector register vd. This is a fault-first operation that stops on the first fault. The effective element width is 8 bits.
+Loads 4 segments of 8-bit elements from memory starting at address in xs1 register,
+using vector mask vm, and stores results in vector register vd. This is a fault-first
+operation: a fault on element 0 raises normally; a fault on element i > 0 trims CSR[vl]
+to i and stops without raising. The effective element width is 8 bits.
 
 
 Decode Variables::
@@ -50672,7 +50708,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -50724,7 +50760,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -50757,7 +50793,10 @@ Encoding::
 ....
 
 Description::
-Loads 5 segments of 16-bit elements from memory starting at address in xs1 register, using vector mask vm, and stores results in vector register vd. This is a fault-first operation that stops on the first fault. The effective element width is 16 bits.
+Loads 5 segments of 16-bit elements from memory starting at address in xs1 register,
+using vector mask vm, and stores results in vector register vd. This is a fault-first
+operation: a fault on element 0 raises normally; a fault on element i > 0 trims CSR[vl]
+to i and stops without raising. The effective element width is 16 bits.
 
 
 Decode Variables::
@@ -50776,7 +50815,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -50828,7 +50867,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -50861,7 +50900,10 @@ Encoding::
 ....
 
 Description::
-Loads 5 segments of 32-bit elements from memory starting at address in xs1 register, using vector mask vm, and stores results in vector register vd. This is a fault-first operation that stops on the first fault. The effective element width is 32 bits.
+Loads 5 segments of 32-bit elements from memory starting at address in xs1 register,
+using vector mask vm, and stores results in vector register vd. This is a fault-first
+operation: a fault on element 0 raises normally; a fault on element i > 0 trims CSR[vl]
+to i and stops without raising. The effective element width is 32 bits.
 
 
 Decode Variables::
@@ -50880,7 +50922,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -50932,7 +50974,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -50965,7 +51007,10 @@ Encoding::
 ....
 
 Description::
-Loads 5 segments of 64-bit elements from memory starting at address in xs1 register, using vector mask vm, and stores results in vector register vd. This is a fault-first operation that stops on the first fault. The effective element width is 64 bits.
+Loads 5 segments of 64-bit elements from memory starting at address in xs1 register,
+using vector mask vm, and stores results in vector register vd. This is a fault-first
+operation: a fault on element 0 raises normally; a fault on element i > 0 trims CSR[vl]
+to i and stops without raising. The effective element width is 64 bits.
 
 
 Decode Variables::
@@ -50984,7 +51029,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -51036,7 +51081,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -51069,7 +51114,10 @@ Encoding::
 ....
 
 Description::
-Loads 5 segments of 8-bit elements from memory starting at address in xs1 register, using vector mask vm, and stores results in vector register vd. This is a fault-first operation that stops on the first fault. The effective element width is 8 bits.
+Loads 5 segments of 8-bit elements from memory starting at address in xs1 register,
+using vector mask vm, and stores results in vector register vd. This is a fault-first
+operation: a fault on element 0 raises normally; a fault on element i > 0 trims CSR[vl]
+to i and stops without raising. The effective element width is 8 bits.
 
 
 Decode Variables::
@@ -51088,7 +51136,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -51140,7 +51188,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -51173,7 +51221,10 @@ Encoding::
 ....
 
 Description::
-Loads 6 segments of 16-bit elements from memory starting at address in xs1 register, using vector mask vm, and stores results in vector register vd. This is a fault-first operation that stops on the first fault. The effective element width is 16 bits.
+Loads 6 segments of 16-bit elements from memory starting at address in xs1 register,
+using vector mask vm, and stores results in vector register vd. This is a fault-first
+operation: a fault on element 0 raises normally; a fault on element i > 0 trims CSR[vl]
+to i and stops without raising. The effective element width is 16 bits.
 
 
 Decode Variables::
@@ -51192,7 +51243,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -51244,7 +51295,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -51277,7 +51328,10 @@ Encoding::
 ....
 
 Description::
-Loads 6 segments of 32-bit elements from memory starting at address in xs1 register, using vector mask vm, and stores results in vector register vd. This is a fault-first operation that stops on the first fault. The effective element width is 32 bits.
+Loads 6 segments of 32-bit elements from memory starting at address in xs1 register,
+using vector mask vm, and stores results in vector register vd. This is a fault-first
+operation: a fault on element 0 raises normally; a fault on element i > 0 trims CSR[vl]
+to i and stops without raising. The effective element width is 32 bits.
 
 
 Decode Variables::
@@ -51296,7 +51350,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -51348,7 +51402,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -51381,7 +51435,10 @@ Encoding::
 ....
 
 Description::
-Loads 6 segments of 64-bit elements from memory starting at address in xs1 register, using vector mask vm, and stores results in vector register vd. This is a fault-first operation that stops on the first fault. The effective element width is 64 bits.
+Loads 6 segments of 64-bit elements from memory starting at address in xs1 register,
+using vector mask vm, and stores results in vector register vd. This is a fault-first
+operation: a fault on element 0 raises normally; a fault on element i > 0 trims CSR[vl]
+to i and stops without raising. The effective element width is 64 bits.
 
 
 Decode Variables::
@@ -51400,7 +51457,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -51452,7 +51509,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -51485,7 +51542,10 @@ Encoding::
 ....
 
 Description::
-Loads 6 segments of 8-bit elements from memory starting at address in xs1 register, using vector mask vm, and stores results in vector register vd. This is a fault-first operation that stops on the first fault. The effective element width is 8 bits.
+Loads 6 segments of 8-bit elements from memory starting at address in xs1 register,
+using vector mask vm, and stores results in vector register vd. This is a fault-first
+operation: a fault on element 0 raises normally; a fault on element i > 0 trims CSR[vl]
+to i and stops without raising. The effective element width is 8 bits.
 
 
 Decode Variables::
@@ -51504,7 +51564,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -51556,7 +51616,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -51589,7 +51649,10 @@ Encoding::
 ....
 
 Description::
-Loads 7 segments of 16-bit elements from memory starting at address in xs1 register, using vector mask vm, and stores results in vector register vd. This is a fault-first operation that stops on the first fault. The effective element width is 16 bits.
+Loads 7 segments of 16-bit elements from memory starting at address in xs1 register,
+using vector mask vm, and stores results in vector register vd. This is a fault-first
+operation: a fault on element 0 raises normally; a fault on element i > 0 trims CSR[vl]
+to i and stops without raising. The effective element width is 16 bits.
 
 
 Decode Variables::
@@ -51608,7 +51671,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -51660,7 +51723,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -51693,7 +51756,10 @@ Encoding::
 ....
 
 Description::
-Loads 7 segments of 32-bit elements from memory starting at address in xs1 register, using vector mask vm, and stores results in vector register vd. This is a fault-first operation that stops on the first fault. The effective element width is 32 bits.
+Loads 7 segments of 32-bit elements from memory starting at address in xs1 register,
+using vector mask vm, and stores results in vector register vd. This is a fault-first
+operation: a fault on element 0 raises normally; a fault on element i > 0 trims CSR[vl]
+to i and stops without raising. The effective element width is 32 bits.
 
 
 Decode Variables::
@@ -51712,7 +51778,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -51764,7 +51830,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -51797,7 +51863,10 @@ Encoding::
 ....
 
 Description::
-Loads 7 segments of 64-bit elements from memory starting at address in xs1 register, using vector mask vm, and stores results in vector register vd. This is a fault-first operation that stops on the first fault. The effective element width is 64 bits.
+Loads 7 segments of 64-bit elements from memory starting at address in xs1 register,
+using vector mask vm, and stores results in vector register vd. This is a fault-first
+operation: a fault on element 0 raises normally; a fault on element i > 0 trims CSR[vl]
+to i and stops without raising. The effective element width is 64 bits.
 
 
 Decode Variables::
@@ -51816,7 +51885,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -51868,7 +51937,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -51901,7 +51970,10 @@ Encoding::
 ....
 
 Description::
-Loads 7 segments of 8-bit elements from memory starting at address in xs1 register, using vector mask vm, and stores results in vector register vd. This is a fault-first operation that stops on the first fault. The effective element width is 8 bits.
+Loads 7 segments of 8-bit elements from memory starting at address in xs1 register,
+using vector mask vm, and stores results in vector register vd. This is a fault-first
+operation: a fault on element 0 raises normally; a fault on element i > 0 trims CSR[vl]
+to i and stops without raising. The effective element width is 8 bits.
 
 
 Decode Variables::
@@ -51920,7 +51992,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -51972,7 +52044,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -52005,7 +52077,10 @@ Encoding::
 ....
 
 Description::
-Loads 8 segments of 16-bit elements from memory starting at address in xs1 register, using vector mask vm, and stores results in vector register vd. This is a fault-first operation that stops on the first fault. The effective element width is 16 bits.
+Loads 8 segments of 16-bit elements from memory starting at address in xs1 register,
+using vector mask vm, and stores results in vector register vd. This is a fault-first
+operation: a fault on element 0 raises normally; a fault on element i > 0 trims CSR[vl]
+to i and stops without raising. The effective element width is 16 bits.
 
 
 Decode Variables::
@@ -52024,7 +52099,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -52076,7 +52151,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -52109,7 +52184,10 @@ Encoding::
 ....
 
 Description::
-Loads 8 segments of 32-bit elements from memory starting at address in xs1 register, using vector mask vm, and stores results in vector register vd. This is a fault-first operation that stops on the first fault. The effective element width is 32 bits.
+Loads 8 segments of 32-bit elements from memory starting at address in xs1 register,
+using vector mask vm, and stores results in vector register vd. This is a fault-first
+operation: a fault on element 0 raises normally; a fault on element i > 0 trims CSR[vl]
+to i and stops without raising. The effective element width is 32 bits.
 
 
 Decode Variables::
@@ -52128,7 +52206,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -52180,7 +52258,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -52213,7 +52291,10 @@ Encoding::
 ....
 
 Description::
-Loads 8 segments of 64-bit elements from memory starting at address in xs1 register, using vector mask vm, and stores results in vector register vd. This is a fault-first operation that stops on the first fault. The effective element width is 64 bits.
+Loads 8 segments of 64-bit elements from memory starting at address in xs1 register,
+using vector mask vm, and stores results in vector register vd. This is a fault-first
+operation: a fault on element 0 raises normally; a fault on element i > 0 trims CSR[vl]
+to i and stops without raising. The effective element width is 64 bits.
 
 
 Decode Variables::
@@ -52232,7 +52313,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -52284,7 +52365,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -52317,7 +52398,10 @@ Encoding::
 ....
 
 Description::
-Loads 8 segments of 8-bit elements from memory starting at address in xs1 register, using vector mask vm, and stores results in vector register vd. This is a fault-first operation that stops on the first fault. The effective element width is 8 bits.
+Loads 8 segments of 8-bit elements from memory starting at address in xs1 register,
+using vector mask vm, and stores results in vector register vd. This is a fault-first
+operation: a fault on element 0 raises normally; a fault on element i > 0 trims CSR[vl]
+to i and stops without raising. The effective element width is 8 bits.
 
 
 Decode Variables::
@@ -52336,7 +52420,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -52389,7 +52473,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -52442,7 +52526,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -52495,7 +52579,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -52548,7 +52632,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -52601,7 +52685,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -52654,7 +52738,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -52707,7 +52791,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -52760,7 +52844,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -52813,7 +52897,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -52866,7 +52950,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -52919,7 +53003,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -52972,7 +53056,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -53025,7 +53109,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -53078,7 +53162,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -53131,7 +53215,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -53184,7 +53268,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -53237,7 +53321,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -53290,7 +53374,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -53343,7 +53427,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -53396,7 +53480,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -53449,7 +53533,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -53502,7 +53586,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -53555,7 +53639,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -53608,7 +53692,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -53661,7 +53745,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -53714,7 +53798,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -53767,7 +53851,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -53820,7 +53904,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -53873,7 +53957,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -53926,7 +54010,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -53979,7 +54063,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -54032,7 +54116,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -54043,7 +54127,7 @@ Included in::
 == vluxseg2ei16.v
 
 Synopsis::
-No synopsis available
+Unordered indexed segment load, 2-field, 16-bit indices
 
 Base::
 
@@ -54065,7 +54149,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Loads a 2-field segment of SEW-wide elements for each active element using unordered indexed addressing: for element i, the instruction adds the 16-bit unsigned byte offset in vs2[i] to the base address in xs1 and loads two consecutive SEW-wide values from that address and address+(SEW/8) into vd[i] and vd+emul_reg[i]. Indices are interpreted as EEW=16 regardless of SEW. Masked-off elements (vm=0) leave the destination undisturbed.
 
 
 Decode Variables::
@@ -54085,7 +54169,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -54096,7 +54180,7 @@ Included in::
 == vluxseg2ei32.v
 
 Synopsis::
-No synopsis available
+Unordered indexed segment load, 2-field, 32-bit indices
 
 Base::
 
@@ -54118,7 +54202,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Loads a 2-field segment of SEW-wide elements for each active element using unordered indexed addressing. For element i, a 32-bit unsigned byte offset from vs2 is added to the base address in xs1 to form the effective address; the SEW-wide values at that address and address+(SEW/8) are written to vd and vd+emul_reg. Indices use EEW=32 regardless of current SEW. Masked-off elements (vm=0) leave the destination undisturbed.
 
 
 Decode Variables::
@@ -54138,7 +54222,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -54191,7 +54275,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -54244,7 +54328,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -54297,7 +54381,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -54350,7 +54434,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -54403,7 +54487,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -54456,7 +54540,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -54509,7 +54593,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -54562,7 +54646,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -54615,7 +54699,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -54668,7 +54752,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -54721,7 +54805,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -54774,7 +54858,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -54827,7 +54911,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -54880,7 +54964,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -54933,7 +55017,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -54986,7 +55070,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -55039,7 +55123,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -55092,7 +55176,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -55145,7 +55229,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -55198,7 +55282,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -55251,7 +55335,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -55304,7 +55388,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -55357,7 +55441,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -55410,7 +55494,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -55463,7 +55547,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -55516,7 +55600,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -55527,7 +55611,7 @@ Included in::
 == vmacc.vv
 
 Synopsis::
-No synopsis available
+Vector integer multiply-accumulate, vector-vector
 
 Base::
 
@@ -55549,7 +55633,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Computes vd[i] = vd[i] + vs1[i] * vs2[i] for each active SEW-wide element. Inactive elements are undisturbed.
 
 
 Decode Variables::
@@ -55569,7 +55653,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -55580,7 +55664,7 @@ Included in::
 == vmacc.vx
 
 Synopsis::
-No synopsis available
+Vector integer multiply-accumulate, vector-scalar
 
 Base::
 
@@ -55602,7 +55686,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Computes vd[i] = vd[i] + xs1 * vs2[i] for each active SEW-wide element; xs1 is the low SEW bits of the integer register. Inactive elements are undisturbed.
 
 
 Decode Variables::
@@ -55622,7 +55706,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -55674,7 +55758,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -55685,7 +55769,7 @@ Included in::
 == vmadc.vim
 
 Synopsis::
-Vector multiply-add with carry and masked
+Vector mask add carry-out with carry-in immediate (.vim)
 
 Base::
 
@@ -55726,7 +55810,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -55737,7 +55821,7 @@ Included in::
 == vmadc.vv
 
 Synopsis::
-Vector multiply-add with carry
+Vector mask add-carry-out, no carry-in
 
 Base::
 
@@ -55778,7 +55862,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -55789,7 +55873,7 @@ Included in::
 == vmadc.vvm
 
 Synopsis::
-Vector multiply-add with carry and masked
+Vector mask add carry-out with carry-in (.vvm)
 
 Base::
 
@@ -55830,7 +55914,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -55882,7 +55966,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -55893,7 +55977,7 @@ Included in::
 == vmadc.vxm
 
 Synopsis::
-Vector multiply-add with carry and scalar, masked
+Vector mask add carry-out with carry-in scalar (.vxm)
 
 Base::
 
@@ -55934,7 +56018,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -55945,7 +56029,7 @@ Included in::
 == vmadd.vv
 
 Synopsis::
-No synopsis available
+Vector integer multiply-add, vector-vector
 
 Base::
 
@@ -55967,7 +56051,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Computes vd[i] = vs1[i] * vd[i] + vs2[i] for each active SEW-wide element, where vd is one multiplicand and vs2 is the addend. Differs from vmacc in that vd is a multiplicand rather than the accumulator. Inactive elements are undisturbed.
 
 
 Decode Variables::
@@ -55987,7 +56071,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -55998,7 +56082,7 @@ Included in::
 == vmadd.vx
 
 Synopsis::
-No synopsis available
+Vector integer multiply-add, vector-scalar
 
 Base::
 
@@ -56020,7 +56104,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Computes vd[i] = xs1 * vd[i] + vs2[i] for each active SEW-wide element; xs1 is the scalar multiplicand (low SEW bits) and vd is both the second multiplicand and the destination. Inactive elements are undisturbed.
 
 
 Decode Variables::
@@ -56040,7 +56124,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -56051,7 +56135,7 @@ Included in::
 == vmand.mm
 
 Synopsis::
-No synopsis available
+Mask register bitwise AND
 
 Base::
 
@@ -56073,7 +56157,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Computes the bitwise AND of mask registers vs2 and vs1 across all VLEN bits starting from vstart, writing the result to vd. Not bounded by vl; the vm bit has no masking effect.
 
 
 Decode Variables::
@@ -56092,7 +56176,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -56103,7 +56187,7 @@ Included in::
 == vmandn.mm
 
 Synopsis::
-No synopsis available
+Mask register AND with complement of vs1
 
 Base::
 
@@ -56125,7 +56209,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Computes vs2 AND (NOT vs1) across all VLEN mask bits and writes the result to vd. Operates from vstart to VLEN-1, independent of vl and the vm masking bit.
 
 
 Decode Variables::
@@ -56144,7 +56228,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -56155,7 +56239,7 @@ Included in::
 == vmax.vv
 
 Synopsis::
-No synopsis available
+Vector signed integer maximum, vector-vector
 
 Base::
 
@@ -56177,7 +56261,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Writes max(vs2[i], vs1[i]) into vd[i] for each active SEW-wide element using signed comparison. Both operands are treated as two's-complement integers of SEW bits. Inactive elements are undisturbed.
 
 
 Decode Variables::
@@ -56197,7 +56281,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -56208,7 +56292,7 @@ Included in::
 == vmax.vx
 
 Synopsis::
-No synopsis available
+Vector signed integer maximum, vector-scalar
 
 Base::
 
@@ -56230,7 +56314,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Writes max(vs2[i], xs1) into vd[i] for each active SEW-wide element using signed comparison, where xs1 is sign-extended to SEW bits. Inactive elements are undisturbed.
 
 
 Decode Variables::
@@ -56250,7 +56334,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -56261,7 +56345,7 @@ Included in::
 == vmaxu.vv
 
 Synopsis::
-No synopsis available
+Vector unsigned integer maximum, vector-vector
 
 Base::
 
@@ -56283,7 +56367,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Writes max(vs2[i], vs1[i]) into vd[i] for each active SEW-wide element using unsigned comparison. Both operands are treated as unsigned integers of SEW bits. Inactive elements are undisturbed.
 
 
 Decode Variables::
@@ -56303,7 +56387,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -56314,7 +56398,7 @@ Included in::
 == vmaxu.vx
 
 Synopsis::
-No synopsis available
+Vector unsigned integer maximum, vector-scalar
 
 Base::
 
@@ -56336,7 +56420,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Writes max(vs2[i], xs1) into vd[i] for each active SEW-wide element using unsigned comparison, where xs1 is zero-extended to SEW bits. Inactive elements are undisturbed.
 
 
 Decode Variables::
@@ -56356,7 +56440,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -56367,7 +56451,7 @@ Included in::
 == vmerge.vim
 
 Synopsis::
-No synopsis available
+Merge vector and sign-extended immediate using mask v0
 
 Base::
 
@@ -56389,7 +56473,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Selects between vs2 and a 5-bit sign-extended immediate for each element using mask register v0 as the selector: where v0[i]=1, vd[i] = sext(imm); where v0[i]=0, vd[i] = vs2[i]. Always unmasked (vm=0 is implicit); all active elements in [vstart, vl) are written.
 
 
 Decode Variables::
@@ -56408,7 +56492,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -56460,7 +56544,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -56471,7 +56555,7 @@ Included in::
 == vmerge.vxm
 
 Synopsis::
-No synopsis available
+Merge vector and scalar register using mask v0
 
 Base::
 
@@ -56493,7 +56577,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Selects between vs2 and integer register xs1 for each element using mask register v0 as the selector: where v0[i]=1, vd[i] = xs1; where v0[i]=0, vd[i] = vs2[i]. Always unmasked (vm=0 is implicit); all active elements in [vstart, vl) are written.
 
 
 Decode Variables::
@@ -56512,7 +56596,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -56523,7 +56607,7 @@ Included in::
 == vmfeq.vf
 
 Synopsis::
-No synopsis available
+Vector FP equal, vector-scalar
 
 Base::
 
@@ -56545,7 +56629,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Compares each SEW-wide FP element of vs2 against scalar FP register fs1 using an IEEE 754 quiet equality test, writing the 1-bit result into bit i of mask register vd. When SEW=32 and the D extension is present, fs1 is NaN-boxed: if bits [63:32] are not all-ones, fs1 is treated as the canonical NaN. Masked-off elements leave vd undisturbed.
 
 
 Decode Variables::
@@ -56565,7 +56649,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -56576,7 +56660,7 @@ Included in::
 == vmfeq.vv
 
 Synopsis::
-No synopsis available
+Vector FP equal, vector-vector
 
 Base::
 
@@ -56598,7 +56682,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Compares each SEW-wide FP element of vs2 against the corresponding element of vs1 using an IEEE 754 quiet equality test, writing the 1-bit result into bit i of mask destination vd. Quiet NaN inputs return false without raising NV; only sNaN inputs raise the NV flag. Masked-off elements (when vm=0 for a given lane) leave the corresponding bit in vd undisturbed.
 
 
 Decode Variables::
@@ -56618,7 +56702,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -56629,7 +56713,7 @@ Included in::
 == vmfge.vf
 
 Synopsis::
-No synopsis available
+Vector FP greater-than-or-equal, vector-scalar
 
 Base::
 
@@ -56651,7 +56735,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Compares each SEW-wide element of vs2 against scalar FP register fs1 using IEEE 754 signaling greater-than-or-equal, writing a 1-bit result into bit i of mask register vd. Implemented as f_le(fs1, vs2[i]): returns true when fs1 is less than or equal to the vector element. Any NaN operand raises NV and returns false; when SEW=32 with D present, fs1 is NaN-boxed.
 
 
 Decode Variables::
@@ -56671,7 +56755,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -56682,7 +56766,7 @@ Included in::
 == vmfgt.vf
 
 Synopsis::
-No synopsis available
+Vector FP greater-than, vector-scalar
 
 Base::
 
@@ -56704,7 +56788,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Compares each SEW-wide element of vs2 against scalar FP register fs1 using IEEE 754 signaling greater-than, writing a 1-bit result into bit i of mask register vd. Implemented as f_lt(fs1, vs2[i]): returns true when fs1 is strictly less than the vector element. Any NaN operand raises NV and returns false; when SEW=32 with D present, fs1 is NaN-boxed.
 
 
 Decode Variables::
@@ -56724,7 +56808,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -56735,7 +56819,7 @@ Included in::
 == vmfle.vf
 
 Synopsis::
-No synopsis available
+Vector FP less-than-or-equal, vector-scalar
 
 Base::
 
@@ -56757,7 +56841,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Compares each SEW-wide element of vs2 against scalar FP register fs1 using IEEE 754 signaling less-than-or-equal, writing a 1-bit result into bit i of mask register vd. Any NaN operand raises NV and returns false; when SEW=32 with D present, fs1 is NaN-boxed and treated as canonical NaN if its upper 32 bits are not all-ones. Masked-off elements leave vd undisturbed.
 
 
 Decode Variables::
@@ -56777,7 +56861,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -56788,7 +56872,7 @@ Included in::
 == vmfle.vv
 
 Synopsis::
-No synopsis available
+Vector FP less-than-or-equal, vector-vector
 
 Base::
 
@@ -56810,7 +56894,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Compares each SEW-wide element of vs2 against the corresponding element of vs1 using IEEE 754 signaling less-than-or-equal, writing a 1-bit result into bit i of mask register vd. Any NaN operand, quiet or signaling, returns false and raises the NV flag. vmfge.vv assembles as vmfle.vv with the source operands swapped; masked-off elements leave vd undisturbed.
 
 
 Decode Variables::
@@ -56830,7 +56914,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -56841,7 +56925,7 @@ Included in::
 == vmflt.vf
 
 Synopsis::
-No synopsis available
+Vector FP less-than, vector-scalar
 
 Base::
 
@@ -56863,7 +56947,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Compares each SEW-wide element of vs2 against scalar FP register fs1 using IEEE 754 signaling less-than, writing a 1-bit result into bit i of mask register vd. Any NaN operand raises NV and returns false; when SEW=32 with D present, fs1 is NaN-boxed and treated as canonical NaN if its upper 32 bits are not all-ones. Masked-off elements leave vd undisturbed.
 
 
 Decode Variables::
@@ -56883,7 +56967,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -56894,7 +56978,7 @@ Included in::
 == vmflt.vv
 
 Synopsis::
-No synopsis available
+Vector FP less-than, vector-vector
 
 Base::
 
@@ -56916,7 +57000,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Performs an IEEE 754 signaling less-than comparison of each SEW-wide element of vs2 against the corresponding element of vs1, writing a 1-bit result into bit i of mask register vd. Any NaN operand, quiet or signaling, returns false and raises the NV flag. vmfgt.vv assembles as vmflt.vv with source operands swapped; masked-off elements leave vd undisturbed.
 
 
 Decode Variables::
@@ -56936,7 +57020,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -56947,7 +57031,7 @@ Included in::
 == vmfne.vf
 
 Synopsis::
-No synopsis available
+Vector FP not-equal, vector-scalar
 
 Base::
 
@@ -56969,7 +57053,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Compares each SEW-wide FP element of vs2 against scalar FP register fs1 for IEEE 754 inequality, writing the 1-bit not-equal result into bit i of mask register vd. Quiet NaN inputs return true without raising NV; only sNaN inputs raise the NV flag. When SEW=32 with D present, fs1 is NaN-boxed: invalid upper bits force the scalar to canonical NaN.
 
 
 Decode Variables::
@@ -56989,7 +57073,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -57000,7 +57084,7 @@ Included in::
 == vmfne.vv
 
 Synopsis::
-No synopsis available
+Vector FP not-equal, vector-vector
 
 Base::
 
@@ -57022,7 +57106,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Compares each SEW-wide FP element of vs2 against the corresponding element of vs1 for IEEE 754 inequality, writing the logical negation of the quiet-equal result into bit i of mask register vd. Quiet NaN inputs return true (unordered) without raising NV; only sNaN inputs raise the NV flag. Masked-off elements leave vd undisturbed.
 
 
 Decode Variables::
@@ -57042,7 +57126,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32f*
 | any
 |===
 
@@ -57053,7 +57137,7 @@ Included in::
 == vmin.vv
 
 Synopsis::
-No synopsis available
+Vector signed integer minimum, vector-vector
 
 Base::
 
@@ -57075,7 +57159,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Writes min(vs2[i], vs1[i]) into vd[i] for each active SEW-wide element using signed comparison. Both operands are treated as two's-complement integers of SEW bits. Inactive elements are undisturbed.
 
 
 Decode Variables::
@@ -57095,7 +57179,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -57106,7 +57190,7 @@ Included in::
 == vmin.vx
 
 Synopsis::
-No synopsis available
+Vector signed integer minimum, vector-scalar
 
 Base::
 
@@ -57128,7 +57212,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Writes min(vs2[i], xs1) into vd[i] for each active SEW-wide element using signed comparison, where xs1 is sign-extended to SEW bits. Inactive elements are undisturbed.
 
 
 Decode Variables::
@@ -57148,7 +57232,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -57159,7 +57243,7 @@ Included in::
 == vminu.vv
 
 Synopsis::
-No synopsis available
+Vector unsigned integer minimum, vector-vector
 
 Base::
 
@@ -57181,7 +57265,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Writes min(vs2[i], vs1[i]) into vd[i] for each active SEW-wide element using unsigned comparison. Both operands are treated as unsigned integers of SEW bits. Inactive elements are undisturbed.
 
 
 Decode Variables::
@@ -57201,7 +57285,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -57212,7 +57296,7 @@ Included in::
 == vminu.vx
 
 Synopsis::
-No synopsis available
+Vector unsigned integer minimum, vector-scalar
 
 Base::
 
@@ -57234,7 +57318,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Writes min(vs2[i], xs1) into vd[i] for each active SEW-wide element using unsigned comparison, where xs1 is zero-extended to SEW bits. Inactive elements are undisturbed.
 
 
 Decode Variables::
@@ -57254,7 +57338,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -57265,7 +57349,7 @@ Included in::
 == vmnand.mm
 
 Synopsis::
-No synopsis available
+Mask register bitwise NAND
 
 Base::
 
@@ -57287,7 +57371,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Computes the bitwise complement of AND of mask registers vs2 and vs1 across all VLEN bits starting from vstart, writing the result to vd. Not bounded by vl; the vm bit has no masking effect. When vs1 == vs2, encodes the vmnot.m pseudoinstruction.
 
 
 Decode Variables::
@@ -57306,7 +57390,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -57317,7 +57401,7 @@ Included in::
 == vmnor.mm
 
 Synopsis::
-No synopsis available
+Mask register bitwise NOR
 
 Base::
 
@@ -57339,7 +57423,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Computes the bitwise complement of OR of mask registers vs2 and vs1 across all VLEN bits starting from vstart, writing the result to vd. Not bounded by vl; the vm bit has no masking effect.
 
 
 Decode Variables::
@@ -57358,7 +57442,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -57369,7 +57453,7 @@ Included in::
 == vmor.mm
 
 Synopsis::
-No synopsis available
+Mask register bitwise OR
 
 Base::
 
@@ -57391,7 +57475,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Computes the bitwise OR of mask registers vs2 and vs1 across all VLEN bits starting from vstart, writing the result to vd. Not bounded by vl; the vm bit has no masking effect.
 
 
 Decode Variables::
@@ -57410,7 +57494,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -57421,7 +57505,7 @@ Included in::
 == vmorn.mm
 
 Synopsis::
-No synopsis available
+Mask register OR with complement of vs1
 
 Base::
 
@@ -57443,7 +57527,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Computes vs2 OR (NOT vs1) across all VLEN mask bits and writes the result to vd. Operates from vstart to VLEN-1, independent of vl and the vm masking bit.
 
 
 Decode Variables::
@@ -57462,7 +57546,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -57473,7 +57557,7 @@ Included in::
 == vmsbc.vv
 
 Synopsis::
-Vector multiply-subtract with carry
+Vector mask subtract-borrow-out, no borrow-in
 
 Base::
 
@@ -57514,7 +57598,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -57525,7 +57609,7 @@ Included in::
 == vmsbc.vvm
 
 Synopsis::
-No synopsis available
+Vector subtract borrow out, vector operands with carry-in v0
 
 Base::
 
@@ -57547,7 +57631,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Produces the borrow bit of vs2[i] - vs1[i] - v0[i] for each element, writing a single result bit per element into vd. vd[i] = 1 if vs2[i] < vs1[i], or if vs2[i] == vs1[i] and v0[i] == 1; otherwise 0. Used for chained multi-word unsigned subtraction; always operates on the full [vstart, vl) range without vm masking.
 
 
 Decode Variables::
@@ -57566,7 +57650,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -57618,7 +57702,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -57629,7 +57713,7 @@ Included in::
 == vmsbc.vxm
 
 Synopsis::
-No synopsis available
+Vector subtract borrow out, scalar operand with carry-in v0
 
 Base::
 
@@ -57651,7 +57735,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Produces the borrow bit of vs2[i] - xs1 - v0[i] for each element, writing a single result bit per element into vd. vd[i] = 1 if vs2[i] < xs1, or if vs2[i] == xs1 and v0[i] == 1; otherwise 0. Used for chained multi-word unsigned subtraction; always operates on the full [vstart, vl) range without vm masking.
 
 
 Decode Variables::
@@ -57670,7 +57754,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -57681,7 +57765,7 @@ Included in::
 == vmsbf.m
 
 Synopsis::
-No synopsis available
+Mask set-before-first set bit
 
 Base::
 
@@ -57703,7 +57787,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Scans mask register vs2 from element 0 to vl-1, writing 1 to each active element of vd strictly before the first set bit in vs2 and 0 to the first set bit position and all subsequent active elements. Inactive elements (determined by vm) are undisturbed; vstart must be 0.
 
 
 Decode Variables::
@@ -57722,7 +57806,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -57775,7 +57859,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -57828,7 +57912,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -57881,7 +57965,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -57934,7 +58018,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -57987,7 +58071,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -58040,7 +58124,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -58093,7 +58177,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -58104,7 +58188,7 @@ Included in::
 == vmsif.m
 
 Synopsis::
-No synopsis available
+Mask set-including-first set bit
 
 Base::
 
@@ -58126,7 +58210,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Scans mask register vs2 from element 0 to vl-1 and writes 1 to each active element of vd at or before the position of the first set bit in vs2, and 0 to all active elements after it. Inactive elements (determined by vm) are undisturbed; vstart must be 0.
 
 
 Decode Variables::
@@ -58145,7 +58229,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -58198,7 +58282,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -58251,7 +58335,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -58304,7 +58388,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -58357,7 +58441,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -58410,7 +58494,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -58463,7 +58547,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -58516,7 +58600,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -58569,7 +58653,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -58622,7 +58706,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -58675,7 +58759,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -58728,7 +58812,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -58781,7 +58865,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -58834,7 +58918,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -58845,7 +58929,7 @@ Included in::
 == vmsof.m
 
 Synopsis::
-No synopsis available
+Mask set-only-first set bit
 
 Base::
 
@@ -58867,7 +58951,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Scans mask register vs2 from element 0 to vl-1 and writes 1 only to the active element of vd at the index of the first set bit in vs2; all other active elements are written 0. Inactive elements (determined by vm) are undisturbed; vstart must be 0.
 
 
 Decode Variables::
@@ -58886,7 +58970,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -58897,7 +58981,7 @@ Included in::
 == vmul.vv
 
 Synopsis::
-No synopsis available
+Vector integer multiply, return low half, vv
 
 Base::
 
@@ -58919,7 +59003,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Multiplies corresponding SEW-wide elements of vs2 and vs1, writing the low SEW bits of each full-width product into vd; the upper half of each product is discarded. Inactive elements under vm mask control are undisturbed.
 
 
 Decode Variables::
@@ -58939,7 +59023,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -58950,7 +59034,7 @@ Included in::
 == vmul.vx
 
 Synopsis::
-No synopsis available
+Vector integer multiply scalar, return low half, vx
 
 Base::
 
@@ -58972,7 +59056,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Multiplies each SEW-wide element of vs2 by the scalar xs1 (sign-extended to SEW), writing the low SEW bits of each product into vd; the upper bits are discarded. Inactive elements under vm mask control are undisturbed.
 
 
 Decode Variables::
@@ -58992,7 +59076,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -59003,7 +59087,7 @@ Included in::
 == vmulh.vv
 
 Synopsis::
-No synopsis available
+Vector signed multiply high half, vv
 
 Base::
 
@@ -59025,7 +59109,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Multiplies signed SEW-wide elements of vs2 and vs1, writing the upper SEW bits of the 2*SEW product into vd. Both operands sign-extend to 2*SEW before multiplication. Inactive elements under vm mask control are undisturbed.
 
 
 Decode Variables::
@@ -59045,7 +59129,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -59056,7 +59140,7 @@ Included in::
 == vmulh.vx
 
 Synopsis::
-No synopsis available
+Vector signed multiply high half, scalar, vx
 
 Base::
 
@@ -59078,7 +59162,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Multiplies each signed SEW-wide vs2 element by the scalar xs1 (sign-extended to SEW), writing the upper SEW bits of the 2*SEW product into vd. Both operands sign-extend to 2*SEW for the multiplication. Inactive elements under vm mask control are undisturbed.
 
 
 Decode Variables::
@@ -59098,7 +59182,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -59109,7 +59193,7 @@ Included in::
 == vmulhsu.vv
 
 Synopsis::
-No synopsis available
+Vector signed-by-unsigned multiply high half, vv
 
 Base::
 
@@ -59131,7 +59215,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Multiplies signed vs2 elements by unsigned vs1 elements (both SEW-wide), writing the upper SEW bits of the 2*SEW product into vd. vs2 sign-extends and vs1 zero-extends for the mixed-sign multiplication. Inactive elements under vm mask control are undisturbed.
 
 
 Decode Variables::
@@ -59151,7 +59235,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -59162,7 +59246,7 @@ Included in::
 == vmulhsu.vx
 
 Synopsis::
-No synopsis available
+Vector signed-by-unsigned multiply high half, scalar, vx
 
 Base::
 
@@ -59184,7 +59268,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Multiplies each signed vs2 element by the unsigned scalar xs1 (zero-extended to SEW), writing the upper SEW bits of the 2*SEW product into vd. vs2 sign-extends and xs1 zero-extends for the mixed-sign multiplication. Inactive elements under vm mask control are undisturbed.
 
 
 Decode Variables::
@@ -59204,7 +59288,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -59215,7 +59299,7 @@ Included in::
 == vmulhu.vv
 
 Synopsis::
-No synopsis available
+Vector unsigned multiply high half, vv
 
 Base::
 
@@ -59237,7 +59321,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Multiplies unsigned SEW-wide elements of vs2 and vs1, writing the upper SEW bits of the 2*SEW product into vd. Both operands zero-extend to 2*SEW before multiplication. Inactive elements under vm mask control are undisturbed.
 
 
 Decode Variables::
@@ -59257,7 +59341,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -59268,7 +59352,7 @@ Included in::
 == vmulhu.vx
 
 Synopsis::
-No synopsis available
+Vector unsigned multiply high half, scalar, vx
 
 Base::
 
@@ -59290,7 +59374,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Multiplies each unsigned SEW-wide vs2 element by the scalar xs1 (zero-extended to SEW), writing the upper SEW bits of the 2*SEW product into vd. Both operands zero-extend to 2*SEW for the multiplication. Inactive elements under vm mask control are undisturbed.
 
 
 Decode Variables::
@@ -59310,7 +59394,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -59321,7 +59405,7 @@ Included in::
 == vmv.s.x
 
 Synopsis::
-No synopsis available
+Move integer scalar to vector element 0
 
 Base::
 
@@ -59343,7 +59427,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Writes element 0 of vd with the SEW-wide value from integer register xs1. The write occurs only when vl > 0 and vstart == 0; if vl == 0, element 0 is unchanged. Masking does not apply; all other elements are unaffected.
 
 
 Decode Variables::
@@ -59361,7 +59445,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -59418,7 +59502,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -59469,7 +59553,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -59520,7 +59604,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -59575,7 +59659,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -59586,7 +59670,7 @@ Included in::
 == vmv1r.v
 
 Synopsis::
-No synopsis available
+Move 1 vector register as a unit
 
 Base::
 
@@ -59608,7 +59692,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Copies all VLEN bits of vs2 into vd as a whole-register move. Bypasses vtype validity checks (vill-exempt) and operates independently of vl, vstart, SEW, and LMUL. No masking applies.
 
 
 Decode Variables::
@@ -59626,7 +59710,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -59637,7 +59721,7 @@ Included in::
 == vmv2r.v
 
 Synopsis::
-No synopsis available
+Move 2 vector registers as a unit
 
 Base::
 
@@ -59659,7 +59743,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Copies the full VLEN-bit contents of vs2 and vs2+1 into vd and vd+1 as a contiguous 2-register whole-register move. Bypasses vtype validity; vd and vs2 must each be aligned to a multiple of 2. No masking applies.
 
 
 Decode Variables::
@@ -59677,7 +59761,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -59688,7 +59772,7 @@ Included in::
 == vmv4r.v
 
 Synopsis::
-No synopsis available
+Move 4 vector registers as a unit
 
 Base::
 
@@ -59710,7 +59794,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Copies the full VLEN-bit contents of vs2 through vs2+3 into vd through vd+3 as a contiguous 4-register whole-register move. Bypasses vtype validity; vd and vs2 must each be aligned to a multiple of 4. No masking applies.
 
 
 Decode Variables::
@@ -59728,7 +59812,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -59739,7 +59823,7 @@ Included in::
 == vmv8r.v
 
 Synopsis::
-No synopsis available
+Move 8 vector registers as a unit
 
 Base::
 
@@ -59761,7 +59845,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Copies the full VLEN-bit contents of vs2 through vs2+7 into vd through vd+7 as a contiguous 8-register whole-register move. Bypasses vtype validity; vd and vs2 must each be aligned to a multiple of 8. No masking applies.
 
 
 Decode Variables::
@@ -59779,7 +59863,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -59790,7 +59874,7 @@ Included in::
 == vmxnor.mm
 
 Synopsis::
-No synopsis available
+Mask register bitwise XNOR
 
 Base::
 
@@ -59812,7 +59896,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Computes the bitwise complement of XOR of mask registers vs2 and vs1 across all VLEN bits starting from vstart, writing the result to vd. Not bounded by vl; the vm bit has no masking effect. When vs1 == vs2 == vd, encodes the vmset.m pseudoinstruction.
 
 
 Decode Variables::
@@ -59831,7 +59915,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -59842,7 +59926,7 @@ Included in::
 == vmxor.mm
 
 Synopsis::
-No synopsis available
+Mask register bitwise XOR
 
 Base::
 
@@ -59864,7 +59948,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Computes the bitwise XOR of mask registers vs2 and vs1 across all VLEN bits starting from vstart, writing the result to vd. Not bounded by vl; the vm bit has no masking effect. When vs1 == vs2 == vd, encodes the vmclr.m pseudoinstruction.
 
 
 Decode Variables::
@@ -59883,7 +59967,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -59894,7 +59978,7 @@ Included in::
 == vnclip.wi
 
 Synopsis::
-Vector widening signed clip with immediate
+Vector narrowing signed clip with immediate
 
 Base::
 
@@ -59916,7 +60000,7 @@ Encoding::
 ....
 
 Description::
-Performs widening signed clip operation on elements from vector register vs2 using immediate clip value and stores results in vector register vd, using vector mask vm. The operation clips values to a specified range and widens the result.
+Rounds and arithmetically right-shifts the 2*SEW-wide elements of vector register vs2 by the immediate shift amount (masked to log2(2*SEW) bits), then clips the result to the signed SEW-bit range, storing in vector register vd using vector mask vm. Sets vxsat if any element is clamped.
 
 
 Decode Variables::
@@ -59936,7 +60020,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -59947,7 +60031,7 @@ Included in::
 == vnclip.wv
 
 Synopsis::
-Vector widening signed clip
+Vector narrowing signed clip
 
 Base::
 
@@ -59969,7 +60053,7 @@ Encoding::
 ....
 
 Description::
-Performs widening signed clip operation on elements from vector register vs2 using clip values from vector register vs1 and stores results in vector register vd, using vector mask vm. The operation clips values to a specified range and widens the result.
+Rounds and arithmetically right-shifts the 2*SEW-wide elements of vector register vs2 by the shift amount in vs1 (masked to log2(2*SEW) bits), then clips the result to the signed SEW-bit range, storing in vector register vd using vector mask vm. Sets vxsat if any element is clamped.
 
 
 Decode Variables::
@@ -59989,7 +60073,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -60000,7 +60084,7 @@ Included in::
 == vnclip.wx
 
 Synopsis::
-Vector widening signed clip with scalar
+Vector narrowing signed clip with scalar
 
 Base::
 
@@ -60022,7 +60106,7 @@ Encoding::
 ....
 
 Description::
-Performs widening signed clip operation on elements from vector register vs2 using scalar clip value from register xs1 and stores results in vector register vd, using vector mask vm. The operation clips values to a specified range and widens the result.
+Rounds and arithmetically right-shifts the 2*SEW-wide elements of vector register vs2 by the shift amount in scalar register xs1 (masked to log2(2*SEW) bits), then clips the result to the signed SEW-bit range, storing in vector register vd using vector mask vm. Sets vxsat if any element is clamped.
 
 
 Decode Variables::
@@ -60042,7 +60126,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -60053,7 +60137,7 @@ Included in::
 == vnclipu.wi
 
 Synopsis::
-Vector widening unsigned clip with immediate
+Vector narrowing unsigned clip with immediate
 
 Base::
 
@@ -60075,7 +60159,7 @@ Encoding::
 ....
 
 Description::
-Performs widening unsigned clip operation on elements from vector register vs2 using immediate clip value and stores results in vector register vd, using vector mask vm. The operation clips values to a specified range and widens the result.
+Rounds and logically right-shifts the 2*SEW-wide elements of vector register vs2 by the immediate shift amount (masked to log2(2*SEW) bits), then clips the result to the unsigned SEW-bit range, storing in vector register vd using vector mask vm. Sets vxsat if any element is clamped.
 
 
 Decode Variables::
@@ -60095,7 +60179,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -60106,7 +60190,7 @@ Included in::
 == vnclipu.wv
 
 Synopsis::
-Vector widening unsigned clip
+Vector narrowing unsigned clip
 
 Base::
 
@@ -60128,7 +60212,7 @@ Encoding::
 ....
 
 Description::
-Performs widening unsigned clip operation on elements from vector register vs2 using clip values from vector register vs1 and stores results in vector register vd, using vector mask vm. The operation clips values to a specified range and widens the result.
+Rounds and logically right-shifts the 2*SEW-wide elements of vector register vs2 by the shift amount in vs1 (masked to log2(2*SEW) bits), then clips the result to the unsigned SEW-bit range, storing in vector register vd using vector mask vm. Sets vxsat if any element is clamped.
 
 
 Decode Variables::
@@ -60148,7 +60232,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -60159,7 +60243,7 @@ Included in::
 == vnclipu.wx
 
 Synopsis::
-Vector widening unsigned clip with scalar
+Vector narrowing unsigned clip with scalar
 
 Base::
 
@@ -60181,7 +60265,7 @@ Encoding::
 ....
 
 Description::
-Performs widening unsigned clip operation on elements from vector register vs2 using scalar clip value from register xs1 and stores results in vector register vd, using vector mask vm. The operation clips values to a specified range and widens the result.
+Rounds and logically right-shifts the 2*SEW-wide elements of vector register vs2 by the shift amount in scalar register xs1 (masked to log2(2*SEW) bits), then clips the result to the unsigned SEW-bit range, storing in vector register vd using vector mask vm. Sets vxsat if any element is clamped.
 
 
 Decode Variables::
@@ -60201,7 +60285,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -60212,7 +60296,7 @@ Included in::
 == vnmsac.vv
 
 Synopsis::
-No synopsis available
+Vector integer negating multiply-subtract from accumulator, vector-vector
 
 Base::
 
@@ -60234,7 +60318,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Computes vd[i] = vd[i] - vs1[i] * vs2[i] for each active SEW-wide element. The negating counterpart to vmacc. Inactive elements are undisturbed.
 
 
 Decode Variables::
@@ -60254,7 +60338,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -60265,7 +60349,7 @@ Included in::
 == vnmsac.vx
 
 Synopsis::
-No synopsis available
+Vector integer negating multiply-subtract from accumulator, vector-scalar
 
 Base::
 
@@ -60287,7 +60371,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Computes vd[i] = vd[i] - xs1 * vs2[i] for each active SEW-wide element; xs1 is the scalar multiplicand (low SEW bits). Inactive elements are undisturbed.
 
 
 Decode Variables::
@@ -60307,7 +60391,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -60318,7 +60402,7 @@ Included in::
 == vnmsub.vv
 
 Synopsis::
-No synopsis available
+Vector integer negating multiply-subtract, vector-vector
 
 Base::
 
@@ -60340,7 +60424,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Computes vd[i] = -(vs1[i] * vd[i]) + vs2[i] for each active SEW-wide element, where vd is one multiplicand and vs2 is the addend. Differs from vnmsac in that vd is a multiplicand rather than the accumulator. Inactive elements are undisturbed.
 
 
 Decode Variables::
@@ -60360,7 +60444,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -60371,7 +60455,7 @@ Included in::
 == vnmsub.vx
 
 Synopsis::
-No synopsis available
+Vector integer negating multiply-subtract, vector-scalar
 
 Base::
 
@@ -60393,7 +60477,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Computes vd[i] = -(xs1 * vd[i]) + vs2[i] for each active SEW-wide element; xs1 is the scalar multiplicand (low SEW bits) and vd is the second multiplicand. Inactive elements are undisturbed.
 
 
 Decode Variables::
@@ -60413,7 +60497,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -60466,7 +60550,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -60519,7 +60603,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -60572,7 +60656,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -60625,7 +60709,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -60636,7 +60720,7 @@ Included in::
 == vnsrl.wv
 
 Synopsis::
-Vector widening logical shift right
+Vector narrowing logical right shift
 
 Base::
 
@@ -60678,7 +60762,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -60731,7 +60815,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -60784,7 +60868,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -60837,7 +60921,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -60890,7 +60974,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -60901,7 +60985,7 @@ Included in::
 == vredand.vs
 
 Synopsis::
-No synopsis available
+Vector integer bitwise-AND reduction into scalar
 
 Base::
 
@@ -60923,7 +61007,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Reduces active elements of vs2 by bitwise AND at SEW width, initializing the accumulator from element 0 of vs1, and writing the result to element 0 of vd. Inactive elements (vm-masked) are skipped; when vl=0, vd is undisturbed. vstart must be 0.
 
 
 Decode Variables::
@@ -60943,7 +61027,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -60954,7 +61038,7 @@ Included in::
 == vredmax.vs
 
 Synopsis::
-No synopsis available
+Vector signed integer maximum reduction into scalar
 
 Base::
 
@@ -60976,7 +61060,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Reduces active elements of vs2 by signed integer maximum at SEW width, initializing the accumulator from element 0 of vs1, and writing the result to element 0 of vd. Elements compare as signed two's-complement integers; inactive elements (vm-masked) are skipped. vstart must be 0.
 
 
 Decode Variables::
@@ -60996,7 +61080,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -61007,7 +61091,7 @@ Included in::
 == vredmaxu.vs
 
 Synopsis::
-No synopsis available
+Vector unsigned integer maximum reduction into scalar
 
 Base::
 
@@ -61029,7 +61113,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Reduces active elements of vs2 by unsigned integer maximum at SEW width, initializing the accumulator from element 0 of vs1, and writing the result to element 0 of vd. Elements compare as unsigned integers; inactive elements (vm-masked) are skipped. vstart must be 0.
 
 
 Decode Variables::
@@ -61049,7 +61133,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -61060,7 +61144,7 @@ Included in::
 == vredmin.vs
 
 Synopsis::
-No synopsis available
+Vector signed integer minimum reduction into scalar
 
 Base::
 
@@ -61082,7 +61166,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Reduces active elements of vs2 by signed integer minimum at SEW width, initializing the accumulator from element 0 of vs1, and writing the result to element 0 of vd. Elements compare as signed two's-complement integers; inactive elements (vm-masked) are skipped. vstart must be 0.
 
 
 Decode Variables::
@@ -61102,7 +61186,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -61113,7 +61197,7 @@ Included in::
 == vredminu.vs
 
 Synopsis::
-No synopsis available
+Vector unsigned integer minimum reduction into scalar
 
 Base::
 
@@ -61135,7 +61219,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Reduces active elements of vs2 by unsigned integer minimum at SEW width, initializing the accumulator from element 0 of vs1, and writing the result to element 0 of vd. Elements compare as unsigned integers; inactive elements (vm-masked) are skipped. vstart must be 0.
 
 
 Decode Variables::
@@ -61155,7 +61239,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -61166,7 +61250,7 @@ Included in::
 == vredor.vs
 
 Synopsis::
-No synopsis available
+Vector integer bitwise-OR reduction into scalar
 
 Base::
 
@@ -61188,7 +61272,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Reduces active elements of vs2 by bitwise OR at SEW width, initializing the accumulator from element 0 of vs1, and writing the result to element 0 of vd. Inactive elements (vm-masked) are skipped; when vl=0, vd is undisturbed. vstart must be 0.
 
 
 Decode Variables::
@@ -61208,7 +61292,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -61219,7 +61303,7 @@ Included in::
 == vredsum.vs
 
 Synopsis::
-No synopsis available
+Vector integer sum reduction into scalar
 
 Base::
 
@@ -61241,7 +61325,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Reduces active elements of vs2 by integer addition at SEW width, initializing the accumulator from element 0 of vs1, and writing the result to element 0 of vd. Inactive elements (vm-masked) are skipped; when vl=0, vs1[0] is written to vd[0] unchanged. vstart must be 0.
 
 
 Decode Variables::
@@ -61261,7 +61345,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -61272,7 +61356,7 @@ Included in::
 == vredxor.vs
 
 Synopsis::
-No synopsis available
+Vector integer bitwise-XOR reduction into scalar
 
 Base::
 
@@ -61294,7 +61378,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Reduces active elements of vs2 by bitwise XOR at SEW width, initializing the accumulator from element 0 of vs1, and writing the result to element 0 of vd. Inactive elements (vm-masked) are skipped; when vl=0, vd is undisturbed. vstart must be 0.
 
 
 Decode Variables::
@@ -61314,7 +61398,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -61367,7 +61451,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -61420,7 +61504,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -61473,7 +61557,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -61526,7 +61610,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -61631,7 +61715,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -61684,7 +61768,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -61737,7 +61821,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -61748,7 +61832,7 @@ Included in::
 == vrgatherei16.vv
 
 Synopsis::
-No synopsis available
+Vector gather using 16-bit indices regardless of SEW
 
 Base::
 
@@ -61770,7 +61854,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Gathers SEW-wide elements from vs2 using 16-bit unsigned indices read from vs1, writing vd[i] = vs2[vs1[i]] for each active element; writes 0 when the index is >= VLMAX. The index EEW is always 16 bits regardless of SEW; when SEW < 16, this allows indices to address the full element range where SEW-wide indices would be too narrow. Masked per vm bit; inactive elements are undisturbed.
 
 
 Decode Variables::
@@ -61790,7 +61874,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -62108,7 +62192,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -62161,7 +62245,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -62212,7 +62296,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -62263,7 +62347,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -62314,7 +62398,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -62365,7 +62449,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -62376,7 +62460,7 @@ Included in::
 == vsadd.vi
 
 Synopsis::
-Vector unsigned addition with immediate
+Vector signed saturating addition with immediate
 
 Base::
 
@@ -62398,7 +62482,7 @@ Encoding::
 ....
 
 Description::
-Performs unsigned addition on elements from vector register vs2 and immediate value and stores results in vector register vd, using vector mask vm. The operation follows standard unsigned arithmetic rules.
+Performs signed saturating addition on elements from vector register vs2 and a sign-extended immediate and stores results in vector register vd, using vector mask vm. Results that overflow the signed SEW-bit range are clamped and the vxsat flag is set.
 
 
 Decode Variables::
@@ -62418,7 +62502,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -62429,7 +62513,7 @@ Included in::
 == vsadd.vv
 
 Synopsis::
-Vector unsigned addition
+Vector signed saturating addition
 
 Base::
 
@@ -62451,7 +62535,7 @@ Encoding::
 ....
 
 Description::
-Performs unsigned addition on elements from vector registers vs2 and vs1 and stores results in vector register vd, using vector mask vm. The operation follows standard unsigned arithmetic rules.
+Performs signed saturating addition on elements from vector registers vs2 and vs1 and stores results in vector register vd, using vector mask vm. Results that overflow the signed SEW-bit range are clamped to the range endpoint and the vxsat flag is set.
 
 
 Decode Variables::
@@ -62471,7 +62555,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -62482,7 +62566,7 @@ Included in::
 == vsadd.vx
 
 Synopsis::
-Vector unsigned addition with scalar
+Vector signed saturating addition with scalar
 
 Base::
 
@@ -62504,7 +62588,7 @@ Encoding::
 ....
 
 Description::
-Performs unsigned addition on elements from vector register vs2 and scalar register xs1 and stores results in vector register vd, using vector mask vm. The operation follows standard unsigned arithmetic rules.
+Performs signed saturating addition on elements from vector register vs2 and scalar register xs1 and stores results in vector register vd, using vector mask vm. Results that overflow the signed SEW-bit range are clamped and the vxsat flag is set.
 
 
 Decode Variables::
@@ -62524,7 +62608,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -62535,7 +62619,7 @@ Included in::
 == vsaddu.vi
 
 Synopsis::
-Vector signed addition with immediate
+Vector unsigned saturating addition with immediate
 
 Base::
 
@@ -62557,7 +62641,7 @@ Encoding::
 ....
 
 Description::
-Performs signed addition on elements from vector register vs2 and immediate value and stores results in vector register vd, using vector mask vm. The operation follows standard signed arithmetic rules.
+Performs unsigned saturating addition on elements from vector register vs2 and a sign-extended immediate and stores results in vector register vd, using vector mask vm. Results that exceed the unsigned SEW-bit range are clamped to the maximum and the vxsat flag is set.
 
 
 Decode Variables::
@@ -62577,7 +62661,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -62588,7 +62672,7 @@ Included in::
 == vsaddu.vv
 
 Synopsis::
-Vector signed addition
+Vector unsigned saturating addition
 
 Base::
 
@@ -62610,7 +62694,7 @@ Encoding::
 ....
 
 Description::
-Performs signed addition on elements from vector registers vs2 and vs1 and stores results in vector register vd, using vector mask vm. The operation follows standard signed arithmetic rules.
+Performs unsigned saturating addition on elements from vector registers vs2 and vs1 and stores results in vector register vd, using vector mask vm. Results that exceed the unsigned SEW-bit range are clamped to the maximum and the vxsat flag is set.
 
 
 Decode Variables::
@@ -62630,7 +62714,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -62641,7 +62725,7 @@ Included in::
 == vsaddu.vx
 
 Synopsis::
-Vector signed addition with scalar
+Vector unsigned saturating addition with scalar
 
 Base::
 
@@ -62663,7 +62747,7 @@ Encoding::
 ....
 
 Description::
-Performs signed addition on elements from vector register vs2 and scalar register xs1 and stores results in vector register vd, using vector mask vm. The operation follows standard signed arithmetic rules.
+Performs unsigned saturating addition on elements from vector register vs2 and scalar register xs1 and stores results in vector register vd, using vector mask vm. Results that exceed the unsigned SEW-bit range are clamped to the maximum and the vxsat flag is set.
 
 
 Decode Variables::
@@ -62683,7 +62767,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -62735,7 +62819,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -62787,7 +62871,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -62839,7 +62923,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -62891,7 +62975,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -62943,7 +63027,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -62995,7 +63079,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -63046,7 +63130,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -63097,7 +63181,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -63149,7 +63233,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -63201,7 +63285,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -63253,7 +63337,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -63305,7 +63389,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -63514,7 +63598,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -63567,7 +63651,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -63620,7 +63704,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -63673,7 +63757,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -63726,7 +63810,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -63779,7 +63863,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -63832,7 +63916,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -63885,7 +63969,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -63938,7 +64022,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -63989,7 +64073,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -64258,7 +64342,7 @@ Included in::
 == vsmul.vv
 
 Synopsis::
-Vector signed multiplication
+Vector signed saturating fractional multiply
 
 Base::
 
@@ -64280,7 +64364,7 @@ Encoding::
 ....
 
 Description::
-Performs signed multiplication on elements from vector registers vs2 and vs1 and stores results in vector register vd, using vector mask vm.
+Performs signed fixed-point fractional multiplication of elements from vector registers vs2 and vs1: the full 2*SEW product is rounded (per vxrm) and shifted right by SEW-1 to keep the high SEW bits, storing results in vector register vd using vector mask vm. Only the INT_MIN*INT_MIN case saturates (to INT_MAX), setting the vxsat flag.
 
 
 Decode Variables::
@@ -64300,7 +64384,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -64311,7 +64395,7 @@ Included in::
 == vsmul.vx
 
 Synopsis::
-Vector signed multiplication with scalar
+Vector signed saturating fractional multiply with scalar
 
 Base::
 
@@ -64333,7 +64417,7 @@ Encoding::
 ....
 
 Description::
-Performs signed multiplication on elements from vector register vs2 and scalar register xs1 and stores results in vector register vd, using vector mask vm.
+Performs signed fixed-point fractional multiplication of elements from vector register vs2 by scalar register xs1: the full 2*SEW product is rounded (per vxrm) and shifted right by SEW-1 to keep the high SEW bits, storing results in vector register vd using vector mask vm. Only the INT_MIN*INT_MIN case saturates (to INT_MAX), setting the vxsat flag.
 
 
 Decode Variables::
@@ -64353,7 +64437,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -64406,7 +64490,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -64459,7 +64543,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -64512,7 +64596,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -64565,7 +64649,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -64618,7 +64702,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -64671,7 +64755,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -64724,7 +64808,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -64777,7 +64861,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -64830,7 +64914,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -64883,7 +64967,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -64936,7 +65020,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -64989,7 +65073,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -65042,7 +65126,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -65095,7 +65179,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -65148,7 +65232,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -65201,7 +65285,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -65254,7 +65338,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -65307,7 +65391,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -65360,7 +65444,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -65413,7 +65497,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -65466,7 +65550,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -65519,7 +65603,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -65572,7 +65656,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -65625,7 +65709,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -65678,7 +65762,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -65731,7 +65815,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -65784,7 +65868,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -65837,7 +65921,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -65890,7 +65974,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -65943,7 +66027,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -65996,7 +66080,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -66049,7 +66133,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -66102,7 +66186,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -66155,7 +66239,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -66208,7 +66292,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -66261,7 +66345,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -66314,7 +66398,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -66367,7 +66451,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -66420,7 +66504,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -66473,7 +66557,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -66526,7 +66610,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -66579,7 +66663,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -66631,7 +66715,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -66683,7 +66767,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -66735,7 +66819,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -66787,7 +66871,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -66839,7 +66923,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -66891,7 +66975,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -66943,7 +67027,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -66995,7 +67079,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -67047,7 +67131,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -67099,7 +67183,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -67151,7 +67235,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -67203,7 +67287,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -67255,7 +67339,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -67307,7 +67391,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -67359,7 +67443,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -67411,7 +67495,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -67463,7 +67547,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -67515,7 +67599,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -67567,7 +67651,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -67619,7 +67703,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -67671,7 +67755,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -67723,7 +67807,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -67775,7 +67859,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -67827,7 +67911,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -67879,7 +67963,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -67931,7 +68015,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -67983,7 +68067,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -68035,7 +68119,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -68046,7 +68130,7 @@ Included in::
 == vssra.vi
 
 Synopsis::
-Vector signed shift right arithmetic with immediate
+Vector rounding shift right arithmetic with immediate
 
 Base::
 
@@ -68068,7 +68152,7 @@ Encoding::
 ....
 
 Description::
-Performs signed arithmetic right shift on elements from vector register vs2 by immediate shift amount and stores results in vector register vd, using vector mask vm. The operation preserves the sign bit.
+Performs a rounding arithmetic right shift on each element of vector register vs2 by the immediate shift amount (low log2(SEW) bits), sign-preserving, rounding the discarded bits per vxrm, storing results in vector register vd using vector mask vm. This is a fixed-point scaling shift and does not affect vxsat.
 
 
 Decode Variables::
@@ -68088,7 +68172,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -68099,7 +68183,7 @@ Included in::
 == vssra.vv
 
 Synopsis::
-Vector signed shift right arithmetic
+Vector rounding shift right arithmetic
 
 Base::
 
@@ -68121,7 +68205,7 @@ Encoding::
 ....
 
 Description::
-Performs signed arithmetic right shift on elements from vector register vs2 by shift amounts from vector register vs1 and stores results in vector register vd, using vector mask vm. The operation preserves the sign bit.
+Performs a rounding arithmetic right shift on each element of vector register vs2 by the shift amount in the low log2(SEW) bits of vs1, sign-preserving, rounding the discarded bits per vxrm, storing results in vector register vd using vector mask vm. This is a fixed-point scaling shift and does not affect vxsat.
 
 
 Decode Variables::
@@ -68141,7 +68225,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -68152,7 +68236,7 @@ Included in::
 == vssra.vx
 
 Synopsis::
-Vector signed shift right arithmetic with scalar
+Vector rounding shift right arithmetic with scalar
 
 Base::
 
@@ -68174,7 +68258,7 @@ Encoding::
 ....
 
 Description::
-Performs signed arithmetic right shift on elements from vector register vs2 by shift amount from scalar register xs1 and stores results in vector register vd, using vector mask vm. The operation preserves the sign bit.
+Performs a rounding arithmetic right shift on each element of vector register vs2 by the shift amount in the low log2(SEW) bits of scalar register xs1, sign-preserving, rounding the discarded bits per vxrm, storing results in vector register vd using vector mask vm. This is a fixed-point scaling shift and does not affect vxsat.
 
 
 Decode Variables::
@@ -68194,7 +68278,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -68205,7 +68289,7 @@ Included in::
 == vssrl.vi
 
 Synopsis::
-Vector shift right logical by immediate
+Vector rounding shift right logical with immediate
 
 Base::
 
@@ -68227,7 +68311,7 @@ Encoding::
 ....
 
 Description::
-Performs a logical right shift on each element in vector register vs2 by the immediate shift amount, storing results in vector register vd according to mask vm. This is not a memory operation but a shift operation.
+Performs a rounding logical right shift on each element of vector register vs2 by the immediate shift amount (low log2(SEW) bits), rounding the discarded bits per vxrm, storing results in vector register vd using vector mask vm. This is a fixed-point scaling shift and does not affect vxsat.
 
 
 Decode Variables::
@@ -68247,7 +68331,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -68258,7 +68342,7 @@ Included in::
 == vssrl.vv
 
 Synopsis::
-No synopsis available
+Vector rounding shift right logical
 
 Base::
 
@@ -68280,7 +68364,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Performs a rounding logical right shift on each element of vector register vs2 by the shift amount in the low log2(SEW) bits of vs1, rounding the discarded bits per vxrm, storing results in vector register vd using vector mask vm. This is a fixed-point scaling shift and does not affect vxsat.
 
 
 Decode Variables::
@@ -68300,7 +68384,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -68311,7 +68395,7 @@ Included in::
 == vssrl.vx
 
 Synopsis::
-Vector shift right logical by vector
+Vector rounding shift right logical with scalar
 
 Base::
 
@@ -68333,7 +68417,7 @@ Encoding::
 ....
 
 Description::
-Performs a logical right shift on each element in vector register vs2 by the shift amount in vector register vs1, storing results in vector register vd according to mask vm. This is not a memory operation but a shift operation.
+Performs a rounding logical right shift on each element of vector register vs2 by the shift amount in the low log2(SEW) bits of scalar register xs1, rounding the discarded bits per vxrm, storing results in vector register vd using vector mask vm. This is a fixed-point scaling shift and does not affect vxsat.
 
 
 Decode Variables::
@@ -68353,7 +68437,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -68406,7 +68490,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -68459,7 +68543,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -68512,7 +68596,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -68565,7 +68649,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -68618,7 +68702,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -68671,7 +68755,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -68724,7 +68808,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -68777,7 +68861,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -68830,7 +68914,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -68883,7 +68967,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -68936,7 +69020,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -68989,7 +69073,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -69042,7 +69126,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -69095,7 +69179,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -69148,7 +69232,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -69201,7 +69285,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -69254,7 +69338,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -69307,7 +69391,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -69360,7 +69444,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -69413,7 +69497,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -69466,7 +69550,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -69519,7 +69603,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -69572,7 +69656,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -69625,7 +69709,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -69678,7 +69762,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -69731,7 +69815,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -69784,7 +69868,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -69837,7 +69921,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -69848,7 +69932,7 @@ Included in::
 == vssub.vv
 
 Synopsis::
-Vector subtraction
+Vector signed saturating subtraction
 
 Base::
 
@@ -69870,7 +69954,7 @@ Encoding::
 ....
 
 Description::
-Performs subtraction on elements from vector registers vs2 and vs1 and stores results in vector register vd, using vector mask vm.
+Performs signed saturating subtraction (vs2 - vs1) on elements from vector registers vs2 and vs1 and stores results in vector register vd, using vector mask vm. Results that overflow the signed SEW-bit range are clamped and the vxsat flag is set.
 
 
 Decode Variables::
@@ -69890,7 +69974,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -69901,7 +69985,7 @@ Included in::
 == vssub.vx
 
 Synopsis::
-Vector subtraction with scalar
+Vector signed saturating subtraction with scalar
 
 Base::
 
@@ -69923,7 +70007,7 @@ Encoding::
 ....
 
 Description::
-Performs subtraction on elements from vector register vs2 and scalar register xs1 and stores results in vector register vd, using vector mask vm.
+Performs signed saturating subtraction (vs2 - xs1) on elements from vector register vs2 and scalar register xs1 and stores results in vector register vd, using vector mask vm. Results that overflow the signed SEW-bit range are clamped and the vxsat flag is set.
 
 
 Decode Variables::
@@ -69943,7 +70027,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -69954,7 +70038,7 @@ Included in::
 == vssubu.vv
 
 Synopsis::
-Vector unsigned subtraction
+Vector unsigned saturating subtraction
 
 Base::
 
@@ -69976,7 +70060,7 @@ Encoding::
 ....
 
 Description::
-Performs unsigned subtraction on elements from vector registers vs2 and vs1 and stores results in vector register vd, using vector mask vm.
+Performs unsigned saturating subtraction (vs2 - vs1) on elements from vector registers vs2 and vs1 and stores results in vector register vd, using vector mask vm. On borrow the result saturates to 0 and the vxsat flag is set.
 
 
 Decode Variables::
@@ -69996,7 +70080,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -70007,7 +70091,7 @@ Included in::
 == vssubu.vx
 
 Synopsis::
-Vector unsigned subtraction with scalar
+Vector unsigned saturating subtraction with scalar
 
 Base::
 
@@ -70029,7 +70113,7 @@ Encoding::
 ....
 
 Description::
-Performs unsigned subtraction on elements from vector register vs2 and scalar register xs1 and stores results in vector register vd, using vector mask vm.
+Performs unsigned saturating subtraction (vs2 - xs1) on elements from vector register vs2 and scalar register xs1 and stores results in vector register vd, using vector mask vm. On borrow the result saturates to 0 and the vxsat flag is set.
 
 
 Decode Variables::
@@ -70049,7 +70133,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -70102,7 +70186,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -70135,7 +70219,7 @@ Encoding::
 ....
 
 Description::
-Subtracts elements of vs2 from scalar rs1 according to mask vm and stores results in vd. Element width is determined by SEW setting.
+Subtracts scalar rs1 from elements of vs2 according to mask vm and stores results in vd. Element width is determined by SEW setting.
 
 
 Decode Variables::
@@ -70155,7 +70239,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -70208,7 +70292,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -70261,7 +70345,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -70314,7 +70398,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -70367,7 +70451,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -70420,7 +70504,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -70473,7 +70557,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -70526,7 +70610,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -70579,7 +70663,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -70632,7 +70716,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -70685,7 +70769,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -70738,7 +70822,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -70791,7 +70875,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -70844,7 +70928,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -70897,7 +70981,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -70950,7 +71034,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -71003,7 +71087,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -71056,7 +71140,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -71109,7 +71193,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -71162,7 +71246,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -71215,7 +71299,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -71268,7 +71352,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -71321,7 +71405,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -71374,7 +71458,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -71427,7 +71511,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -71480,7 +71564,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -71533,7 +71617,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -71586,7 +71670,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -71639,7 +71723,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -71692,7 +71776,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -71745,7 +71829,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -71798,7 +71882,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -71851,7 +71935,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -71862,7 +71946,7 @@ Included in::
 == vwadd.vv
 
 Synopsis::
-Vector widening unsigned addition
+Vector widening signed addition
 
 Base::
 
@@ -71884,7 +71968,7 @@ Encoding::
 ....
 
 Description::
-Performs unsigned addition on elements from vector registers vs2 and vs1, widens the results, and stores them in vector register vd, using vector mask vm. The operation follows standard unsigned arithmetic rules.
+Performs signed addition on elements from vector registers vs2 and vs1, widens the results, and stores them in vector register vd, using vector mask vm. The operation follows standard unsigned arithmetic rules.
 
 
 Decode Variables::
@@ -71904,7 +71988,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -71915,7 +71999,7 @@ Included in::
 == vwadd.vx
 
 Synopsis::
-Vector widening unsigned addition with scalar
+Vector widening signed addition with scalar
 
 Base::
 
@@ -71937,7 +72021,7 @@ Encoding::
 ....
 
 Description::
-Performs unsigned addition on elements from vector register vs2 and scalar register xs1, widens the results, and stores them in vector register vd, using vector mask vm. The operation follows standard unsigned arithmetic rules.
+Performs signed addition on elements from vector register vs2 and scalar register xs1, widens the results, and stores them in vector register vd, using vector mask vm. The operation follows standard unsigned arithmetic rules.
 
 
 Decode Variables::
@@ -71957,7 +72041,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -71968,7 +72052,7 @@ Included in::
 == vwadd.wv
 
 Synopsis::
-No synopsis available
+Widening signed add: 2xSEW vector plus SEW vector
 
 Base::
 
@@ -71990,7 +72074,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Adds each 2*SEW-wide element of vs2 to the sign-extended SEW-wide element of vs1, writing the 2*SEW result to vd. vs2 holds 2*SEW-wide elements; vs1 elements are sign-extended to 2*SEW before the add. Masked per vm bit; inactive elements are undisturbed.
 
 
 Decode Variables::
@@ -72010,7 +72094,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -72021,7 +72105,7 @@ Included in::
 == vwadd.wx
 
 Synopsis::
-No synopsis available
+Widening signed add: 2xSEW vector plus scalar
 
 Base::
 
@@ -72043,7 +72127,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Adds each 2*SEW-wide element of vs2 to the sign-extended low-SEW bits of xs1, writing the 2*SEW result to vd. vs2 holds 2*SEW-wide elements. Masked per vm bit; inactive elements are undisturbed.
 
 
 Decode Variables::
@@ -72063,7 +72147,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -72116,7 +72200,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -72169,7 +72253,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -72180,7 +72264,7 @@ Included in::
 == vwaddu.wv
 
 Synopsis::
-No synopsis available
+Widening unsigned add: 2xSEW vector plus SEW vector
 
 Base::
 
@@ -72202,7 +72286,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Adds each 2*SEW-wide element of vs2 to the zero-extended SEW-wide element of vs1, writing the 2*SEW result to vd. vs2 is treated as already holding 2*SEW elements; vs1 elements are zero-extended before the add. Masked per vm bit; inactive elements are undisturbed.
 
 
 Decode Variables::
@@ -72222,7 +72306,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -72233,7 +72317,7 @@ Included in::
 == vwaddu.wx
 
 Synopsis::
-No synopsis available
+Widening unsigned add: 2xSEW vector plus scalar
 
 Base::
 
@@ -72255,7 +72339,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Adds each 2*SEW-wide element of vs2 to the zero-extended low-SEW bits of integer register xs1, writing the 2*SEW result to vd. The scalar xs1 is zero-extended to 2*SEW before each addition. Masked per vm bit; inactive elements are undisturbed.
 
 
 Decode Variables::
@@ -72275,7 +72359,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -72328,7 +72412,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -72381,7 +72465,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -72414,7 +72498,7 @@ Encoding::
 ....
 
 Description::
-Performs widening signed-unsigned multiplication on elements from vector registers vs2 (signed) and vs1 (unsigned), adds the result to elements from vector register vd, and stores the final results in vector register vd, using vector mask vm.
+Performs widening signed-unsigned multiplication on elements from vector registers vs1 (signed) and vs2 (unsigned), adds the result to elements from vector register vd, and stores the final results in vector register vd, using vector mask vm.
 
 
 Decode Variables::
@@ -72434,7 +72518,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -72487,7 +72571,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -72540,7 +72624,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -72593,7 +72677,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -72626,7 +72710,7 @@ Encoding::
 ....
 
 Description::
-Performs widening unsigned multiplication on elements from vector register vs2 and scalar register xs1, adds the signed result to elements from vector register vd, and stores the final results in vector register vd, using vector mask vm.
+Performs widening mixed-sign multiplication: unsigned(xs1) * signed(vs2), adds result to elements from vector register vd, and stores the final results in vector register vd, using vector mask vm.
 
 
 Decode Variables::
@@ -72646,7 +72730,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -72699,7 +72783,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -72752,7 +72836,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -72805,7 +72889,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -72858,7 +72942,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -72911,7 +72995,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -72964,7 +73048,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -72975,7 +73059,7 @@ Included in::
 == vwredsum.vs
 
 Synopsis::
-No synopsis available
+Vector widening signed integer sum reduction into scalar
 
 Base::
 
@@ -72997,7 +73081,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Reduces active SEW-wide elements of vs2 by signed addition into a 2*SEW accumulator, sign-extending each vs2 element before adding. The lower 2*SEW bits of vs1[0] initialize the accumulator; the 2*SEW result writes to element 0 of vd. Inactive elements (vm-masked) are skipped; vstart must be 0.
 
 
 Decode Variables::
@@ -73017,7 +73101,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -73028,7 +73112,7 @@ Included in::
 == vwredsumu.vs
 
 Synopsis::
-No synopsis available
+Vector widening unsigned integer sum reduction into scalar
 
 Base::
 
@@ -73050,7 +73134,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Reduces active SEW-wide elements of vs2 by unsigned addition into a 2*SEW accumulator, zero-extending each vs2 element before adding. The lower 2*SEW bits of vs1[0] initialize the accumulator; the 2*SEW result writes to element 0 of vd. Inactive elements (vm-masked) are skipped; vstart must be 0.
 
 
 Decode Variables::
@@ -73070,7 +73154,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -73282,7 +73366,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -73335,7 +73419,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -73346,7 +73430,7 @@ Included in::
 == vwsub.wv
 
 Synopsis::
-No synopsis available
+Widening signed subtract: 2xSEW vector minus SEW vector
 
 Base::
 
@@ -73368,7 +73452,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Subtracts the sign-extended SEW-wide element of vs1 from each 2*SEW-wide element of vs2, writing the 2*SEW result to vd. Both operands are treated as signed; vs1 is sign-extended to 2*SEW before the subtract. Masked per vm bit; inactive elements are undisturbed.
 
 
 Decode Variables::
@@ -73388,7 +73472,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -73399,7 +73483,7 @@ Included in::
 == vwsub.wx
 
 Synopsis::
-No synopsis available
+Widening signed subtract: 2xSEW vector minus scalar
 
 Base::
 
@@ -73421,7 +73505,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Subtracts the sign-extended low-SEW bits of integer register xs1 from each 2*SEW-wide element of vs2, writing the 2*SEW result to vd. Both operands are treated as signed; xs1 is sign-extended to 2*SEW before each subtraction. Masked per vm bit; inactive elements are undisturbed.
 
 
 Decode Variables::
@@ -73441,7 +73525,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -73494,7 +73578,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -73547,7 +73631,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -73558,7 +73642,7 @@ Included in::
 == vwsubu.wv
 
 Synopsis::
-No synopsis available
+Widening unsigned subtract: 2xSEW vector minus SEW vector
 
 Base::
 
@@ -73580,7 +73664,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Subtracts the zero-extended SEW-wide element of vs1 from each 2*SEW-wide element of vs2, writing the 2*SEW result to vd. Both operands are treated as unsigned; vs1 is zero-extended to 2*SEW before the subtract. Masked per vm bit; inactive elements are undisturbed.
 
 
 Decode Variables::
@@ -73600,7 +73684,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -73611,7 +73695,7 @@ Included in::
 == vwsubu.wx
 
 Synopsis::
-No synopsis available
+Widening unsigned subtract: 2xSEW vector minus scalar
 
 Base::
 
@@ -73633,7 +73717,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Subtracts the zero-extended low-SEW bits of integer register xs1 from each 2*SEW-wide element of vs2, writing the 2*SEW result to vd. Both operands are treated as unsigned; xs1 is zero-extended to 2*SEW before each subtraction. Masked per vm bit; inactive elements are undisturbed.
 
 
 Decode Variables::
@@ -73653,7 +73737,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -73706,7 +73790,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -73759,7 +73843,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -73812,7 +73896,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -73864,7 +73948,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -73916,7 +74000,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
@@ -73968,7 +74052,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvl32b*
+| *Zve32x*
 | any
 |===
 
