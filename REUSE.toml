@@ -22,8 +22,7 @@ path = [
     "Rakefile",
     "README.adoc",
     "spec/schemas/**",
-    "sorbet/config",
-    "tasks/**"
+    "sorbet/config"
 ]
 SPDX-FileCopyrightText = [
     "Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.",
