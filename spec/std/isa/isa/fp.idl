@@ -1372,7 +1372,7 @@ function softfloat_addMagsF32 {
     U32 b,
     RoundingMode mode
   description {
-    Returns sum of the magnitudes of 2 floating point numbers
+    Returns sum of the magnitudes of two f32 numbers
   }
   body {
     if (is_sp_signaling_nan?(a) || is_sp_signaling_nan?(b)) {
@@ -1385,15 +1385,11 @@ function softfloat_addMagsF32 {
     Bits<16> expB = expF32UI(b);
     Bits<32> sigB = fracF32UI(b);
 
-    # declare a variable to store significand of sum
     U32 sigZ;
-    # declare a variable to store sum of the magnitudes of the 2 numbers
     U32 z;
-    # declare a variable to store sign of sum
     Bits<1> signZ;
 
-    # declare a variable to store the exponent part of sum
-    Bits<8> expZ;
+    Bits<16> expZ;
 
     # calculate difference of exponents
     Bits<16> expDiff = expA - expB;
@@ -1449,7 +1445,7 @@ function softfloat_addMagsF32 {
         }
         expZ  = expB;
 
-        sigA = (expA == 0) ? 2*sigA : (sigA + 0x20000000);
+        sigA = (expA == 0) ? 2*sigA : (sigA + 32'h20000000);
         sigA = softfloat_shiftRightJam32(sigA, -expDiff);
       } else {
         # check if A is infinity or NaN
@@ -1464,12 +1460,12 @@ function softfloat_addMagsF32 {
         }
 
         expZ = expA;
-        sigB = (expB == 0) ? 2*sigB : (sigB + 0x20000000);
+        sigB = (expB == 0) ? 2*sigB : (sigB + 32'h20000000);
         sigB = softfloat_shiftRightJam32(sigB, expDiff);
       }
 
-      sigZ = 0x20000000 + sigA + sigB;
-      if ( sigZ < 0x40000000 ) {
+      sigZ = 32'h20000000 + sigA + sigB;
+      if ( sigZ < 32'h40000000 ) {
             expZ = expZ - 1;
             sigZ =  sigZ << 1;
         }
@@ -1485,7 +1481,7 @@ function softfloat_subMagsF32 {
     U32 b,
     RoundingMode mode
   description {
-    Returns difference of the magnitudes of 2 floating point numbers
+    Returns difference of the magnitudes of two f32 numbers
   }
   body {
     if (is_sp_signaling_nan?(a) || is_sp_signaling_nan?(b)) {
@@ -1498,24 +1494,17 @@ function softfloat_subMagsF32 {
     Bits<16> expB = expF32UI(b);
     Bits<32> sigB = fracF32UI(b);
 
-    # declare a variable to store significand of difference
     U32 sigZ;
-    # declare a variable to store difference of the magnitudes of the 2 numbers
     U32 z;
-    # declare a variable to store sign of difference
     Bits<1> signZ;
 
-    # declare a variable to store the exponent part of difference
-    Bits<8> expZ;
+    Bits<16> expZ;
 
-    # declare a variable to store the difference in significand
     U32 sigDiff;
 
-    # declare a sigX and sigY
     U32 sigX;
     U32 sigY;
 
-    # declare a variable to store shift distance
     Bits<8> shiftDist;
 
     # calculate difference of exponents
@@ -1548,15 +1537,15 @@ function softfloat_subMagsF32 {
       signZ = signF32UI(a);
 
       # if difference is negative, change the sign of the result
-      if (sigDiff < 0) {
+      if ($signed(sigDiff) < 32's0) {
         signZ = ~signZ;
-        sigDiff = -32'sh1 * sigDiff;
+        sigDiff = -sigDiff;
       }
 
       shiftDist = count_leading_zeros(32, sigDiff) - 8;
       expZ = expA - shiftDist;
 
-      if (expZ < 0) {
+      if ($signed(expZ) < 16's0) {
         shiftDist = expA;
         expZ       = 0;
       }
@@ -1578,8 +1567,8 @@ function softfloat_subMagsF32 {
           return packToF32UI(signZ, expB, 0);
         }
         expZ = expB - 1;
-        sigX = sigB | 0x40000000;
-        sigY = sigA + ((expA != 0) ? 0x40000000 : sigA);
+        sigX = sigB | 32'h40000000;
+        sigY = sigA + ((expA != 0) ? 32'h40000000 : sigA);
         expDiff = - expDiff;
       } else {
         if (expA == 0xFF) {
@@ -1590,8 +1579,8 @@ function softfloat_subMagsF32 {
           return a;
         }
         expZ = expA - 1;
-        sigX = sigA | 0x40000000;
-        sigY = sigB + ((expB != 0) ? 0x40000000 : sigB);
+        sigX = sigA | 32'h40000000;
+        sigY = sigB + ((expB != 0) ? 32'h40000000 : sigB);
       }
       return softfloat_normRoundPackToF32(signZ, expZ, sigX - softfloat_shiftRightJam32(sigY, expDiff), mode);
     }
@@ -2457,6 +2446,7 @@ function softfloat_addMagsF64 {
     Returns the sum of the magnitudes of two f64 numbers.
   }
   body {
+    if (is_dp_signaling_nan?(a) || is_dp_signaling_nan?(b)) { set_fp_flag(FpFlag::NV); }
     Bits<16> expA = expF64UI(a);
     Bits<64> sigA = fracF64UI(a);
     Bits<16> expB = expF64UI(b);
@@ -2535,6 +2525,7 @@ function softfloat_subMagsF64 {
     Returns the difference of the magnitudes of two f64 numbers.
   }
   body {
+    if (is_dp_signaling_nan?(a) || is_dp_signaling_nan?(b)) { set_fp_flag(FpFlag::NV); }
     Bits<16> expA = expF64UI(a);
     Bits<64> sigA = fracF64UI(a);
     Bits<16> expB = expF64UI(b);
@@ -2663,6 +2654,7 @@ function f64_mul {
     Translated from Berkeley Softfloat f64_mul.
   }
   body {
+    if (is_dp_signaling_nan?(a) || is_dp_signaling_nan?(b)) { set_fp_flag(FpFlag::NV); }
     Bits<1>  signA = signF64UI(a);
     Bits<16> expA  = expF64UI(a);
     Bits<64> sigA  = fracF64UI(a);
@@ -2745,6 +2737,7 @@ function f64_div {
     refinement step, exactly as in Berkeley's f64_div.
   }
   body {
+    if (is_dp_signaling_nan?(a) || is_dp_signaling_nan?(b)) { set_fp_flag(FpFlag::NV); }
     Bits<1>  signA = signF64UI(a);
     Bits<16> expA  = expF64UI(a);
     Bits<64> sigA  = fracF64UI(a);
@@ -2857,6 +2850,7 @@ function f64_sqrt {
     refinement step, exactly as in Berkeley's f64_sqrt.
   }
   body {
+    if (is_dp_signaling_nan?(a)) { set_fp_flag(FpFlag::NV); }
     Bits<1>  signA = signF64UI(a);
     Bits<16> expA  = expF64UI(a);
     Bits<64> sigA  = fracF64UI(a);
@@ -3557,6 +3551,7 @@ function f64_muladd {
     128-bit product/accumulator (mirrors the f32 64-bit version scaled 2x).
   }
   body {
+    if (is_dp_signaling_nan?(a) || is_dp_signaling_nan?(b) || is_dp_signaling_nan?(c)) { set_fp_flag(FpFlag::NV); }
     Bits<1>  signA    = signF64UI(a);
     Bits<16> expA     = expF64UI(a);
     Bits<64> sigA     = fracF64UI(a);

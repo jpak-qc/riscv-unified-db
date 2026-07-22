@@ -3,14 +3,6 @@
 
 %version: 1.0
 
-# - test suite?
-# - Vector params (there will be many)
-# - Vector state
-# - Order (might be dictated somewhat by test suite)
-#   - vset*
-#   - integer arith (vadd/vsub/vrsub(.vv,.vx,.vi), compare, min, max)
-#   - integer widening arith ()
-
 # the vector register file is populated by the symtab from V.yaml
 
 enum VectorLmulType {
