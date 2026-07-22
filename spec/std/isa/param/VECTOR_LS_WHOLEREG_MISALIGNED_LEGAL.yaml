@@ -12,7 +12,7 @@ description: |
   loads/stores if the base address is not aligned to the maximum of the
   encoded EEW size (in bytes) or the implementation's smallest supported
   SEW (in bytes).
-long_name: TODO
+long_name: Vector whole-register load/store misaligned base address legal
 schema:
   type: boolean
 definedBy:
