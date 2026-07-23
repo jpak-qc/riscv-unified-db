@@ -54,6 +54,18 @@ operation(): |
     CSR[vtype].VLMUL = new_vtype[2:0];
 
     VectorState state = vector_state();
+
+    # Check if SEW > ELEN * LMUL (fractional LMUL case) per RVV spec §3.4.2
+    if (VILL_SET_ON_RESERVED_VTYPE
+        && state.lmul_type == VectorLmulType::Divide
+        && state.log2_sew + state.log2_lmul > 6) {
+      CSR[vtype].VILL = 1;
+      CSR[vtype].VMA = 0;
+      CSR[vtype].VTA = 0;
+      CSR[vtype].VSEW = 0;
+      CSR[vtype].VLMUL = 0;
+      CSR[vl].VALUE = 0;
+    } else {
     XReg vlen = VLEN;
     XReg vlmax;
     if (state.lmul_type == VectorLmulType::Multiply) {
@@ -99,6 +111,7 @@ operation(): |
       # AVL >= 2*VLMAX: set vl to VLMAX
       CSR[vl].VALUE = vlmax;
     }
+    }  # close VILL_SET_ON_RESERVED_VTYPE else block
   }
   X[xd] = CSR[vl].VALUE;
   CSR[vstart].VALUE = 0;

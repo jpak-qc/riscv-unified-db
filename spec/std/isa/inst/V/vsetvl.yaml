@@ -29,6 +29,7 @@ access:
 data_independent_timing: false
 operation(): |
   XReg new_vtype = X[xs2];
+  VectorState old_state = vector_state();
   if ((new_vtype[xlen() - 1] == 1'b1)        # software is setting the illegal bit
       || (new_vtype[xlen() - 2:8] != 0)      # reserved bits [XLEN-2:8] (full-width source)
       || (new_vtype[5] == 1)                 # reserved vsew encoding
@@ -52,6 +53,21 @@ operation(): |
     CSR[vtype].VLMUL = new_vtype[2:0];
 
     VectorState state = vector_state();
+
+    # Check if SEW > ELEN * LMUL (fractional LMUL case) per RVV spec §3.4.2
+    # For fractional LMUL, log2_sew + log2_lmul > log2(ELEN) means illegal
+    if (VILL_SET_ON_RESERVED_VTYPE
+        && state.lmul_type == VectorLmulType::Divide
+        && state.log2_sew + state.log2_lmul > 6) {
+      CSR[vtype].VILL = 1;
+      CSR[vtype].VMA = 0;
+      CSR[vtype].VTA = 0;
+      CSR[vtype].VSEW = 0;
+      CSR[vtype].VLMUL = 0;
+      CSR[vl].VALUE = 0;
+      X[xd] = 0;
+      CSR[vstart].VALUE = 0;
+    } else {
     XReg vlen = VLEN;
     XReg vlmax;
     if (state.lmul_type == VectorLmulType::Multiply) {
@@ -62,7 +78,23 @@ operation(): |
     }
     XReg avl = X[xs1];
     XReg ceil_avl_over_two = (avl + 1) / 2;
-    if (avl <= vlmax) {
+    if (xs1 == 0 && xd != 0) {
+      # rs1 == x0, rd != x0: set vl to VLMAX
+      CSR[vl].VALUE = vlmax;
+    } else if (xs1 == 0) {
+      # rs1 == x0, rd == x0: keep existing vl, but check LMUL/SEW ratio
+      XReg old_ratio = old_state.log2_sew - old_state.log2_lmul;
+      XReg new_ratio = state.log2_sew - state.log2_lmul;
+      if (new_ratio != old_ratio) {
+        CSR[vtype].VILL = 1;
+        CSR[vtype].VMA = 0;
+        CSR[vtype].VTA = 0;
+        CSR[vtype].VSEW = 0;
+        CSR[vtype].VLMUL = 0;
+        CSR[vl].VALUE = 0;
+      }
+      # else: keep vl unchanged
+    } else if (avl <= vlmax) {
       CSR[vl].VALUE = avl;
     } else if (avl < 2 * vlmax) {
       if (RVV_VL_WHEN_AVL_LT_DOUBLE_VLMAX == "ceil(AVL/2)") {
@@ -78,4 +110,5 @@ operation(): |
 
     X[xd] = CSR[vl].VALUE;
     CSR[vstart].VALUE = 0;
+    }  # close VILL_SET_ON_RESERVED_VTYPE else block
   }
