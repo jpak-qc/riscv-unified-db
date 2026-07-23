@@ -75,8 +75,12 @@ operation(): |
 
       if (faulted) {
         if (i == 0) {
-          # first active element faults: raise normally (forward progress guarantee)
-          raise(fcode, fmode, ftval);
+          # first active element faults: raise normally (forward progress guarantee).
+          # Use mode() (the actual CPU privilege mode) not fmode (effective_ldst_mode,
+          # which may be U under MPRV=1+MPP=U) so that raise_precise sets MPP to the
+          # actual mode at exception entry, matching the RISC-V spec ("xPP is set to y
+          # where y is the actual privilege mode at the time of the trap").
+          raise(fcode, mode(), ftval);
         }
         # trim vl to elements completed so far and stop
         new_vl = i;

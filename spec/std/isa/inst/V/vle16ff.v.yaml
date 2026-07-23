@@ -79,7 +79,9 @@ operation(): |
 
       if (faulted) {
         if (i == 0) {
-          raise(fcode, fmode, ftval);
+          # Use mode() (actual CPU privilege mode) not fmode (effective_ldst_mode under
+          # MPRV) so raise_precise sets MPP correctly per RISC-V spec.
+          raise(fcode, mode(), ftval);
         }
         new_vl = i;
         trimmed = true;
