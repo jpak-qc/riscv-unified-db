@@ -58,7 +58,7 @@ operation(): |
     # For fractional LMUL, log2_sew + log2_lmul > log2(ELEN) means illegal
     if (VILL_SET_ON_RESERVED_VTYPE
         && state.lmul_type == VectorLmulType::Divide
-        && state.log2_sew + state.log2_lmul > 6) {
+        && state.log2_sew + state.log2_lmul > 7) {
       CSR[vtype].VILL = 1;
       CSR[vtype].VMA = 0;
       CSR[vtype].VTA = 0;

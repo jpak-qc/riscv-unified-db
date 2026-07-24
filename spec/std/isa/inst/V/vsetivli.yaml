@@ -53,10 +53,10 @@ operation(): |
 
     VectorState state = vector_state();
 
-    # Check if SEW > ELEN * LMUL (fractional LMUL case) per RVV spec §3.4.2
+    # Check if VLMAX < 1: SEW*/LMUL > VLEN i.e. log2_sew + log2_lmul > log2(VLEN)=7 for VLEN=128
     if (VILL_SET_ON_RESERVED_VTYPE
         && state.lmul_type == VectorLmulType::Divide
-        && state.log2_sew + state.log2_lmul > 6) {
+        && state.log2_sew + state.log2_lmul > 7) {
       CSR[vtype].VILL = 1;
       CSR[vtype].VMA = 0;
       CSR[vtype].VTA = 0;
