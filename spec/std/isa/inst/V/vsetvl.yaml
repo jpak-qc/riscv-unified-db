@@ -54,8 +54,8 @@ operation(): |
 
     VectorState state = vector_state();
 
-    # Check if SEW > ELEN * LMUL (fractional LMUL case) per RVV spec §3.4.2
-    # For fractional LMUL, log2_sew + log2_lmul > log2(ELEN) means illegal
+    # Check if VLMAX < 1: SEW/LMUL > VLEN, i.e. log2_sew + log2_lmul > log2(VLEN)
+    # For VLEN=128: log2(VLEN)=7; VLMAX=1 is valid, VLMAX<1 requires sum > 7
     if (VILL_SET_ON_RESERVED_VTYPE
         && state.lmul_type == VectorLmulType::Divide
         && state.log2_sew + state.log2_lmul > 7) {
