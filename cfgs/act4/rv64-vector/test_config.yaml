@@ -1,0 +1,14 @@
+name: rv64-vector
+# GCC 16+ required for V extension tests (Vx/Vls/Vf suites).
+# Update this path to your riscv64-unknown-elf-gcc 16+ installation.
+# On this machine: /home/josepak/riscv/bin/riscv64-unknown-elf-gcc
+compiler_exe: bin/riscv64-unknown-elf-gcc
+objdump_exe: bin/riscv64-unknown-elf-objdump
+ref_model_exe: sail_riscv_sim
+# Point directly at the UDB config — ACT4 reads this natively
+udb_config: ../../../cfgs/rv64-vector.yaml
+linker_script: link.ld
+dut_include_dir: .
+# Priv vector tests (ExceptionsVx, ExceptionsSv etc.) have upstream assembler bugs
+# (bare register numbers, 64-bit .set expressions) not yet fixed in arch-test.
+include_priv_tests: False

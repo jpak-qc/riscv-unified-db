@@ -1,0 +1,1 @@
+bin/iss -m rv64-vector -c cfgs/rv64-vector.yaml __ELF__

@@ -60,6 +60,11 @@ namespace udb {
 
       // subclasses only need to override these functions:
       virtual uint64_t read(uint64_t addr, size_t bytes) {
+        // Out-of-range reads return 0 to prevent UB from garbage pointer arithmetic
+        if (addr < m_offset || addr >= m_offset + m_data.size()) {
+          return 0;
+        }
+
         MemAccessRange memAccessData(addr, bytes);
         this->Notify(MEMREAD_EVENT, &memAccessData);
 
@@ -78,6 +83,11 @@ namespace udb {
       }
 
       void write(uint64_t addr, uint64_t data, size_t bytes) {
+        // Out-of-range writes are silently ignored to prevent UB
+        if (addr < m_offset || addr >= m_offset + m_data.size()) {
+          return;
+        }
+
         MemAccess memAccess(addr, bytes, data);
         switch (bytes) {
           case 1:
@@ -141,6 +151,13 @@ namespace udb {
     IssSocModel() = delete;
     ~IssSocModel() = default;
 
+    // CLINT stub: covers standard CLINT msip range 0x2000000-0x200ffff
+    // and sail_macros.h mtimecmp address 0x02004000.
+    // Reads return 0, writes are no-ops.
+    static bool is_clint_addr(uint64_t addr) {
+      return (addr >= 0x2000000ULL && addr <= 0x200ffffULL);
+    }
+
     uint64_t read_hpm_counter(uint64_t n) { return 0; }
     uint64_t read_mcycle() { return 0; }
     uint64_t read_mtime() { return 0; }
@@ -166,27 +183,35 @@ namespace udb {
     void order_pgtbl_reads_after_vmafence() {}
 
     uint64_t read_physical_memory_8(uint64_t paddr) {
+      if (is_clint_addr(paddr)) return 0;
       return m_memory.read(paddr, 1);
     }
     uint64_t read_physical_memory_16(uint64_t paddr) {
+      if (is_clint_addr(paddr)) return 0;
       return m_memory.read(paddr, 2);
     }
     uint64_t read_physical_memory_32(uint64_t paddr) {
+      if (is_clint_addr(paddr)) return 0;
       return m_memory.read(paddr, 4);
     }
     uint64_t read_physical_memory_64(uint64_t paddr) {
+      if (is_clint_addr(paddr)) return 0;
       return m_memory.read(paddr, 8);
     }
     void write_physical_memory_8(uint64_t paddr, uint64_t value) {
+      if (is_clint_addr(paddr)) return;
       m_memory.write(paddr, value, 1);
     }
     void write_physical_memory_16(uint64_t paddr, uint64_t value) {
+      if (is_clint_addr(paddr)) return;
       m_memory.write(paddr, value, 2);
     }
     void write_physical_memory_32(uint64_t paddr, uint64_t value) {
+      if (is_clint_addr(paddr)) return;
       m_memory.write(paddr, value, 4);
     }
     void write_physical_memory_64(uint64_t paddr, uint64_t value) {
+      if (is_clint_addr(paddr)) return;
       m_memory.write(paddr, value, 8);
     }
 
