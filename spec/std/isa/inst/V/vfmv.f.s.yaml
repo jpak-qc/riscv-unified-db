@@ -6,12 +6,12 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfmv.f.s
-long_name: "Vector floating-point move to scalar FP register"
+long_name: "Vector floating-point to scalar move"
 description: |
-  Copies element 0 of vector register vs2 into scalar FP register fd, NaN-boxing the result for SP values when D is implemented. No masking; reads element 0 unconditionally. vstart is reset to 0 after execution.
+  Moves floating-point element from vector register vs2 to scalar floating-point register fd, using vector mask vm. This operation extracts a single element from the vector.
 definedBy:
   extension:
-    name: Zve32f
+    name: Zvl32b
 assembly: fd, vs2
 encoding:
   match: 0100001-----00000001-----1010111
@@ -27,14 +27,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  check_f_ok($encoding);
-  VectorState state = vector_state();
-  # SEW=32 uses f32; SEW=64 uses f64 (legal because Zve64d requires Zve32f).
-  if (state.log2_sew == 6) {
-    F[fd] = v_elem_read(vs2, 0, 6)[63:0];
-  } else {
-    F[fd] = {32'hffffffff, v_elem_read(vs2, 0, 5)[31:0]};
-  }
-  CSR[vstart].VALUE = 0;
-  mark_f_state_dirty();

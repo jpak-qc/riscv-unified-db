@@ -6,12 +6,12 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vwredsum.vs
-long_name: "Vector widening signed integer sum reduction into scalar"
+long_name: No synopsis available
 description: |
-  Reduces active SEW-wide elements of vs2 by signed addition into a 2*SEW accumulator, sign-extending each vs2 element before adding. The lower 2*SEW bits of vs1[0] initialize the accumulator; the 2*SEW result writes to element 0 of vd. Inactive elements (vm-masked) are skipped; vstart must be 0.
+  No description available.
 definedBy:
   extension:
-    name: Zve32x
+    name: Zvl32b
 assembly: vd, vs2, vs1, vm
 encoding:
   match: 110001-----------000-----1010111
@@ -31,24 +31,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  if (CSR[vstart].VALUE != 0) { raise(ExceptionCode::IllegalInstruction, mode(), $encoding); }
-  VectorState state = vector_state();
-  U32 elems_per_reg = VLEN >> state.log2_sew;
-  U32 sew2 = state.sew * 2;
-  if (CSR[vl].VALUE == 0) {
-    CSR[vstart].VALUE = 0;
-  } else {
-    Bits<128> acc = V[vs1][sew2 - 1:0];
-    for (U32 i = 0; i < CSR[vl].VALUE; i++) {
-      if (v_mask_elem_active?(vm, i)) {
-        U32 reg_off   = i / elems_per_reg;
-        U32 start_bit = (i % elems_per_reg) * state.sew;
-        Bits<128> src = $signed(V[vs2 + reg_off][start_bit + state.sew - 1:start_bit]);
-        acc = (acc + src)[sew2 - 1:0];
-      }
-    }
-    V[vd][sew2 - 1:0] = acc[sew2 - 1:0];
-    CSR[vstart].VALUE = 0;
-    mark_v_state_dirty();
-  }

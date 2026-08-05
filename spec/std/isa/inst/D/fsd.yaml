@@ -20,6 +20,7 @@ encoding:
   variables:
     - name: imm
       location: 31-25|11-7
+      sign_extend: true
     - name: fs2
       location: 24-20
     - name: xs1
@@ -31,6 +32,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_f_ok($encoding);
-  XReg virtual_address = X[xs1] + $signed(imm);
-  write_memory(64, virtual_address, F[fs2], $encoding);

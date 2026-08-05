@@ -6,12 +6,12 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vcompress.vm
-long_name: "Compress active mask elements into consecutive positions"
+long_name: No synopsis available
 description: |
-  Packs elements of vs2 selected by the mask register vs1 into consecutive positions in vd starting at element 0. For each element i in 0..vl-1 where vs1[i]==1, vs2[i] is written to vd[out_idx++]; tail elements of vd beyond out_idx are unmodified. Requires vstart==0; uses vs1 as an explicit mask operand rather than the vm bit.
+  No description available.
 definedBy:
   extension:
-    name: Zve32x
+    name: Zvl32b
 assembly: vd, vs2, vs1
 encoding:
   match: 0101111----------010-----1010111
@@ -29,18 +29,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  if (CSR[vstart].VALUE != 0) { raise(ExceptionCode::IllegalInstruction, mode(), $encoding); }
-  VectorState state = vector_state();
-  U32 elems_per_reg = VLEN >> state.log2_sew;
-  U32 out_idx = 0;
-  for (U32 i = 0; i < CSR[vl].VALUE; i++) {
-    if (V[vs1][i] == 1'b1) {
-      U32 s_reg = i / elems_per_reg;       U32 s_bit = (i % elems_per_reg) * state.sew;
-      U32 d_reg = out_idx / elems_per_reg;  U32 d_bit = (out_idx % elems_per_reg) * state.sew;
-      V[vd + d_reg][d_bit + state.sew - 1:d_bit] = V[vs2 + s_reg][s_bit + state.sew - 1:s_bit];
-      out_idx = out_idx + 1;
-    }
-  }
-  CSR[vstart].VALUE = 0;
-  mark_v_state_dirty();

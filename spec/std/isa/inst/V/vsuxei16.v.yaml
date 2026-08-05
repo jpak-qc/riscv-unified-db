@@ -11,7 +11,7 @@ description: |
   Stores 1 segment of 16-bit elements from vector register vs2 to memory using unordered access pattern with index register vs1, starting at address in xs1 register, using vector mask vm. The effective element width is 16 bits.
 definedBy:
   extension:
-    name: Zve32x
+    name: Zvl32b
 assembly: vs3, (xs1), vs2, vm
 encoding:
   match: 000001-----------101-----0100111
@@ -31,27 +31,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  VectorState state = vector_state();
-  XReg virtual_address = X[xs1];
-  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    if (v_mask_elem_active?(vm, i)) {
-      XReg idx = v_elem_read(vs2, i, 4)[15:0];
-      Bits<64> data = v_elem_read(vs3, i, state.log2_sew)[63:0];
-      XReg addr = virtual_address + idx;
-      if (state.sew == 8) {
-        write_memory(8, addr, data[7:0], $encoding);
-      } else if (state.sew == 16) {
-        v_check_store_alignment(16, addr);
-        write_memory(16, addr, data[15:0], $encoding);
-      } else if (state.sew == 32) {
-        v_check_store_alignment(32, addr);
-        write_memory(32, addr, data[31:0], $encoding);
-      } else {
-        v_check_store_alignment(64, addr);
-        write_memory(64, addr, data[63:0], $encoding);
-      }
-    }
-  }
-  CSR[vstart].VALUE = 0;
-  mark_v_state_dirty();

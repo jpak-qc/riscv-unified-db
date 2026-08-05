@@ -6,12 +6,12 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfrsqrt7.v
-long_name: "Vector FP 7-bit reciprocal square-root approximation"
+long_name: No synopsis available
 description: |
-  Computes a 7-bit-significant reciprocal square-root approximation (1/sqrt(x)) for each active element of vs2, writing results to vd. Results follow the RISC-V V spec rsqrt7 table; negative operands, negative zero, positive zero, infinity, and NaN are treated as special cases per spec, with NV raised for negative inputs and DZ raised for negative-zero.
+  No description available.
 definedBy:
   extension:
-    name: Zve32f
+    name: Zvl32b
 assembly: vd, vs2, vm
 encoding:
   match: 010011------00100001-----1010111
@@ -29,22 +29,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  check_f_ok($encoding);
-  VectorState state = vector_state();
-  RoundingMode rmode = rm_to_mode(CSR[fcsr].FRM, $encoding);
-  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    if (v_mask_elem_active?(vm, i)) {
-      # SEW=32 uses f32; SEW=64 uses f64 (legal because Zve64d requires Zve32f).
-      if (state.log2_sew == 6) {
-        Bits<64> a = v_elem_read(vs2, i, 6)[63:0];
-        v_elem_write(vd, i, 6, {64'b0, f64_rsqrt7(a, rmode)});
-      } else {
-        Bits<32> a = v_elem_read(vs2, i, 5)[31:0];
-        v_elem_write(vd, i, 5, {96'b0, f32_rsqrt7(a, rmode)});
-      }
-    }
-  }
-  CSR[vstart].VALUE = 0;
-  mark_f_state_dirty();
-  mark_v_state_dirty();

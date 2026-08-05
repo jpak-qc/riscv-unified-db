@@ -6,12 +6,12 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vredsum.vs
-long_name: "Vector integer sum reduction into scalar"
+long_name: No synopsis available
 description: |
-  Reduces active elements of vs2 by integer addition at SEW width, initializing the accumulator from element 0 of vs1, and writing the result to element 0 of vd. Inactive elements (vm-masked) are skipped; when vl=0, vs1[0] is written to vd[0] unchanged. vstart must be 0.
+  No description available.
 definedBy:
   extension:
-    name: Zve32x
+    name: Zvl32b
 assembly: vd, vs2, vs1, vm
 encoding:
   match: 000000-----------010-----1010111
@@ -31,26 +31,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  if (CSR[vstart].VALUE != 0) { raise(ExceptionCode::IllegalInstruction, mode(), $encoding); }
-  VectorState state = vector_state();
-  U32 elems_per_reg = VLEN >> state.log2_sew;
-  if (CSR[vl].VALUE == 0) {
-    # V spec §14.1: when vl=0, result is vs1[0] written to vd[0]
-    V[vd][state.sew - 1:0] = V[vs1][state.sew - 1:0];
-    CSR[vstart].VALUE = 0;
-    mark_v_state_dirty();
-  } else {
-    Bits<64> acc = V[vs1][state.sew - 1:0];
-    for (U32 i = 0; i < CSR[vl].VALUE; i++) {
-      if (v_mask_elem_active?(vm, i)) {
-        U32 reg_off   = i / elems_per_reg;
-        U32 start_bit = (i % elems_per_reg) * state.sew;
-        Bits<64> src = V[vs2 + reg_off][start_bit + state.sew - 1:start_bit];
-        acc = (acc + src)[state.sew - 1:0];
-      }
-    }
-    V[vd][state.sew - 1:0] = acc[state.sew - 1:0];
-    CSR[vstart].VALUE = 0;
-    mark_v_state_dirty();
-  }

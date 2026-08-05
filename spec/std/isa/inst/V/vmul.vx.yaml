@@ -6,12 +6,12 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmul.vx
-long_name: "Vector integer multiply scalar, return low half, vx"
+long_name: No synopsis available
 description: |
-  Multiplies each SEW-wide element of vs2 by the scalar xs1 (sign-extended to SEW), writing the low SEW bits of each product into vd; the upper bits are discarded. Inactive elements under vm mask control are undisturbed.
+  No description available.
 definedBy:
   extension:
-    name: Zve32x
+    name: Zvl32b
 assembly: vd, vs2, xs1, vm
 encoding:
   match: 100101-----------110-----1010111
@@ -31,13 +31,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  VectorState state = vector_state();
-  Bits<64> scalar_val = X[xs1][state.sew - 1:0];
-  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    if (v_mask_elem_active?(vm, i)) {
-      v_elem_write(vd, i, state.log2_sew, (v_elem_read(vs2, i, state.log2_sew) * {64'b0, scalar_val})[state.sew - 1:0]);
-    }
-  }
-  CSR[vstart].VALUE = 0;
-  mark_v_state_dirty();

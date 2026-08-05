@@ -11,7 +11,7 @@ description: |
   Loads 8-bit elements from memory starting at address in xs1 register, using vector mask vm, and stores results in vector register vd. This is a fault-first operation that stops on the first fault. The effective element width is 8 bits.
 definedBy:
   extension:
-    name: Zve32x
+    name: Zvl32b
 assembly: vd, (xs1), vm
 encoding:
   match: 000000-10000-----000-----0000111
@@ -29,71 +29,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  XReg virtual_address = X[xs1];
-
-  # Fault-only-first: process elements normally, but if a fault occurs on any element
-  # after element 0, trim vl to the number of elements completed and stop (no raise).
-  # A fault on element 0 (the first active element) raises normally, guaranteeing
-  # forward progress. `trimmed` records that vl was reduced so the loop can stop.
-  Boolean trimmed = false;
-  U32 new_vl = CSR[vl].VALUE;
-
-  for (U32 i = CSR[vstart].VALUE; (i < CSR[vl].VALUE) && trimmed == false; i++) {
-    if (v_mask_elem_active?(vm, i)) {
-      XReg elem_addr = virtual_address + i;
-
-      TranslationResult tr;
-      Boolean faulted = false;
-      ExceptionCode fcode;
-      PrivilegeMode fmode;
-      XReg ftval;
-
-      if (CSR[misa].S == 1) {
-        TranslationFaultResult tprobe = translate_probe(elem_addr, MemoryOperation::Read, effective_ldst_mode(), $encoding);
-        if (tprobe.has_fault) {
-          faulted = true;
-          fcode = tprobe.fault_code;
-          fmode = tprobe.from_mode;
-          ftval = tprobe.tval;
-        } else {
-          tr = tprobe.result;
-        }
-      } else {
-        tr.paddr = elem_addr;
-      }
-
-      if (faulted == false) {
-        TranslationFaultResult aprobe = access_check_probe(tr.paddr, 8, elem_addr, MemoryOperation::Read, ExceptionCode::LoadAccessFault, effective_ldst_mode());
-        if (aprobe.has_fault) {
-          faulted = true;
-          fcode = aprobe.fault_code;
-          fmode = aprobe.from_mode;
-          ftval = aprobe.tval;
-        }
-      }
-
-      if (faulted) {
-        if (i == 0) {
-          # first active element faults: raise normally (forward progress guarantee).
-          # Use mode() (the actual CPU privilege mode) not fmode (effective_ldst_mode,
-          # which may be U under MPRV=1+MPP=U) so that raise_precise sets MPP to the
-          # actual mode at exception entry, matching the RISC-V spec ("xPP is set to y
-          # where y is the actual privilege mode at the time of the trap").
-          raise(fcode, mode(), ftval);
-        }
-        # trim vl to elements completed so far and stop
-        new_vl = i;
-        trimmed = true;
-      } else {
-        # EEW=8 fixed (log2_eew=3), regardless of SEW
-        v_elem_write(vd, i, 3, {120'b0, read_physical_memory(8, tr.paddr)[7:0]});
-      }
-    }
-  }
-
-  if (trimmed) {
-    CSR[vl].VALUE = new_vl;
-  }
-  CSR[vstart].VALUE = 0;
-  mark_v_state_dirty();

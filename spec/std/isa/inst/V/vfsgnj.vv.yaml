@@ -6,12 +6,12 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfsgnj.vv
-long_name: "Vector FP sign injection, vector-vector"
+long_name: No synopsis available
 description: |
-  Copies each element of vs2 with its sign bit replaced by the sign bit of the corresponding vs1 element, writing the result to vd. Sign injection is purely bitwise: no arithmetic rounding occurs and no FP exceptions are raised. Masked inactive elements are undisturbed.
+  No description available.
 definedBy:
   extension:
-    name: Zve32f
+    name: Zvl32b
 assembly: vd, vs2, vs1, vm
 encoding:
   match: 001000-----------001-----1010111
@@ -31,24 +31,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  check_f_ok($encoding);
-  VectorState state = vector_state();
-  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    if (v_mask_elem_active?(vm, i)) {
-      # SEW=32 uses f32; SEW=64 uses f64 (legal because Zve64d requires Zve32f).
-      if (state.log2_sew == 6) {
-        Bits<64> a = v_elem_read(vs2, i, 6)[63:0];
-        Bits<64> b = v_elem_read(vs1, i, 6)[63:0];
-        Bits<1> sign = b[63];
-        v_elem_write(vd, i, 6, {64'b0, {sign, a[62:0]}});
-      } else {
-        Bits<32> a = v_elem_read(vs2, i, 5)[31:0];
-        Bits<32> b = v_elem_read(vs1, i, 5)[31:0];
-        Bits<1> sign = b[31];
-        v_elem_write(vd, i, 5, {96'b0, {sign, a[30:0]}});
-      }
-    }
-  }
-  CSR[vstart].VALUE = 0;
-  mark_v_state_dirty();

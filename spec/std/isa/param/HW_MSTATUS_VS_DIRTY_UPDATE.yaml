@@ -16,7 +16,7 @@ description: |
   h! precise  ! Hardware writes `mstatus.VS` to the Dirty (3) state precisely when V registers are modified
   h! imprecise ! Hardware writes `mstatus.VS` imprecisely. This will result in a call to unpredictable() on any attempt to read `mstatus` or write vector state.
   !===
-long_name: Hardware mstatus.VS dirty state update behavior
+long_name: TODO
 schema:
   type: string
   enum:

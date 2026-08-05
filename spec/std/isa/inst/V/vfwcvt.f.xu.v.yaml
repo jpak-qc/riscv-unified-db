@@ -11,7 +11,7 @@ description: |
   Converts unsigned integer elements from vector register vs2 to a wider floating-point format and stores results in vector register vd, using vector mask vm. The conversion follows IEEE 754 standards.
 definedBy:
   extension:
-    name: Zve64d
+    name: Zvl32b
 assembly: vd, vs2, vm
 encoding:
   match: 010010------01010001-----1010111
@@ -29,16 +29,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  check_f_ok($encoding);
-  VectorState state = vector_state();
-  RoundingMode rmode = rm_to_mode(CSR[fcsr].FRM, $encoding);
-  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    if (v_mask_elem_active?(vm, i)) {
-      Bits<32> a = v_elem_read(vs2, i, state.log2_sew)[31:0];
-      v_elem_write(vd, i, state.log2_sew + 1, {64'b0, ui32_to_f64(a, rmode)});
-    }
-  }
-  CSR[vstart].VALUE = 0;
-  mark_f_state_dirty();
-  mark_v_state_dirty();

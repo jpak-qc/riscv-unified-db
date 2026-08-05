@@ -6,12 +6,12 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfwmul.vv
-long_name: "Vector FP widening multiply, vector-vector"
+long_name: No synopsis available
 description: |
-  Multiplies corresponding SEW-wide elements of vs2 and vs1, widening both to 2*SEW before the multiply and writing the 2*SEW results to vd. No accumulator is used. Inactive elements in vd are undisturbed.
+  No description available.
 definedBy:
   extension:
-    name: Zve64d
+    name: Zvl32b
 assembly: vd, vs2, vs1, vm
 encoding:
   match: 111000-----------001-----1010111
@@ -31,18 +31,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  check_f_ok($encoding);
-  VectorState state = vector_state();
-  RoundingMode rmode = rm_to_mode(CSR[fcsr].FRM, $encoding);
-  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    if (v_mask_elem_active?(vm, i)) {
-      Bits<32> a = v_elem_read(vs2, i, state.log2_sew)[31:0];
-      Bits<32> b = v_elem_read(vs1, i, state.log2_sew)[31:0];
-      Bits<64> res = f64_mul(f32_to_f64(a, rmode), f32_to_f64(b, rmode), rmode);  # rmode unused: f32->f64 widening is exact
-      v_elem_write(vd, i, state.log2_sew + 1, {64'b0, res});
-    }
-  }
-  CSR[vstart].VALUE = 0;
-  mark_f_state_dirty();
-  mark_v_state_dirty();

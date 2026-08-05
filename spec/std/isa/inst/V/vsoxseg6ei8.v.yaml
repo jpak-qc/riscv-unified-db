@@ -11,7 +11,7 @@ description: |
   Stores 6 segments of 8-bit elements from vector register vs2 to memory using ordered access pattern with index register vs1, starting at address in xs1 register, using vector mask vm. The effective element width is 8 bits.
 definedBy:
   extension:
-    name: Zve32x
+    name: Zvl32b
 assembly: vs3, (xs1), vs2, vm
 encoding:
   match: 101011-----------000-----0100111
@@ -31,35 +31,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  VectorState state = vector_state();
-  U32 emul_reg = (state.lmul_type == VectorLmulType::Multiply) ? (32'b1 << state.log2_lmul) : 1;
-  U32 elems_per_reg_idx  = VLEN >> 3;
-  U32 elems_per_reg_data = VLEN >> state.log2_sew;
-  XReg virtual_address = X[xs1];
-  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    if (v_mask_elem_active?(vm, i)) {
-      XReg idx = v_elem_read(vs2, i, 3)[7:0];
-      U32 reg_off = i / elems_per_reg_data;
-      U32 start_bit_f = (i % elems_per_reg_data) * state.sew;
-      CSR[vstart].VALUE = i;
-      for (U32 j = 0; j < 6; j++) {
-        XReg addr = virtual_address + idx + j * (state.sew / 8);
-        Bits<64> data = V[vs3 + j * emul_reg + reg_off][start_bit_f + state.sew - 1:start_bit_f];
-        if (state.sew == 8) {
-          write_memory(8, addr, data[7:0], $encoding);
-        } else if (state.sew == 16) {
-          v_check_store_alignment(16, addr);
-          write_memory(16, addr, data[15:0], $encoding);
-        } else if (state.sew == 32) {
-          v_check_store_alignment(32, addr);
-          write_memory(32, addr, data[31:0], $encoding);
-        } else {
-          v_check_store_alignment(64, addr);
-          write_memory(64, addr, data[63:0], $encoding);
-        }
-      }
-    }
-  }
-  CSR[vstart].VALUE = 0;
-  mark_v_state_dirty();

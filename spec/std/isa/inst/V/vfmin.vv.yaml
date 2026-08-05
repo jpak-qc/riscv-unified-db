@@ -6,12 +6,12 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfmin.vv
-long_name: "Vector FP minimum, vector-vector"
+long_name: No synopsis available
 description: |
-  Computes the IEEE 754-2019 minimum of corresponding elements from vs2 and vs1, writing to vd. When one operand is NaN, the non-NaN value is used; when both are NaN, the instruction writes canonical NaN and raises NV only if either input is a signaling NaN. Signed-zero tie-breaking follows the V-spec rule: min(-0, +0) = -0.
+  No description available.
 definedBy:
   extension:
-    name: Zve32f
+    name: Zvl32b
 assembly: vd, vs2, vs1, vm
 encoding:
   match: 000100-----------001-----1010111
@@ -31,59 +31,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  check_f_ok($encoding);
-  VectorState state = vector_state();
-  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    if (v_mask_elem_active?(vm, i)) {
-      # SEW=32 uses f32; SEW=64 uses f64 (legal because Zve64d requires Zve32f).
-      if (state.log2_sew == 6) {
-        Bits<64> a = v_elem_read(vs2, i, 6)[63:0];
-        Bits<64> b = v_elem_read(vs1, i, 6)[63:0];
-        Bits<64> res;
-        if (is_dp_nan?(a) && is_dp_nan?(b)) {
-          if (is_dp_signaling_nan?(a) || is_dp_signaling_nan?(b)) { set_fp_flag(FpFlag::NV); }
-          res = DP_CANONICAL_NAN;
-        } else if (is_dp_nan?(a)) {
-          if (is_dp_signaling_nan?(a)) { set_fp_flag(FpFlag::NV); }
-          res = b;
-        } else if (is_dp_nan?(b)) {
-          if (is_dp_signaling_nan?(b)) { set_fp_flag(FpFlag::NV); }
-          res = a;
-        } else {
-          # Signed-zero: min(-0.0, +0.0) = -0.0 per IEEE 754/v-spec
-          if (is_dp_neg_zero?(a) || is_dp_neg_zero?(b)) {
-            res = DP_NEG_ZERO;
-          } else {
-            res = f64_lt?(a, b, true) ? a : b;
-          }
-        }
-        v_elem_write(vd, i, 6, {64'b0, res});
-      } else {
-        Bits<32> a = v_elem_read(vs2, i, 5)[31:0];
-        Bits<32> b = v_elem_read(vs1, i, 5)[31:0];
-        Bits<32> res;
-        if (is_sp_nan?(a) && is_sp_nan?(b)) {
-          if (is_sp_signaling_nan?(a) || is_sp_signaling_nan?(b)) { set_fp_flag(FpFlag::NV); }
-          res = SP_CANONICAL_NAN;
-        } else if (is_sp_nan?(a)) {
-          if (is_sp_signaling_nan?(a)) { set_fp_flag(FpFlag::NV); }
-          res = b;
-        } else if (is_sp_nan?(b)) {
-          if (is_sp_signaling_nan?(b)) { set_fp_flag(FpFlag::NV); }
-          res = a;
-        } else {
-          # Signed-zero: min(-0.0, +0.0) = -0.0 per IEEE 754/v-spec
-          if (is_sp_neg_zero?(a) || is_sp_neg_zero?(b)) {
-            res = SP_NEG_ZERO;
-          } else {
-            res = f32_lt?(a, b, true) ? a : b;
-          }
-        }
-        v_elem_write(vd, i, 5, {96'b0, res});
-      }
-    }
-  }
-  CSR[vstart].VALUE = 0;
-  mark_f_state_dirty();
-  mark_v_state_dirty();

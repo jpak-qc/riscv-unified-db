@@ -6,12 +6,12 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfirst.m
-long_name: "Find index of first set bit in mask"
+long_name: No synopsis available
 description: |
-  Searches mask register vs2 for the lowest-indexed active set bit among elements 0 to vl-1, optionally masked by vm, and writes that index to scalar integer register xd. Writes -1 (all-ones, XLEN wide) if no active set bit is found; vstart must be 0.
+  No description available.
 definedBy:
   extension:
-    name: Zve32x
+    name: Zvl32b
 assembly: xd, vs2, vm
 encoding:
   match: 010000------10001010-----1010111
@@ -29,19 +29,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  if (CSR[vstart].VALUE != 0) { raise(ExceptionCode::IllegalInstruction, mode(), $encoding); }
-  Boolean found = false;
-  XReg first_idx = 0;
-  for (U32 i = 0; i < CSR[vl].VALUE; i++) {
-    if (v_mask_elem_active?(vm, i)) {
-      if (found == false && V[vs2][i] == 1'b1) {
-        first_idx = i;
-        found = true;
-      }
-    }
-  }
-  # Return the index of the first set bit, or -1 (all-ones XLEN bits) if none found.
-  # Use explicit 64-bit all-ones rather than ~0 (which would be Bits<1> NOT in IDL).
-  X[xd] = found ? first_idx : ~64'b0;
-  CSR[vstart].VALUE = 0;

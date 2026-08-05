@@ -11,7 +11,7 @@ description: |
   Slides elements in vector register vs2 up by 1 position, inserting scalar register xs1 at the bottom, and stores results in vector register vd, using vector mask vm.
 definedBy:
   extension:
-    name: Zve32x
+    name: Zvl32b
 assembly: vd, vs2, xs1, vm
 encoding:
   match: 001110-----------100-----1010111
@@ -31,20 +31,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  VectorState state = vector_state();
-  U32 elems_per_reg = VLEN >> state.log2_sew;
-  XReg offset = X[xs1];
-  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    if (v_mask_elem_active?(vm, i)) {
-      U32 d_reg = i / elems_per_reg;  U32 d_bit = (i % elems_per_reg) * state.sew;
-      if (i >= offset) {
-        U32 s_idx = i - offset;
-        U32 s_reg = s_idx / elems_per_reg;  U32 s_bit = (s_idx % elems_per_reg) * state.sew;
-        V[vd + d_reg][d_bit + state.sew - 1:d_bit] = V[vs2 + s_reg][s_bit + state.sew - 1:s_bit];
-      }
-      # else: element below offset stays undisturbed (not written)
-    }
-  }
-  CSR[vstart].VALUE = 0;
-  mark_v_state_dirty();

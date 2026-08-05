@@ -6,12 +6,12 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfwmul.vf
-long_name: "Vector FP widening multiply, scalar-vector"
+long_name: No synopsis available
 description: |
-  Multiplies SEW-wide elements of vs2 by scalar fs1 (NaN-boxed, taken from the low SEW bits of the FP register file), producing 2*SEW-wide results in vd. When D is present, fs1 values with invalid NaN-box encoding are replaced with the canonical NaN before widening. Inactive elements are undisturbed.
+  No description available.
 definedBy:
   extension:
-    name: Zve64d
+    name: Zvl32b
 assembly: vd, vs2, fs1, vm
 encoding:
   match: 111000-----------101-----1010111
@@ -31,21 +31,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  check_f_ok($encoding);
-  VectorState state = vector_state();
-  RoundingMode rmode = rm_to_mode(CSR[fcsr].FRM, $encoding);
-  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    if (v_mask_elem_active?(vm, i)) {
-      Bits<32> a = v_elem_read(vs2, i, state.log2_sew)[31:0];
-      Bits<32> b = F[fs1][31:0];
-      if (implemented?(ExtensionName::D) && F[fs1][63:32] != 32'hffffffff) {
-        b = SP_CANONICAL_NAN;
-      }
-      Bits<64> res = f64_mul(f32_to_f64(a, rmode), f32_to_f64(b, rmode), rmode);  # rmode unused: f32->f64 widening is exact
-      v_elem_write(vd, i, state.log2_sew + 1, {64'b0, res});
-    }
-  }
-  CSR[vstart].VALUE = 0;
-  mark_f_state_dirty();
-  mark_v_state_dirty();

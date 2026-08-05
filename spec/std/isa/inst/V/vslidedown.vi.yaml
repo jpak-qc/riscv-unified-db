@@ -11,7 +11,7 @@ description: |
   Slides elements in vector register vs2 down by 1 position, inserting immediate value at the top, and stores results in vector register vd, using vector mask vm.
 definedBy:
   extension:
-    name: Zve32x
+    name: Zvl32b
 assembly: vd, vs2, imm, vm
 encoding:
   match: 001111-----------011-----1010111
@@ -31,27 +31,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  VectorState state = vector_state();
-  U32 elems_per_reg = VLEN >> state.log2_sew;
-  XReg vlmax;
-  if (state.lmul_type == VectorLmulType::Multiply) {
-    vlmax = (VLEN << state.log2_lmul) >> state.log2_sew;
-  } else {
-    vlmax = (VLEN >> state.log2_lmul) >> state.log2_sew;
-  }
-  U32 offset = {27'b0, imm};
-  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    if (v_mask_elem_active?(vm, i)) {
-      U32 d_reg = i / elems_per_reg;  U32 d_bit = (i % elems_per_reg) * state.sew;
-      U32 s_idx = i + offset;
-      if (s_idx < vlmax) {
-        U32 s_reg = s_idx / elems_per_reg;  U32 s_bit = (s_idx % elems_per_reg) * state.sew;
-        V[vd + d_reg][d_bit + state.sew - 1:d_bit] = V[vs2 + s_reg][s_bit + state.sew - 1:s_bit];
-      } else {
-        V[vd + d_reg][d_bit + state.sew - 1:d_bit] = 0;
-      }
-    }
-  }
-  CSR[vstart].VALUE = 0;
-  mark_v_state_dirty();

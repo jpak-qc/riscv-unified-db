@@ -6,12 +6,12 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmor.mm
-long_name: "Mask register bitwise OR"
+long_name: No synopsis available
 description: |
-  Computes the bitwise OR of mask registers vs2 and vs1 across all VLEN bits starting from vstart, writing the result to vd. Not bounded by vl; the vm bit has no masking effect.
+  No description available.
 definedBy:
   extension:
-    name: Zve32x
+    name: Zvl32b
 assembly: vd, vs2, vs1
 encoding:
   match: 0110101----------010-----1010111
@@ -29,13 +29,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok($encoding);
-  # Read-modify-write: avoid setBit-on-copy ISS bug (see bits.hpp)
-  Bits<VLEN> vd_bits = V[vd];
-  for (U32 i = CSR[vstart].VALUE; i < VLEN; i++) {
-    vd_bits[i] = V[vs2][i] | V[vs1][i];
-  }
-  V[vd] = vd_bits;
-
-  CSR[vstart].VALUE = 0;
-  mark_v_state_dirty();

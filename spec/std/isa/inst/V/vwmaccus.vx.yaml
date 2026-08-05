@@ -8,10 +8,10 @@ kind: instruction
 name: vwmaccus.vx
 long_name: "Vector widening unsigned multiply-add with scalar, signed"
 description: |
-  Performs widening mixed-sign multiplication: unsigned(xs1) * signed(vs2), adds result to elements from vector register vd, and stores the final results in vector register vd, using vector mask vm.
+  Performs widening unsigned multiplication on elements from vector register vs2 and scalar register xs1, adds the signed result to elements from vector register vd, and stores the final results in vector register vd, using vector mask vm.
 definedBy:
   extension:
-    name: Zve32x
+    name: Zvl32b
 assembly: vd, xs1, vs2, vm
 encoding:
   match: 111110-----------110-----1010111
@@ -31,20 +31,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  VectorState state = vector_state();
-  U32 elems_per_reg_s = VLEN >> state.log2_sew;
-  U32 elems_per_reg_d = VLEN >> (state.log2_sew + 1);
-  U32 sew2 = state.sew * 2;
-  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    if (v_mask_elem_active?(vm, i)) {
-      U32 s_reg = i / elems_per_reg_s;  U32 s_bit = (i % elems_per_reg_s) * state.sew;
-      U32 d_reg = i / elems_per_reg_d;  U32 d_bit = (i % elems_per_reg_d) * sew2;
-      Bits<128> m1 = X[xs1][state.sew - 1:0];
-      Bits<128> m2 = $signed(V[vs2 + s_reg][s_bit + state.sew - 1:s_bit]);
-      Bits<128> acc = V[vd + d_reg][d_bit + sew2 - 1:d_bit];
-      V[vd + d_reg][d_bit + sew2 - 1:d_bit] = (m1 * m2 + acc)[sew2 - 1:0];
-    }
-  }
-  CSR[vstart].VALUE = 0;
-  mark_v_state_dirty();

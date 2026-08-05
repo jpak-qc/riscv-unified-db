@@ -6,12 +6,12 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vdivu.vx
-long_name: "Vector unsigned integer divide by scalar, vx"
+long_name: No synopsis available
 description: |
-  Divides each unsigned SEW-wide vs2 element by the zero-extended scalar xs1, writing the truncated quotient into vd. Divide-by-zero returns all-ones (maximum unsigned value for SEW). Inactive elements are undisturbed.
+  No description available.
 definedBy:
   extension:
-    name: Zve32x
+    name: Zvl32b
 assembly: vd, vs2, xs1, vm
 encoding:
   match: 100000-----------110-----1010111
@@ -31,15 +31,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  VectorState state = vector_state();
-  Bits<128> all_ones = (128'b1 << state.sew) - 1;
-  Bits<128> divisor = X[xs1][state.sew - 1:0];
-  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    if (v_mask_elem_active?(vm, i)) {
-      Bits<128> dividend = v_elem_read(vs2, i, state.log2_sew)[state.sew - 1:0];
-      v_elem_write(vd, i, state.log2_sew, (divisor == 0 ? all_ones : dividend / divisor)[state.sew - 1:0]);
-    }
-  }
-  CSR[vstart].VALUE = 0;
-  mark_v_state_dirty();

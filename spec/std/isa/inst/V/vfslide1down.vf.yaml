@@ -6,12 +6,12 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfslide1down.vf
-long_name: "Vector FP slide down by one and insert scalar"
+long_name: No synopsis available
 description: |
-  Shifts active elements of vs2 toward lower indices by one, writing vs2[i+1] into vd[i] for i < vl-1; the last active element (vd[vl-1]) receives the scalar value from FP register fs1. The same NaN-boxing rule as vfslide1up applies to fs1 when SEW=32 and D is implemented.
+  No description available.
 definedBy:
   extension:
-    name: Zve32f
+    name: Zvl32b
 assembly: vd, vs2, fs1, vm
 encoding:
   match: 001111-----------101-----1010111
@@ -31,30 +31,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  check_f_ok($encoding);
-  VectorState state = vector_state();
-  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    if (v_mask_elem_active?(vm, i)) {
-      # SEW=32 uses f32; SEW=64 uses f64 (legal because Zve64d requires Zve32f).
-      if (state.log2_sew == 6) {
-        if (i < CSR[vl].VALUE - 1) {
-          v_elem_write(vd, i, 6, {64'b0, v_elem_read(vs2, i + 1, 6)[63:0]});
-        } else {
-          v_elem_write(vd, i, 6, {64'b0, F[fs1][63:0]});
-        }
-      } else {
-        if (i < CSR[vl].VALUE - 1) {
-          v_elem_write(vd, i, 5, {96'b0, v_elem_read(vs2, i + 1, 5)[31:0]});
-        } else {
-          Bits<32> scalar_fs1 = F[fs1][31:0];
-          if (implemented?(ExtensionName::D) && F[fs1][63:32] != 32'hffffffff) {
-            scalar_fs1 = SP_CANONICAL_NAN;
-          }
-          v_elem_write(vd, i, 5, {96'b0, scalar_fs1});
-        }
-      }
-    }
-  }
-  CSR[vstart].VALUE = 0;
-  mark_v_state_dirty();

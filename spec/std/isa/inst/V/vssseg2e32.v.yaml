@@ -11,7 +11,7 @@ description: |
   Stores 2 segments of 32-bit elements from vector register vs2 to memory starting at address in xs1 register with stride, using vector mask vm. The effective element width is 32 bits.
 definedBy:
   extension:
-    name: Zve32x
+    name: Zvl32b
 assembly: vs3, (xs1), xs2, vm
 encoding:
   match: 001010-----------110-----0100111
@@ -31,23 +31,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  VectorState state = vector_state();
-  U32 emul_reg = (state.lmul_type == VectorLmulType::Multiply) ? (32'b1 << state.log2_lmul) : 1;
-  U32 elems_per_reg = VLEN >> 5;
-  XReg virtual_address = X[xs1];
-  XReg stride = X[xs2];
-  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    if (v_mask_elem_active?(vm, i)) {
-      CSR[vstart].VALUE = i;
-      for (U32 j = 0; j < 2; j++) {
-        U32 reg_off = i / elems_per_reg;
-        U32 start_bit_f = (i % elems_per_reg) * 32;
-        XReg elem_addr = virtual_address + i * stride + j * 4;
-        v_check_store_alignment(32, elem_addr);
-        write_memory(32, elem_addr, V[vs3 + j * emul_reg + reg_off][start_bit_f + 31:start_bit_f], $encoding);
-      }
-    }
-  }
-  CSR[vstart].VALUE = 0;
-  mark_v_state_dirty();

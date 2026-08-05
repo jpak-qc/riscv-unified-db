@@ -6,12 +6,12 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmerge.vim
-long_name: "Merge vector and sign-extended immediate using mask v0"
+long_name: No synopsis available
 description: |
-  Selects between vs2 and a 5-bit sign-extended immediate for each element using mask register v0 as the selector: where v0[i]=1, vd[i] = sext(imm); where v0[i]=0, vd[i] = vs2[i]. Always unmasked (vm=0 is implicit); all active elements in [vstart, vl) are written.
+  No description available.
 definedBy:
   extension:
-    name: Zve32x
+    name: Zvl32b
 assembly: vd, vs2, imm, v0
 encoding:
   match: 0101110----------011-----1010111
@@ -30,15 +30,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  VectorState state = vector_state();
-  Bits<64> sext_imm = $signed(imm);
-  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    if (V[0][i] == 1'b1) {
-      v_elem_write(vd, i, state.log2_sew, {64'b0, sext_imm});
-    } else {
-      v_elem_write(vd, i, state.log2_sew, v_elem_read(vs2, i, state.log2_sew));
-    }
-  }
-  CSR[vstart].VALUE = 0;
-  mark_v_state_dirty();

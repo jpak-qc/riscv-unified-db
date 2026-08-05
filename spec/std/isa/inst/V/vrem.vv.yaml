@@ -11,7 +11,7 @@ description: |
   Performs remainder operation on elements from vector registers vs2 and vs1 and stores results in vector register vd, using vector mask vm.
 definedBy:
   extension:
-    name: Zve32x
+    name: Zvl32b
 assembly: vd, vs2, vs1, vm
 encoding:
   match: 100011-----------010-----1010111
@@ -31,27 +31,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  VectorState state = vector_state();
-  Bits<128> sign_ext_mask = -(128'b1 << state.sew);
-  Bits<128> all_ones_sew = (128'b1 << state.sew) - 1;
-  Bits<128> int_min_sew = 128'b1 << (state.sew - 1);
-  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    if (v_mask_elem_active?(vm, i)) {
-      Bits<128> dividend_raw = v_elem_read(vs2, i, state.log2_sew)[state.sew - 1:0];
-      Bits<128> divisor_raw  = v_elem_read(vs1, i, state.log2_sew)[state.sew - 1:0];
-      Bits<128> dividend = (dividend_raw[state.sew - 1] == 1'b1) ? (dividend_raw | sign_ext_mask) : dividend_raw;
-      Bits<128> divisor  = (divisor_raw[state.sew - 1] == 1'b1) ? (divisor_raw | sign_ext_mask) : divisor_raw;
-      Bits<128> result;
-      if (divisor_raw == 0) {
-        result = dividend_raw;
-      } else if (dividend_raw == int_min_sew && divisor_raw == all_ones_sew) {
-        result = 0;
-      } else {
-        result = $signed(dividend) % $signed(divisor);
-      }
-      v_elem_write(vd, i, state.log2_sew, result[state.sew - 1:0]);
-    }
-  }
-  CSR[vstart].VALUE = 0;
-  mark_v_state_dirty();

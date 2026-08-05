@@ -31,7 +31,7 @@ access:
   u: always
   vs: always
   vu: always
-data_independent_timing: true
+data_independent_timing: false
 pseudoinstructions:
   - when: (fs2 == fs1)
     to: fmv.s fd, fs1
@@ -39,17 +39,7 @@ pseudoinstructions:
 operation(): |
   check_f_ok($encoding);
 
-  Bits<32> sp_fs1 = F[fs1][31:0];
-  if (implemented?(ExtensionName::D) && F[fs1][63:32] != 32'hffffffff) {
-    sp_fs1 = SP_CANONICAL_NAN;
-  }
-
-  Bits<1> sign = F[fs2][31];
-  if (implemented?(ExtensionName::D) && F[fs2][63:32] != 32'hffffffff) {
-    sign = SP_CANONICAL_NAN[31];
-  }
-
-  Bits<32> sp_value = {sign, sp_fs1[30:0]};
+  Bits<32> sp_value = {F[fs2][31], F[fs1][30:0]};
 
   if (implemented?(ExtensionName::D)) {
     F[fd] = nan_box(32, 64, sp_value);

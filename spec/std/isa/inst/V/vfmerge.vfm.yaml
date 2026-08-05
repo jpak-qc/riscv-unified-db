@@ -6,12 +6,12 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfmerge.vfm
-long_name: "Vector FP merge, vector and scalar with mask"
+long_name: No synopsis available
 description: |
-  Merges vs2 and scalar fs1 element-wise using the v0 mask register as a per-element selector: vd[i] = v0[i] ? fs1 : vs2[i] for all i in [vstart, vl). Unlike typical masked instructions, the vm encoding bit is fixed and v0 is the explicit merge selector rather than an enable predicate, so all elements in [vstart, vl) are written. NaN-boxing of fs1 applies when SEW=32 and D is implemented.
+  No description available.
 definedBy:
   extension:
-    name: Zve32f
+    name: Zvl32b
 assembly: vd, vs2, fs1, v0
 encoding:
   match: 0101110----------101-----1010111
@@ -29,28 +29,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  check_f_ok($encoding);
-  VectorState state = vector_state();
-  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    # SEW=32 uses f32; SEW=64 uses f64 (legal because Zve64d requires Zve32f).
-    if (state.log2_sew == 6) {
-      if (V[0][i] == 1'b1) {
-        v_elem_write(vd, i, 6, {64'b0, F[fs1][63:0]});
-      } else {
-        v_elem_write(vd, i, 6, {64'b0, v_elem_read(vs2, i, 6)[63:0]});
-      }
-    } else {
-      Bits<32> scalar_fs1 = F[fs1][31:0];
-      if (implemented?(ExtensionName::D) && F[fs1][63:32] != 32'hffffffff) {
-        scalar_fs1 = SP_CANONICAL_NAN;
-      }
-      if (V[0][i] == 1'b1) {
-        v_elem_write(vd, i, 5, {96'b0, scalar_fs1});
-      } else {
-        v_elem_write(vd, i, 5, {96'b0, v_elem_read(vs2, i, 5)[31:0]});
-      }
-    }
-  }
-  CSR[vstart].VALUE = 0;
-  mark_v_state_dirty();

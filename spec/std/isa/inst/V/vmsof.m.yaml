@@ -6,12 +6,12 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmsof.m
-long_name: "Mask set-only-first set bit"
+long_name: No synopsis available
 description: |
-  Scans mask register vs2 from element 0 to vl-1 and writes 1 only to the active element of vd at the index of the first set bit in vs2; all other active elements are written 0. Inactive elements (determined by vm) are undisturbed; vstart must be 0.
+  No description available.
 definedBy:
   extension:
-    name: Zve32x
+    name: Zvl32b
 assembly: vd, vs2, vm
 encoding:
   match: 010100------00010010-----1010111
@@ -29,22 +29,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  if (CSR[vstart].VALUE != 0) { raise(ExceptionCode::IllegalInstruction, mode(), $encoding); }
-  Boolean found = false;
-  # Read-modify-write: avoid setBit-on-copy ISS bug (see bits.hpp)
-  Bits<VLEN> vd_bits = V[vd];
-  for (U32 i = 0; i < CSR[vl].VALUE; i++) {
-    if (v_mask_elem_active?(vm, i)) {
-      if (found == false && V[vs2][i] == 1'b1) {
-        vd_bits[i] = 1'b1;
-        found = true;
-      } else {
-        vd_bits[i] = 1'b0;
-      }
-    }
-  }
-  V[vd] = vd_bits;
-
-  CSR[vstart].VALUE = 0;
-  mark_v_state_dirty();

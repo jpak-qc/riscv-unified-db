@@ -6,12 +6,12 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfredmin.vs
-long_name: "Vector FP reduction minimum into scalar"
+long_name: No synopsis available
 description: |
-  Reduces active elements of vs2 by IEEE 754 fmin, seeded with vs1[0], and writes the result to vd[0]. NaN propagation mirrors vfredmax: a single NaN operand yields the other operand, dual NaN yields canonical NaN, and any sNaN sets NV.
+  No description available.
 definedBy:
   extension:
-    name: Zve32f
+    name: Zvl32b
 assembly: vd, vs2, vs1, vm
 encoding:
   match: 000101-----------001-----1010111
@@ -31,63 +31,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  check_f_ok($encoding);
-  VectorState state = vector_state();
-  if (CSR[vstart].VALUE != 0) { raise(ExceptionCode::IllegalInstruction, mode(), $encoding); }
-  if (CSR[vl].VALUE == 0) {
-    # V spec §14.3: when vl=0, result is vs1[0] written to vd[0]
-    # SEW=32 uses f32; SEW=64 uses f64 (legal because Zve64d requires Zve32f).
-    if (state.log2_sew == 6) {
-      v_elem_write(vd, 0, 6, {64'b0, V[vs1][63:0]});
-    } else {
-      v_elem_write(vd, 0, 5, {96'b0, V[vs1][31:0]});
-    }
-    CSR[vstart].VALUE = 0;
-    mark_f_state_dirty();
-    mark_v_state_dirty();
-  } else {
-    # SEW=32 uses f32; SEW=64 uses f64 (legal because Zve64d requires Zve32f).
-    if (state.log2_sew == 6) {
-      Bits<64> acc = V[vs1][63:0];
-      for (U32 i = 0; i < CSR[vl].VALUE; i++) {
-        if (v_mask_elem_active?(vm, i)) {
-          Bits<64> elem = v_elem_read(vs2, i, 6)[63:0];
-          if (is_dp_nan?(acc) && is_dp_nan?(elem)) {
-            if (is_dp_signaling_nan?(acc) || is_dp_signaling_nan?(elem)) { set_fp_flag(FpFlag::NV); }
-            acc = DP_CANONICAL_NAN;
-          } else if (is_dp_nan?(acc)) {
-            if (is_dp_signaling_nan?(acc)) { set_fp_flag(FpFlag::NV); }
-            acc = elem;
-          } else if (is_dp_nan?(elem)) {
-            if (is_dp_signaling_nan?(elem)) { set_fp_flag(FpFlag::NV); }
-          } else {
-            acc = f64_lt?(elem, acc, true) ? elem : acc;
-          }
-        }
-      }
-      v_elem_write(vd, 0, 6, {64'b0, acc});
-    } else {
-      Bits<32> acc = V[vs1][31:0];
-      for (U32 i = 0; i < CSR[vl].VALUE; i++) {
-        if (v_mask_elem_active?(vm, i)) {
-          Bits<32> elem = v_elem_read(vs2, i, 5)[31:0];
-          if (is_sp_nan?(acc) && is_sp_nan?(elem)) {
-            if (is_sp_signaling_nan?(acc) || is_sp_signaling_nan?(elem)) { set_fp_flag(FpFlag::NV); }
-            acc = SP_CANONICAL_NAN;
-          } else if (is_sp_nan?(acc)) {
-            if (is_sp_signaling_nan?(acc)) { set_fp_flag(FpFlag::NV); }
-            acc = elem;
-          } else if (is_sp_nan?(elem)) {
-            if (is_sp_signaling_nan?(elem)) { set_fp_flag(FpFlag::NV); }
-          } else {
-            acc = f32_lt?(elem, acc, true) ? elem : acc;
-          }
-        }
-      }
-      v_elem_write(vd, 0, 5, {96'b0, acc});
-    }
-    CSR[vstart].VALUE = 0;
-    mark_f_state_dirty();
-    mark_v_state_dirty();
-  }

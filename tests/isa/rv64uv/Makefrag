@@ -7,30 +7,7 @@ rv64uv_sc_tests = vadd.vv vle8 \
     vsetvl \
     vsetvli_vl_lt_vlmax \
     vsetvli_rs1_eq_zero \
-    vmv_v_i \
-    vadd_lmul8 \
-    vsetvli_frac_lmul \
-    vle_vse_widths \
-    vmv_merge \
-    vint_arith \
-    vmul_mac \
-    vcmp_mask \
-    vshift_widen \
-    vwiden_extra \
-    vphase_gaps \
-    vred_perm \
-    vcarry \
-    vmem_phase10 \
-    vfp64 \
-    vsat_addsub \
-    vsmul \
-    vxsat_roundtrip \
-    vsat_shift \
-    vnclip \
-    vavg \
-    fscalar_d \
-    vff_load \
-    vdiv_mf2_tail
+    vmv_v_i
 
 rv64uv_p_tests = $(addprefix rv64uv-p-, $(rv64uv_sc_tests))
 rv64uv_v_tests = $(addprefix rv64uv-v-, $(rv64uv_sc_tests))

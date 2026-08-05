@@ -6,12 +6,12 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfwadd.wv
-long_name: "Vector FP widening add, wide-source vector-vector"
+long_name: No synopsis available
 description: |
-  Adds SEW-wide elements of vs1, each widened to 2*SEW, to the already-2*SEW-wide elements of vs2, storing 2*SEW results in vd. vs2 is the wide source; vs1 is the narrow source, promoted to 2*SEW before the add. Inactive elements are undisturbed.
+  No description available.
 definedBy:
   extension:
-    name: Zve64d
+    name: Zvl32b
 assembly: vd, vs2, vs1, vm
 encoding:
   match: 110100-----------001-----1010111
@@ -31,18 +31,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  check_f_ok($encoding);
-  VectorState state = vector_state();
-  RoundingMode rmode = rm_to_mode(CSR[fcsr].FRM, $encoding);
-  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    if (v_mask_elem_active?(vm, i)) {
-      Bits<64> a = v_elem_read(vs2, i, state.log2_sew + 1)[63:0];
-      Bits<32> b = v_elem_read(vs1, i, state.log2_sew)[31:0];
-      Bits<64> res = f64_add(a, f32_to_f64(b, rmode), rmode);  # rmode unused: f32->f64 widening is exact
-      v_elem_write(vd, i, state.log2_sew + 1, {64'b0, res});
-    }
-  }
-  CSR[vstart].VALUE = 0;
-  mark_f_state_dirty();
-  mark_v_state_dirty();

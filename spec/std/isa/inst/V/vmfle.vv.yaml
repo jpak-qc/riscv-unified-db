@@ -6,12 +6,12 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmfle.vv
-long_name: "Vector FP less-than-or-equal, vector-vector"
+long_name: No synopsis available
 description: |
-  Compares each SEW-wide element of vs2 against the corresponding element of vs1 using IEEE 754 signaling less-than-or-equal, writing a 1-bit result into bit i of mask register vd. Any NaN operand, quiet or signaling, returns false and raises the NV flag. vmfge.vv assembles as vmfle.vv with the source operands swapped; masked-off elements leave vd undisturbed.
+  No description available.
 definedBy:
   extension:
-    name: Zve32f
+    name: Zvl32b
 assembly: vd, vs2, vs1, vm
 encoding:
   match: 011001-----------001-----1010111
@@ -34,25 +34,3 @@ pseudoinstructions:
     to: vmfge.vv vd, vs1, vs2, vm
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  check_f_ok($encoding);
-  VectorState state = vector_state();
-  Bits<VLEN> vd_bits = V[vd];
-  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    if (v_mask_elem_active?(vm, i)) {
-      # SEW=32 uses f32; SEW=64 uses f64 (legal because Zve64d requires Zve32f).
-      if (state.log2_sew == 6) {
-        Bits<64> a = v_elem_read(vs2, i, 6)[63:0];
-        Bits<64> b = v_elem_read(vs1, i, 6)[63:0];
-        vd_bits[i] = (f64_le?(a, b, false)) ? 1'b1 : 1'b0;
-      } else {
-        Bits<32> a = v_elem_read(vs2, i, 5)[31:0];
-        Bits<32> b = v_elem_read(vs1, i, 5)[31:0];
-        vd_bits[i] = (f32_le?(a, b, false)) ? 1'b1 : 1'b0;
-      }
-    }
-  }
-  V[vd] = vd_bits;
-  CSR[vstart].VALUE = 0;
-  mark_f_state_dirty();
-  mark_v_state_dirty();

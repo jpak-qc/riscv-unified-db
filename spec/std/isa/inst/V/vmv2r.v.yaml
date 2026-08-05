@@ -6,12 +6,12 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmv2r.v
-long_name: "Move 2 vector registers as a unit"
+long_name: No synopsis available
 description: |
-  Copies the full VLEN-bit contents of vs2 and vs2+1 into vd and vd+1 as a contiguous 2-register whole-register move. Bypasses vtype validity; vd and vs2 must each be aligned to a multiple of 2. No masking applies.
+  No description available.
 definedBy:
   extension:
-    name: Zve32x
+    name: Zvl32b
 assembly: vd, vs2
 encoding:
   match: 1001111-----00001011-----1010111
@@ -27,8 +27,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok($encoding);
-  V[vd + 0] = V[vs2 + 0];
-  V[vd + 1] = V[vs2 + 1];
-  CSR[vstart].VALUE = 0;
-  mark_v_state_dirty();

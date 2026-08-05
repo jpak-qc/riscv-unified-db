@@ -6,12 +6,12 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmacc.vv
-long_name: "Vector integer multiply-accumulate, vector-vector"
+long_name: No synopsis available
 description: |
-  Computes vd[i] = vd[i] + vs1[i] * vs2[i] for each active SEW-wide element. Inactive elements are undisturbed.
+  No description available.
 definedBy:
   extension:
-    name: Zve32x
+    name: Zvl32b
 assembly: vd, vs1, vs2, vm
 encoding:
   match: 101101-----------010-----1010111
@@ -31,12 +31,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  VectorState state = vector_state();
-  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    if (v_mask_elem_active?(vm, i)) {
-      v_elem_write(vd, i, state.log2_sew, v_elem_read(vd,  i, state.log2_sew) + v_elem_read(vs1, i, state.log2_sew) * v_elem_read(vs2, i, state.log2_sew));
-    }
-  }
-  CSR[vstart].VALUE = 0;
-  mark_v_state_dirty();

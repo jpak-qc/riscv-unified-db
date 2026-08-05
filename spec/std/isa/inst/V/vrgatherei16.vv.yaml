@@ -6,12 +6,12 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vrgatherei16.vv
-long_name: "Vector gather using 16-bit indices regardless of SEW"
+long_name: No synopsis available
 description: |
-  Gathers SEW-wide elements from vs2 using 16-bit unsigned indices read from vs1, writing vd[i] = vs2[vs1[i]] for each active element; writes 0 when the index is >= VLMAX. The index EEW is always 16 bits regardless of SEW; when SEW < 16, this allows indices to address the full element range where SEW-wide indices would be too narrow. Masked per vm bit; inactive elements are undisturbed.
+  No description available.
 definedBy:
   extension:
-    name: Zve32x
+    name: Zvl32b
 assembly: vd, vs2, vs1, vm
 encoding:
   match: 001110-----------000-----1010111
@@ -31,28 +31,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  VectorState state = vector_state();
-  U32 elems_per_reg   = VLEN >> state.log2_sew;    # vs2/vd group (SEW-width)
-  U32 elems_per_reg_i = VLEN >> 4;                 # vs1 index group (EEW=16, log2=4)
-  XReg vlmax;
-  if (state.lmul_type == VectorLmulType::Multiply) {
-    vlmax = (VLEN << state.log2_lmul) >> state.log2_sew;
-  } else {
-    vlmax = (VLEN >> state.log2_lmul) >> state.log2_sew;
-  }
-  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    if (v_mask_elem_active?(vm, i)) {
-      U32 d_reg = i / elems_per_reg;    U32 d_bit = (i % elems_per_reg) * state.sew;
-      U32 i_reg = i / elems_per_reg_i;  U32 i_bit = (i % elems_per_reg_i) * 16;
-      XReg idx = V[vs1 + i_reg][i_bit + 15:i_bit];   # 16-bit index
-      if (idx < vlmax) {
-        U32 s_reg = idx / elems_per_reg;  U32 s_bit = (idx % elems_per_reg) * state.sew;
-        V[vd + d_reg][d_bit + state.sew - 1:d_bit] = V[vs2 + s_reg][s_bit + state.sew - 1:s_bit];
-      } else {
-        V[vd + d_reg][d_bit + state.sew - 1:d_bit] = 0;
-      }
-    }
-  }
-  CSR[vstart].VALUE = 0;
-  mark_v_state_dirty();

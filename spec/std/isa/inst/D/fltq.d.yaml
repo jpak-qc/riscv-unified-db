@@ -32,5 +32,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_f_ok($encoding);
-  X[xd] = f64_lt?(F[fs1], F[fs2], true) ? 1 : 0;

@@ -33,5 +33,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_f_ok($encoding);
-  X[xd] = sext(F[fs1][63:32], 32);

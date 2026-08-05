@@ -12,7 +12,7 @@ description: |
   may set the `vill` status bit to indicate such vtype encodings are
   unsupported, providing a software-visible indication of invalid vtype
   selections.
-long_name: Set vill on reserved vtype encoding
+long_name: TODO
 schema:
   type: boolean
 definedBy:

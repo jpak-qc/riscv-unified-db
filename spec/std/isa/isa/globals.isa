@@ -193,22 +193,6 @@ struct CachedTranslationResult {
   TranslationResult result;
 }
 
-# Fault-returning result for the VS-stage translation core (stage1_page_walk).
-# has_fault==false: result holds a valid TranslationResult; fault_code/from_mode/tval unused.
-# has_fault==true:  result is unused; fault_code/from_mode/tval carry what the caller would
-# raise. Introduced so a caller (e.g. a vector fault-only-first load) can attempt a translation
-# and observe a would-be fault without it being raised, while the existing translate() wrapper
-# preserves today's unconditional-raise behavior for every other caller.
-# G-stage (H-extension guest-stage) translation is explicitly NOT covered by this fault-return
-# path -- see the guard in stage1_page_walk at each translate_gstage call site.
-struct TranslationFaultResult {
-  Boolean has_fault;
-  ExceptionCode fault_code;
-  PrivilegeMode from_mode;
-  XReg tval;
-  TranslationResult result;
-}
-
 # options associated with a translation (TLB) invalidation
 struct VmaOrderType {
   Boolean global;  # include global mappings?
@@ -1238,16 +1222,12 @@ function effective_ldst_mode {
 
 function pmp_check {
   returns Boolean
-  arguments Bits<PHYS_ADDR_WIDTH> paddr, U32 access_size, MemoryOperation type, PrivilegeMode mode
+  arguments Bits<PHYS_ADDR_WIDTH> paddr, U32 access_size, MemoryOperation type
   description {
-    Given a physical address, operation type, and effective privilege mode, return whether or not
-    the access is allowed by PMP.
-
-    The caller is responsible for passing the correct effective mode: for load/store operations
-    this is effective_ldst_mode() (which accounts for MPRV); for instruction fetches this is
-    mode() (MPRV does not affect fetches per the RISC-V spec).
+    Given a physical address and operation type, return whether or not the access is allowed by PMP.
   }
   body {
+    PrivilegeMode mode = effective_ldst_mode();
     PmpMatchResult match_result;
     PmpCfg cfg;
 
@@ -1287,53 +1267,6 @@ function pmp_check {
   }
 }
 
-function access_check_probe {
-  returns
-    TranslationFaultResult
-  arguments
-    Bits<PHYS_ADDR_WIDTH> paddr,
-    U32 access_size,
-    XReg vaddr,
-    MemoryOperation type,
-    ExceptionCode fault_type,
-    PrivilegeMode from_mode
-  description {
-    Fault-returning core for access_check(): checks if the physical address paddr is able
-    to access memory, and returns a fault indicator instead of raising if not. access_check()
-    is a thin wrapper around this that raises on fault, preserving its existing unconditional-
-    raise behavior for its 13 existing callers. Added so a caller (e.g. a vector fault-only-
-    first load) can probe an access without an unconditional trap.
-  }
-  body {
-    TranslationFaultResult probe;
-    probe.has_fault = false;
-
-    # check if this is a valid physical address
-    if (paddr > ((1 `<< PHYS_ADDR_WIDTH) - access_size)) {
-      TranslationFaultResult tfault_result;
-      tfault_result.has_fault = true;
-      tfault_result.fault_code = fault_type;
-      tfault_result.from_mode = from_mode;
-      tfault_result.tval = vaddr;
-      return tfault_result;
-    }
-
-    # check PMP
-    if (NUM_PMP_ENTRIES > 0) {
-      if (!pmp_check(paddr[PHYS_ADDR_WIDTH-1:0], access_size, type, from_mode)) {
-        TranslationFaultResult tfault_result;
-        tfault_result.has_fault = true;
-        tfault_result.fault_code = fault_type;
-        tfault_result.from_mode = from_mode;
-        tfault_result.tval = vaddr;
-        return tfault_result;
-      }
-    }
-
-    return probe;
-  }
-}
-
 function access_check {
   arguments
     Bits<PHYS_ADDR_WIDTH> paddr,
@@ -1347,9 +1280,16 @@ function access_check {
     the appropriate exception if not.
   }
   body {
-    TranslationFaultResult probe = access_check_probe(paddr, access_size, vaddr, type, fault_type, from_mode);
-    if (probe.has_fault) {
-      raise(probe.fault_code, probe.from_mode, probe.tval);
+    # check if this is a valid physical address
+    if (paddr > ((1 `<< PHYS_ADDR_WIDTH) - access_size)) {
+      raise(fault_type, from_mode, vaddr);
+    }
+
+    # check PMP
+    if (NUM_PMP_ENTRIES > 0) {
+      if (!pmp_check(paddr[PHYS_ADDR_WIDTH-1:0], access_size, type)) {
+        raise(fault_type, from_mode, vaddr);
+      }
     }
   }
 }
@@ -2098,9 +2038,9 @@ function gstage_page_walk {
 }
 
 
-function stage1_page_walk_probe {
+function stage1_page_walk {
   returns
-    TranslationFaultResult  # has_fault + (on success) the translated address and attributes
+    TranslationResult  # the translated address and attributes
   arguments
     U32 VA_SIZE,                  # virtual address size  (Sv32 = 32, Sv39 = 39, Sv48 = 48, Sv57 = 57)
     U32 PA_SIZE,                  # physical address size (Sv32 = 34, Sv39 = 56, Sv48 = 56, Sv57 = 56)
@@ -2111,23 +2051,16 @@ function stage1_page_walk_probe {
     PrivilegeMode effective_mode, # the mode for this walk (usually effective_ldst_mode(), though different for HLV/HLX/HSV)
     Bits<INSTR_ENC_SIZE> encoding # encoding of the instruction causing this access
   description {
-    Fault-returning core for stage1_page_walk(): translates a virtual address to a physical
-    address through a page walk, returning a TranslationFaultResult instead of raising on
-    fault. stage1_page_walk() is a thin wrapper around this that raises on fault, preserving
-    its existing unconditional-raise behavior for its only caller (translate()). Added so a
-    caller (e.g. a vector fault-only-first load) can attempt a page walk and observe a
-    would-be fault without it being raised.
+    Translate virtual address to physical address through a page walk.
 
-    G-stage (H-extension guest-stage) translation is explicitly NOT covered by this
-    fault-return path -- see the guard at each translate_gstage call site below. This is safe
-    because translate_gstage() unconditionally short-circuits to a no-fault, address-preserving
-    result whenever ExtensionName::H is not implemented; every caller of this function must not
-    be used when H is implemented until G-stage is also converted to a fault-returning core.
+    May raise a Page Fault if an error involving the page table structure occurs along the walk.
 
-    Implicit reads of the page table are access checked, and may fault. Implicit writes
-    (updates of A/D) are also access checked, and may fault.
+    Implicit reads of the page table are accessed check, and may raise Access Faults.
+    Implicit writes (updates of A/D) are also accessed checked, and may raise Access Faults
 
     The translated address _is not_ accessed checked.
+
+    Returns the translated guest physical address.
   }
   body {
     Bits<PA_SIZE> ppn;
@@ -2211,12 +2144,7 @@ function stage1_page_walk_probe {
       # non-canonical virtual address raises a page fault
       # note that if pointer masking is enabled,
       # vaddr has already been transformed before reaching here
-      TranslationFaultResult tfault_result;
-      tfault_result.has_fault = true;
-      tfault_result.fault_code = page_fault_code;
-      tfault_result.from_mode = mode();
-      tfault_result.tval = vaddr;
-      return tfault_result;
+      raise (page_fault_code, mode(), vaddr);
     }
 
     for (U32 I = (LEVELS - 1); I >= 0; I--) {
@@ -2224,9 +2152,6 @@ function stage1_page_walk_probe {
 
       Bits<PA_SIZE> pte_gpaddr = (ppn << 12) + (vpn * (PTESIZE/8));
 
-      # G-stage (H-extension) is not covered by this fault-return path -- see function
-      # description. Guard makes the exclusion loud rather than silent.
-      assert(!implemented?(ExtensionName::H), "stage1_page_walk_probe: G-stage fault-returning path not implemented; see globals.isa refactor notes");
       TranslationResult pte_phys =
         translate_gstage(
           pte_gpaddr,
@@ -2238,19 +2163,11 @@ function stage1_page_walk_probe {
 
       # check hw page table access permission
       if (!pma_applies?(PmaAttribute::HardwarePageTableRead, pte_phys.paddr, PTESIZE)) {
-        TranslationFaultResult tfault_result;
-        tfault_result.has_fault = true;
-        tfault_result.fault_code = access_fault_code;
-        tfault_result.from_mode = mode();
-        tfault_result.tval = vaddr;
-        return tfault_result;
+        raise (access_fault_code, mode(), vaddr);
       }
 
       # perform access check on the physical address of pte before it's used
-      TranslationFaultResult ac_probe = access_check_probe(pte_phys.paddr, PTESIZE, vaddr, MemoryOperation::Read, access_fault_code, effective_mode);
-      if (ac_probe.has_fault) {
-        return ac_probe;
-      }
+      access_check(pte_phys.paddr, PTESIZE, vaddr, MemoryOperation::Read, access_fault_code, effective_mode);
 
       XReg pte = read_physical_memory(PTESIZE, pte_phys.paddr);
       PteFlags pte_flags = pte[9:0];
@@ -2261,33 +2178,18 @@ function stage1_page_walk_probe {
       # check if any reserved bits are set
       # Sv32 has no reserved bits, and Sv39/48/57 all have reserved bits at 58:54
       if ((xlen() == 64) && (VA_SIZE != 32) && (pte[58:54] != 0)) {
-        TranslationFaultResult tfault_result;
-        tfault_result.has_fault = true;
-        tfault_result.fault_code = page_fault_code;
-        tfault_result.from_mode = mode();
-        tfault_result.tval = vaddr;
-        return tfault_result;
+        raise(page_fault_code, mode(), vaddr);
       }
 
       if (pte_flags.V == 0) {
         # invalid entry
-        TranslationFaultResult tfault_result;
-        tfault_result.has_fault = true;
-        tfault_result.fault_code = page_fault_code;
-        tfault_result.from_mode = mode();
-        tfault_result.tval = vaddr;
-        return tfault_result;
+        raise (page_fault_code, mode(), vaddr);
       }
 
       if (!sse) {
         if ((pte_flags.R == 0) && (pte_flags.W == 1)) {
           # write permission must also have read permission
-          TranslationFaultResult tfault_result;
-          tfault_result.has_fault = true;
-          tfault_result.fault_code = page_fault_code;
-          tfault_result.from_mode = mode();
-          tfault_result.tval = vaddr;
-          return tfault_result;
+          raise (page_fault_code, mode(), vaddr);
         }
       }
 
@@ -2295,46 +2197,26 @@ function stage1_page_walk_probe {
         if (pbmte) {
           # PBMT == 3 is reserved
           if (pte[62:61] == 3) {
-            TranslationFaultResult tfault_result;
-            tfault_result.has_fault = true;
-            tfault_result.fault_code = page_fault_code;
-            tfault_result.from_mode = mode();
-            tfault_result.tval = vaddr;
-            return tfault_result;
+            raise (page_fault_code, mode(), vaddr);
           }
         } else {
           # PBMT is reserved if Svpbmt is not supported)
           if ((PTESIZE >= 64) && (pte[62:61] != 0)) {
-            TranslationFaultResult tfault_result;
-            tfault_result.has_fault = true;
-            tfault_result.fault_code = page_fault_code;
-            tfault_result.from_mode = mode();
-            tfault_result.tval = vaddr;
-            return tfault_result;
+            raise (page_fault_code, mode(), vaddr);
           }
         }
 
         if (!implemented?(ExtensionName::Svrsw60t59b)) {
           if ((PTESIZE >= 64) && pte[60:59] != 0) {
             # 60:59 are reserved if Svrsw60t59b is not supported
-            TranslationFaultResult tfault_result;
-            tfault_result.has_fault = true;
-            tfault_result.fault_code = page_fault_code;
-            tfault_result.from_mode = mode();
-            tfault_result.tval = vaddr;
-            return tfault_result;
+            raise (page_fault_code, mode(), vaddr);
           }
         }
 
         if (!implemented?(ExtensionName::Svnapot)) {
           if ((PTESIZE >= 64) && (pte[63] != 0)) {
             # N is reserved if Svnapot is not supported
-            TranslationFaultResult tfault_result;
-            tfault_result.has_fault = true;
-            tfault_result.fault_code = page_fault_code;
-            tfault_result.from_mode = mode();
-            tfault_result.tval = vaddr;
-            return tfault_result;
+            raise (page_fault_code, mode(), vaddr);
           }
         }
       }
@@ -2349,84 +2231,37 @@ function stage1_page_walk_probe {
           if (((!mxr) && (pte_flags.R == 0))
               || ((mxr) && (pte_flags.X == 0 && pte_flags.R == 0))) {
             # no read permission
-            TranslationFaultResult tfault_result;
-            tfault_result.has_fault = true;
-            tfault_result.fault_code = page_fault_code;
-            tfault_result.from_mode = mode();
-            tfault_result.tval = vaddr;
-            return tfault_result;
+            raise (page_fault_code, mode(), vaddr);
           }
 
           if (effective_mode == PrivilegeMode::U && pte_flags.U == 0) {
             # U-mode can never access supervisor page
-            TranslationFaultResult tfault_result;
-            tfault_result.has_fault = true;
-            tfault_result.fault_code = page_fault_code;
-            tfault_result.from_mode = mode();
-            tfault_result.tval = vaddr;
-            return tfault_result;
+            raise (page_fault_code, mode(), vaddr);
           } else if (CSR[misa].H == 1 && effective_mode == PrivilegeMode::VU && pte_flags.U == 0) {
             # VU-mode can never access supervisor page
-            TranslationFaultResult tfault_result;
-            tfault_result.has_fault = true;
-            tfault_result.fault_code = page_fault_code;
-            tfault_result.from_mode = mode();
-            tfault_result.tval = vaddr;
-            return tfault_result;
+            raise (page_fault_code, mode(), vaddr);
           } else if (effective_mode == PrivilegeMode::S && pte_flags.U == 1 && !sum) {
             # S-mode cannot access User page unless mstatus.SUM == 1
-            TranslationFaultResult tfault_result;
-            tfault_result.has_fault = true;
-            tfault_result.fault_code = page_fault_code;
-            tfault_result.from_mode = mode();
-            tfault_result.tval = vaddr;
-            return tfault_result;
+            raise (page_fault_code, mode(), vaddr);
           } else if (effective_mode == PrivilegeMode::VS && pte_flags.U == 1 && !sum) {
             # VS-mode cannot access User page unless vsstatus.SUM == 1
-            TranslationFaultResult tfault_result;
-            tfault_result.has_fault = true;
-            tfault_result.fault_code = page_fault_code;
-            tfault_result.from_mode = mode();
-            tfault_result.tval = vaddr;
-            return tfault_result;
+            raise (page_fault_code, mode(), vaddr);
           }
         }
         if (((op == MemoryOperation::Write) || (op == MemoryOperation::ReadModifyWrite))
              && (pte_flags.W == 0)) {
           # no write permission
-          TranslationFaultResult tfault_result;
-          tfault_result.has_fault = true;
-          tfault_result.fault_code = page_fault_code;
-          tfault_result.from_mode = mode();
-          tfault_result.tval = vaddr;
-          return tfault_result;
+          raise (page_fault_code, mode(), vaddr);
         } else if ((op == MemoryOperation::Fetch) && (pte_flags.X == 0)) {
           # no execute permission
-          TranslationFaultResult tfault_result;
-          tfault_result.has_fault = true;
-          tfault_result.fault_code = page_fault_code;
-          tfault_result.from_mode = mode();
-          tfault_result.tval = vaddr;
-          return tfault_result;
+          raise (page_fault_code, mode(), vaddr);
         } else if ((op == MemoryOperation::Fetch) && ss_page) {
           # fetch from Shadow Stack never allowed
-          TranslationFaultResult tfault_result;
-          tfault_result.has_fault = true;
-          tfault_result.fault_code = page_fault_code;
-          tfault_result.from_mode = mode();
-          tfault_result.tval = vaddr;
-          return tfault_result;
+          raise (page_fault_code, mode(), vaddr);
         }
 
         # ensure remaining PPN bits are zero, otherwise there is a misaligned super page
-        if ((I > 0) && (pte[I*VPN_SIZE + 10:10] != 0)) {
-          TranslationFaultResult tfault_result;
-          tfault_result.has_fault = true;
-          tfault_result.fault_code = page_fault_code;
-          tfault_result.from_mode = mode();
-          tfault_result.tval = vaddr;
-          return tfault_result;
-        }
+        raise (page_fault_code, mode(), vaddr) if ((I > 0) && (pte[I*VPN_SIZE + 10:10] != 0));
 
         # check access and dirty bits
         if ((pte_flags.A == 0)         # access is clear
@@ -2437,7 +2272,6 @@ function stage1_page_walk_probe {
           # check for hardware update of A/D bits
           if (adue) {
             # translate again, this time with write permission
-            assert(!implemented?(ExtensionName::H), "stage1_page_walk_probe: G-stage fault-returning path not implemented; see globals.isa refactor notes");
             TranslationResult pte_phys =
               translate_gstage(
                 pte_gpaddr,
@@ -2450,26 +2284,13 @@ function stage1_page_walk_probe {
             # Svadu requires page tables to be located in memory with hardware page-table write access
             # and RsrvEventual PMA
             if (!pma_applies?(PmaAttribute::RsrvEventual, pte_phys.paddr, PTESIZE)) {
-              TranslationFaultResult tfault_result;
-              tfault_result.has_fault = true;
-              tfault_result.fault_code = access_fault_code;
-              tfault_result.from_mode = effective_mode;
-              tfault_result.tval = vaddr;
-              return tfault_result;
+              raise (access_fault_code, effective_mode, vaddr);
             }
             if (!pma_applies?(PmaAttribute::HardwarePageTableWrite, pte_phys.paddr, PTESIZE)) {
-              TranslationFaultResult tfault_result;
-              tfault_result.has_fault = true;
-              tfault_result.fault_code = access_fault_code;
-              tfault_result.from_mode = effective_mode;
-              tfault_result.tval = vaddr;
-              return tfault_result;
+              raise (access_fault_code, effective_mode, vaddr);
             }
 
-            TranslationFaultResult ac_probe2 = access_check_probe(pte_phys.paddr, PTESIZE, vaddr, MemoryOperation::Write, access_fault_code, effective_mode);
-            if (ac_probe2.has_fault) {
-              return ac_probe2;
-            }
+            access_check(pte_phys.paddr, PTESIZE, vaddr, MemoryOperation::Write, access_fault_code, effective_mode);
 
             Boolean success;
             Bits<PTESIZE> updated_pte;
@@ -2497,7 +2318,7 @@ function stage1_page_walk_probe {
               I = I + 1;
             } else {
               # successful translation and update
-              assert(!implemented?(ExtensionName::H), "stage1_page_walk_probe: G-stage fault-returning path not implemented; see globals.isa refactor notes");
+
               TranslationResult pte_phys = translate_gstage(
                   paddr_base + offset,
                   vaddr,
@@ -2510,24 +2331,15 @@ function stage1_page_walk_probe {
                 result.pbmt = pte_phys.pbmt == Pbmt::PMA ? $enum(Pbmt, pte[62:61]) : pte_phys.pbmt;
               }
               result.pte_flags = pte_flags;
-              TranslationFaultResult ok;
-              ok.has_fault = false;
-              ok.result = result;
-              return ok;
+              return result;
             }
           } else {
             # A or D bit needs updated
-            TranslationFaultResult tfault_result;
-            tfault_result.has_fault = true;
-            tfault_result.fault_code = page_fault_code;
-            tfault_result.from_mode = mode();
-            tfault_result.tval = vaddr;
-            return tfault_result;
+            raise(page_fault_code, mode(), vaddr);
           }
         }
 
         # translation succeeded
-        assert(!implemented?(ExtensionName::H), "stage1_page_walk_probe: G-stage fault-returning path not implemented; see globals.isa refactor notes");
         TranslationResult pte_phys =
           translate_gstage(
             paddr_base + offset,
@@ -2541,51 +2353,28 @@ function stage1_page_walk_probe {
           result.pbmt = pte_phys.pbmt == Pbmt::PMA ? $enum(Pbmt, pte[62:61]) : pte_phys.pbmt;
         }
         result.pte_flags = pte_flags;
-        TranslationFaultResult ok;
-        ok.has_fault = false;
-        ok.result = result;
-        return ok;
+        return result;
       } else {
         # found a pointer to the next level
 
         if (I == 0) {
           # a pointer can't exist on the last level
-          TranslationFaultResult tfault_result;
-          tfault_result.has_fault = true;
-          tfault_result.fault_code = page_fault_code;
-          tfault_result.from_mode = mode();
-          tfault_result.tval = vaddr;
-          return tfault_result;
+          raise (page_fault_code, mode(), vaddr);
         }
 
         if (pte_flags.D == 1 || pte_flags.A == 1 || pte_flags.U == 1) {
           # D, A, and U are reserved in non-leaf PTEs
-          TranslationFaultResult tfault_result;
-          tfault_result.has_fault = true;
-          tfault_result.fault_code = page_fault_code;
-          tfault_result.from_mode = mode();
-          tfault_result.tval = vaddr;
-          return tfault_result;
+          raise (page_fault_code, mode(), vaddr);
         }
 
         if ((xlen() == 64) && (VA_SIZE != 32) && (pte[62:61] != 0)) {
           # PBMT must be zero in a pointer PTE
-          TranslationFaultResult tfault_result;
-          tfault_result.has_fault = true;
-          tfault_result.fault_code = page_fault_code;
-          tfault_result.from_mode = mode();
-          tfault_result.tval = vaddr;
-          return tfault_result;
+          raise (page_fault_code, mode(), vaddr);
         }
 
         if ((xlen() == 64) && (VA_SIZE != 32) && pte[63] != 0) {
           # N must be zero in a pointer PTE
-          TranslationFaultResult tfault_result;
-          tfault_result.has_fault = true;
-          tfault_result.fault_code = page_fault_code;
-          tfault_result.from_mode = mode();
-          tfault_result.tval = vaddr;
-          return tfault_result;
+          raise (page_fault_code, mode(), vaddr);
         }
 
         # fall through to next level
@@ -2593,151 +2382,6 @@ function stage1_page_walk_probe {
       }
     }
     unreachable();
-  }
-}
-
-function stage1_page_walk {
-  returns
-    TranslationResult  # the translated address and attributes
-  arguments
-    U32 VA_SIZE,                  # virtual address size  (Sv32 = 32, Sv39 = 39, Sv48 = 48, Sv57 = 57)
-    U32 PA_SIZE,                  # physical address size (Sv32 = 34, Sv39 = 56, Sv48 = 56, Sv57 = 56)
-    U32 PTESIZE,                  # length, in bits, of a Page Table Entry (Sv32 = 4, others = 8)
-    U32 LEVELS,                   # levels in the page table (Sv32 = 2, Sv39 = 3, Sv48 = 4, Sv57 = 5)
-    Bits<MXLEN> vaddr,            # the virtual address to translate
-    MemoryOperation op,           # the operation type
-    PrivilegeMode effective_mode, # the mode for this walk (usually effective_ldst_mode(), though different for HLV/HLX/HSV)
-    Bits<INSTR_ENC_SIZE> encoding # encoding of the instruction causing this access
-  description {
-    Translate virtual address to physical address through a page walk.
-
-    May raise a Page Fault if an error involving the page table structure occurs along the walk.
-
-    Implicit reads of the page table are accessed check, and may raise Access Faults.
-    Implicit writes (updates of A/D) are also accessed checked, and may raise Access Faults
-
-    The translated address _is not_ accessed checked.
-
-    Returns the translated guest physical address.
-  }
-  body {
-    TranslationFaultResult probe = stage1_page_walk_probe(VA_SIZE, PA_SIZE, PTESIZE, LEVELS, vaddr, op, effective_mode, encoding);
-    if (probe.has_fault) {
-      raise(probe.fault_code, probe.from_mode, probe.tval);
-    }
-    return probe.result;
-  }
-}
-
-function translate_probe {
-  returns
-    TranslationFaultResult    # has_fault + (on success) translated physical address and PBMT value
-  arguments
-    XReg vaddr,
-    MemoryOperation op,
-    PrivilegeMode effective_mode,
-    Bits<INSTR_ENC_SIZE> encoding # encoding of the instruction causing this access
-  description {
-    Fault-returning core for translate(): translates a virtual address for operation type
-    +op+ that appears to execute at +effective_mode+, returning a TranslationFaultResult
-    instead of raising on fault. translate() is a thin wrapper around this that raises on
-    fault, preserving its existing unconditional-raise behavior for its existing callers
-    (read_memory/write_memory/fetch_memory families, load_reserved, store_conditional, amo,
-    and a handful of instruction bodies). Added so a caller (e.g. a vector fault-only-first
-    load) can attempt a translation and observe a would-be fault without it being raised.
-
-    Deliberately does NOT populate the translation cache on the probing path (a probe that
-    is discarded on fault should not perturb cache state used by the raising callers) --
-    matches translate()'s existing cache-population behavior only on the definite, cacheable
-    non-faulting paths (M-mode identity, Bare mode, and a completed page walk).
-  }
-  body {
-    TranslationFaultResult probe;
-    probe.has_fault = false;
-
-    #####################################################################
-    # First, check for a cached translation result
-    #####################################################################
-
-    CachedTranslationResult cached_translation_result = cached_translation(vaddr, op);
-
-    if (cached_translation_result.valid) {
-      probe.result = cached_translation_result.result;
-      return probe;
-    }
-
-    #####################################################################
-    # No cached translation, so go through the full translation process
-    #####################################################################
-
-    TranslationResult result;
-
-    if (effective_mode == PrivilegeMode::M) {
-      # there is no translation in M-mode
-      result.paddr = vaddr;
-      probe.result = result;
-      return probe;
-    }
-
-    SatpMode translation_mode =
-      current_translation_mode(effective_mode);
-
-    if (translation_mode == SatpMode::Reserved) {
-      if (op == MemoryOperation::Read) {
-        TranslationFaultResult tfault_result;
-        tfault_result.has_fault = true;
-        tfault_result.fault_code = ExceptionCode::LoadPageFault;
-        tfault_result.from_mode = mode();
-        tfault_result.tval = vaddr;
-        return tfault_result;
-      } else if (op == MemoryOperation::Write || op == MemoryOperation::ReadModifyWrite) {
-        TranslationFaultResult tfault_result;
-        tfault_result.has_fault = true;
-        tfault_result.fault_code = ExceptionCode::StoreAmoPageFault;
-        tfault_result.from_mode = mode();
-        tfault_result.tval = vaddr;
-        return tfault_result;
-      } else {
-        assert(op == MemoryOperation::Fetch, "Unexpected memory operation");
-        TranslationFaultResult tfault_result;
-        tfault_result.has_fault = true;
-        tfault_result.fault_code = ExceptionCode::InstructionPageFault;
-        tfault_result.from_mode = mode();
-        tfault_result.tval = vaddr;
-        return tfault_result;
-      }
-    }
-
-    if (translation_mode == SatpMode::Bare) {
-      result.paddr = vaddr;
-    } else if (xlen() == 32 && translation_mode == SatpMode::Sv32) {
-      # Sv32 page table walk
-      TranslationFaultResult walk = stage1_page_walk_probe(32, 34, 32, 2, vaddr, op, effective_mode, encoding);
-      if (walk.has_fault) { return walk; }
-      result = walk.result;
-    } else if (xlen() == 64 && translation_mode == SatpMode::Sv39) {
-      # Sv39 page table walk
-      TranslationFaultResult walk = stage1_page_walk_probe(39, 56, 64, 3, vaddr, op, effective_mode, encoding);
-      if (walk.has_fault) { return walk; }
-      result = walk.result;
-    } else if (xlen() == 64 && translation_mode == SatpMode::Sv48) {
-      # Sv48 page table walk
-      TranslationFaultResult walk = stage1_page_walk_probe(48, 56, 64, 4, vaddr, op, effective_mode, encoding);
-      if (walk.has_fault) { return walk; }
-      result = walk.result;
-    } else if (xlen() == 64 && translation_mode == SatpMode::Sv57) {
-      # Sv57 page table walk
-      TranslationFaultResult walk = stage1_page_walk_probe(57, 56, 64, 5, vaddr, op, effective_mode, encoding);
-      if (walk.has_fault) { return walk; }
-      result = walk.result;
-    } else {
-      assert(false, "Unexpected SatpMode");
-      unreachable();
-    }
-
-    maybe_cache_translation(vaddr, op, result);
-    probe.result = result;
-    return probe;
   }
 }
 
@@ -2761,11 +2405,69 @@ function translate {
     (though intermediate page table reads will be)
   }
   body {
-    TranslationFaultResult probe = translate_probe(vaddr, op, effective_mode, encoding);
-    if (probe.has_fault) {
-      raise(probe.fault_code, probe.from_mode, probe.tval);
+
+    #####################################################################
+    # First, check for a cached translation result
+    #####################################################################
+
+    Boolean cached_translation_valid;
+    CachedTranslationResult cached_translation_result;
+
+    cached_translation_result =
+      cached_translation(vaddr, op);
+
+    if (cached_translation_result.valid) {
+      return cached_translation_result.result;
     }
-    return probe.result;
+
+    #####################################################################
+    # No cached translation, so go through the full translation process
+    #####################################################################
+
+    TranslationResult result;
+
+    if (effective_mode == PrivilegeMode::M) {
+      # there is no translation in M-mode
+      result.paddr = vaddr;
+      return result;
+    }
+
+    SatpMode translation_mode =
+      current_translation_mode(effective_mode);
+
+    if (translation_mode == SatpMode::Reserved) {
+      if (op == MemoryOperation::Read) {
+        raise (ExceptionCode::LoadPageFault, mode(), vaddr);
+      } else if (op == MemoryOperation::Write || op == MemoryOperation::ReadModifyWrite) {
+        raise (ExceptionCode::StoreAmoPageFault, mode(), vaddr);
+      } else {
+        assert(op == MemoryOperation::Fetch, "Unexpected memory operation");
+        raise (ExceptionCode::InstructionPageFault, mode(), vaddr);
+      }
+    }
+
+
+    if (translation_mode == SatpMode::Bare) {
+      result.paddr = vaddr;
+    } else if (xlen() == 32 && translation_mode == SatpMode::Sv32) {
+      # Sv32 page table walk
+      result = stage1_page_walk(32, 34, 32, 2, vaddr, op, effective_mode, encoding);
+    } else if (xlen() == 64 && translation_mode == SatpMode::Sv39) {
+      # Sv39 page table walk
+      result = stage1_page_walk(39, 56, 64, 3, vaddr, op, effective_mode, encoding);
+    } else if (xlen() == 64 && translation_mode == SatpMode::Sv48) {
+      # Sv48 page table walk
+      result = stage1_page_walk(48, 56, 64, 4, vaddr, op, effective_mode, encoding);
+    } else if (xlen() == 64 && translation_mode == SatpMode::Sv57) {
+      # Sv57 page table walk
+      result = stage1_page_walk(57, 56, 64, 5, vaddr, op, effective_mode, encoding);
+    } else {
+      assert(false, "Unexpected SatpMode");
+      unreachable();
+    }
+
+    maybe_cache_translation(vaddr, op, result);
+    return result;
   }
 }
 
@@ -3375,7 +3077,6 @@ function write_memory {
         }
       } else if (MISALIGNED_SPLIT_STRATEGY == "custom") {
         unpredictable("An implementation is free to break a misaligned access any way, leading to unpredictable behavior when any part of the misaligned access causes an exception");
-        return;
       }
     }
   }

@@ -6,12 +6,12 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmsbc.vvm
-long_name: "Vector subtract borrow out, vector operands with carry-in v0"
+long_name: No synopsis available
 description: |
-  Produces the borrow bit of vs2[i] - vs1[i] - v0[i] for each element, writing a single result bit per element into vd. vd[i] = 1 if vs2[i] < vs1[i], or if vs2[i] == vs1[i] and v0[i] == 1; otherwise 0. Used for chained multi-word unsigned subtraction; always operates on the full [vstart, vl) range without vm masking.
+  No description available.
 definedBy:
   extension:
-    name: Zve32x
+    name: Zvl32b
 assembly: vd, vs2, vs1, v0
 encoding:
   match: 0100110----------000-----1010111
@@ -29,18 +29,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  VectorState state = vector_state();
-  U32 elems_per_reg = VLEN >> state.log2_sew;
-  Bits<VLEN> vd_bits = V[vd];
-  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    U32 reg_off   = i / elems_per_reg;
-    U32 start_bit = (i % elems_per_reg) * state.sew;
-    U32 end_bit   = start_bit + state.sew - 1;
-    Bits<128> a   = V[vs2 + reg_off][end_bit:start_bit];
-    Bits<128> b   = V[vs1 + reg_off][end_bit:start_bit];
-    vd_bits[i] = (a < b || (V[0][i] == 1'b1 && a == b)) ? 1'b1 : 1'b0;
-  }
-  V[vd] = vd_bits;
-  CSR[vstart].VALUE = 0;
-  mark_v_state_dirty();

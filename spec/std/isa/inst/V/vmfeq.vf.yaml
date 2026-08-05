@@ -6,12 +6,12 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmfeq.vf
-long_name: "Vector FP equal, vector-scalar"
+long_name: No synopsis available
 description: |
-  Compares each SEW-wide FP element of vs2 against scalar FP register fs1 using an IEEE 754 quiet equality test, writing the 1-bit result into bit i of mask register vd. When SEW=32 and the D extension is present, fs1 is NaN-boxed: if bits [63:32] are not all-ones, fs1 is treated as the canonical NaN. Masked-off elements leave vd undisturbed.
+  No description available.
 definedBy:
   extension:
-    name: Zve32f
+    name: Zvl32b
 assembly: vd, vs2, fs1, vm
 encoding:
   match: 011000-----------101-----1010111
@@ -31,28 +31,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  check_f_ok($encoding);
-  VectorState state = vector_state();
-  Bits<VLEN> vd_bits = V[vd];
-  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    if (v_mask_elem_active?(vm, i)) {
-      # SEW=32 uses f32; SEW=64 uses f64 (legal because Zve64d requires Zve32f).
-      if (state.log2_sew == 6) {
-        Bits<64> a = v_elem_read(vs2, i, 6)[63:0];
-        Bits<64> b = F[fs1][63:0];
-        vd_bits[i] = (f64_eq?(a, b, true)) ? 1'b1 : 1'b0;
-      } else {
-        Bits<32> a = v_elem_read(vs2, i, 5)[31:0];
-        Bits<32> b = F[fs1][31:0];
-        if (implemented?(ExtensionName::D) && F[fs1][63:32] != 32'hffffffff) {
-          b = SP_CANONICAL_NAN;
-        }
-        vd_bits[i] = (f32_eq?(a, b, true)) ? 1'b1 : 1'b0;
-      }
-    }
-  }
-  V[vd] = vd_bits;
-  CSR[vstart].VALUE = 0;
-  mark_f_state_dirty();
-  mark_v_state_dirty();

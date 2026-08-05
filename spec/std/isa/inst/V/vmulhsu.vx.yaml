@@ -6,12 +6,12 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmulhsu.vx
-long_name: "Vector signed-by-unsigned multiply high half, scalar, vx"
+long_name: No synopsis available
 description: |
-  Multiplies each signed vs2 element by the unsigned scalar xs1 (zero-extended to SEW), writing the upper SEW bits of the 2*SEW product into vd. vs2 sign-extends and xs1 zero-extends for the mixed-sign multiplication. Inactive elements under vm mask control are undisturbed.
+  No description available.
 definedBy:
   extension:
-    name: Zve32x
+    name: Zvl32b
 assembly: vd, vs2, xs1, vm
 encoding:
   match: 100110-----------110-----1010111
@@ -31,17 +31,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  VectorState state = vector_state();
-  U32 elems_per_reg = VLEN >> state.log2_sew;
-  Bits<128> scalar_uzext = X[xs1][state.sew - 1:0];  # zero-extend to SEW width only
-  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    if (v_mask_elem_active?(vm, i)) {
-      U32 reg_off   = i / elems_per_reg;
-      U32 start_bit = (i % elems_per_reg) * state.sew;
-      Bits<128> a = $signed(V[vs2 + reg_off][start_bit + state.sew - 1:start_bit]);
-      v_elem_write(vd, i, state.log2_sew, (a * scalar_uzext)[2 * state.sew - 1:state.sew]);
-    }
-  }
-  CSR[vstart].VALUE = 0;
-  mark_v_state_dirty();

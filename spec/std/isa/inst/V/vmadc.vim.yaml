@@ -6,12 +6,12 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmadc.vim
-long_name: "Vector mask add carry-out with carry-in immediate (.vim)"
+long_name: "Vector multiply-add with carry and masked"
 description: |
   Performs multiply-add operation on elements from vector register vs2 and immediate value, adds the carry-in from vector register vs3, and stores results in vector register vd, using vector mask vm. This variant includes additional masking behavior.
 definedBy:
   extension:
-    name: Zve32x
+    name: Zvl32b
 assembly: vd, vs2, imm, v0
 encoding:
   match: 0100010----------011-----1010111
@@ -30,21 +30,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  VectorState state = vector_state();
-  U32 elems_per_reg = VLEN >> state.log2_sew;
-  Bits<64> sext_imm = $signed(imm);
-  Bits<128> b = {64'b0, sext_imm} & ((128'b1 << state.sew) - 1);
-  Bits<VLEN> vd_bits = V[vd];
-  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    U32 reg_off   = i / elems_per_reg;
-    U32 start_bit = (i % elems_per_reg) * state.sew;
-    U32 end_bit   = start_bit + state.sew - 1;
-    Bits<128> a   = V[vs2 + reg_off][end_bit:start_bit];
-    Bits<128> cin = {127'b0, V[0][i]};
-    Bits<129> sum = (a + b + cin);
-    vd_bits[i] = sum[state.sew];
-  }
-  V[vd] = vd_bits;
-  CSR[vstart].VALUE = 0;
-  mark_v_state_dirty();

@@ -11,7 +11,7 @@ description: |
   Merges elements from vs1 and vs2 using mask register v0 and stores results in vd. Where mask bits are set, elements from vs1 are selected; otherwise elements from vs2 are selected.
 definedBy:
   extension:
-    name: Zve32x
+    name: Zvl32b
 assembly: vd, vs2, vs1, v0
 encoding:
   match: 0101110----------000-----1010111
@@ -29,14 +29,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  VectorState state = vector_state();
-  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    if (V[0][i] == 1'b1) {
-      v_elem_write(vd, i, state.log2_sew, v_elem_read(vs1, i, state.log2_sew));
-    } else {
-      v_elem_write(vd, i, state.log2_sew, v_elem_read(vs2, i, state.log2_sew));
-    }
-  }
-  CSR[vstart].VALUE = 0;
-  mark_v_state_dirty();

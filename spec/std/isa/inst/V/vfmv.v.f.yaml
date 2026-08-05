@@ -11,7 +11,7 @@ description: |
   Moves floating-point element from scalar register fs1 to vector register vd, using vector mask vm. This operation creates a vector with a single floating-point value.
 definedBy:
   extension:
-    name: Zve32f
+    name: Zvl32b
 assembly: vd, fs1
 encoding:
   match: 010111100000-----101-----1010111
@@ -27,20 +27,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  check_f_ok($encoding);
-  VectorState state = vector_state();
-  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    # SEW=32 uses f32; SEW=64 uses f64 (legal because Zve64d requires Zve32f).
-    if (state.log2_sew == 6) {
-      v_elem_write(vd, i, 6, {64'b0, F[fs1][63:0]});
-    } else {
-      Bits<32> scalar_fs1 = F[fs1][31:0];
-      if (implemented?(ExtensionName::D) && F[fs1][63:32] != 32'hffffffff) {
-        scalar_fs1 = SP_CANONICAL_NAN;
-      }
-      v_elem_write(vd, i, 5, {96'b0, scalar_fs1});
-    }
-  }
-  CSR[vstart].VALUE = 0;
-  mark_v_state_dirty();

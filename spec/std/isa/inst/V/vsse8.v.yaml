@@ -11,7 +11,7 @@ description: |
   Stores 8-bit elements from vector register vs2 to memory starting at address in xs1 register with stride in xs2, using vector mask vm. The effective element width is 8 bits.
 definedBy:
   extension:
-    name: Zve32x
+    name: Zvl32b
 assembly: vs3, (xs1), xs2, vm
 encoding:
   match: 000010-----------000-----0100111
@@ -31,14 +31,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  XReg virtual_address = X[xs1];
-  XReg stride = X[xs2];
-  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    if (v_mask_elem_active?(vm, i)) {
-      XReg elem_addr = virtual_address + i * stride;
-      write_memory(8, elem_addr, v_elem_read(vs3, i, 3)[7:0], $encoding);
-    }
-  }
-  CSR[vstart].VALUE = 0;
-  mark_v_state_dirty();

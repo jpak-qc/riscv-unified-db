@@ -6,12 +6,12 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfmv.s.f
-long_name: "Vector floating-point scalar move from FP register"
+long_name: "Vector scalar to floating-point move"
 description: |
-  Copies the scalar FP register fs1 into element 0 of vector register vd. No masking; writes element 0 unconditionally regardless of vl or vm. vstart is reset to 0 after execution.
+  Moves scalar floating-point value from register fs1 to all elements of vector register vd, using vector mask vm. This operation broadcasts a scalar to a vector.
 definedBy:
   extension:
-    name: Zve32f
+    name: Zvl32b
 assembly: vd, fs1
 encoding:
   match: 010000100000-----101-----1010111
@@ -27,16 +27,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  check_f_ok($encoding);
-  VectorState state = vector_state();
-  if (CSR[vl].VALUE > 0) {
-    # SEW=32 uses f32; SEW=64 uses f64 (legal because Zve64d requires Zve32f).
-    if (state.log2_sew == 6) {
-      v_elem_write(vd, 0, 6, {64'b0, F[fs1][63:0]});
-    } else {
-      v_elem_write(vd, 0, 5, {96'b0, F[fs1][31:0]});
-    }
-  }
-  CSR[vstart].VALUE = 0;
-  mark_v_state_dirty();

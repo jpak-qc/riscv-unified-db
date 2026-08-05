@@ -6,12 +6,12 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vnmsub.vx
-long_name: "Vector integer negating multiply-subtract, vector-scalar"
+long_name: No synopsis available
 description: |
-  Computes vd[i] = -(xs1 * vd[i]) + vs2[i] for each active SEW-wide element; xs1 is the scalar multiplicand (low SEW bits) and vd is the second multiplicand. Inactive elements are undisturbed.
+  No description available.
 definedBy:
   extension:
-    name: Zve32x
+    name: Zvl32b
 assembly: vd, xs1, vs2, vm
 encoding:
   match: 101011-----------110-----1010111
@@ -31,13 +31,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  VectorState state = vector_state();
-  Bits<64> scalar_val = X[xs1][state.sew - 1:0];
-  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    if (v_mask_elem_active?(vm, i)) {
-      v_elem_write(vd, i, state.log2_sew, (-({64'b0, scalar_val} * v_elem_read(vd,  i, state.log2_sew))) + v_elem_read(vs2, i, state.log2_sew));
-    }
-  }
-  CSR[vstart].VALUE = 0;
-  mark_v_state_dirty();

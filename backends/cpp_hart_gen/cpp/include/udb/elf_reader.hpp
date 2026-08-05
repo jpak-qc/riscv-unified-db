@@ -5,7 +5,6 @@
 #include <limits>
 #include <string>
 #include <utility>
-#include <vector>
 #include <algorithm>
 
 #include "udb/soc_model.hpp"
@@ -50,12 +49,6 @@ namespace udb {
     template <SocModel SocType>
     uint64_t loadLoadableSegments(SocType& soc);
 
-    // Patches zero-byte alignment padding (0x0000 = c.unimp in compressed ISA)
-    // to 0x0001 (c.nop) in executable segments to prevent spurious traps.
-    // Call after loadLoadableSegments.
-    template <SocModel SocType>
-    void patchCUnimpToNop(SocType& soc);
-
    private:
     int m_fd;
     Elf* m_elf;
@@ -92,50 +85,5 @@ namespace udb {
     }
 
     return ehdr.e_entry;
-  }
-
-  template <SocModel SocType>
-  void ElfReader::patchCUnimpToNop(SocType& soc) {
-    size_t n;
-
-    if (elf_getphdrnum(m_elf, &n) != 0) {
-      return;
-    }
-
-    for (size_t i = 0; i < n; i++) {
-      GElf_Phdr phdr;
-      if (gelf_getphdr(m_elf, i, &phdr) != &phdr) {
-        continue;
-      }
-
-      // Only patch executable (text) segments
-      if (phdr.p_type != PT_LOAD || !(phdr.p_flags & PF_X)) {
-        continue;
-      }
-
-      uint64_t seg_addr = phdr.p_vaddr;
-      uint64_t seg_size = phdr.p_memsz;
-
-      // Read the segment back from SoC memory into a local buffer
-      std::vector<uint8_t> buf(seg_size, 0);
-      int copied = soc.memcpy_to_host(buf.data(), seg_addr, seg_size);
-      if (copied < 0) {
-        continue;
-      }
-
-      // Replace 16-bit aligned 0x0000 (c.unimp) with 0x0001 (c.nop)
-      bool patched = false;
-      for (uint64_t off = 0; off + 1 < seg_size; off += 2) {
-        if (buf[off] == 0x00 && buf[off + 1] == 0x00) {
-          buf[off]     = 0x01;
-          buf[off + 1] = 0x00;
-          patched = true;
-        }
-      }
-
-      if (patched) {
-        soc.memcpy_from_host(seg_addr, buf.data(), seg_size);
-      }
-    }
   }
 }

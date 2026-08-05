@@ -12,7 +12,7 @@ description: |
   Add source vector register groups from vs1 and vs2 according to mask vm and store results in vd.
 definedBy:
   extension:
-    name: Zve32x
+    name: Zvl32b
 assembly: vd, vs2, vs1, vm
 encoding:
   match: 000000-----------000-----1010111
@@ -32,16 +32,22 @@ access:
   vu: always
 data_independent_timing: true
 operation(): |
-  check_v_ok_vtype($encoding);
   VectorState state = vector_state();
+  VectorLmulType lmul_type = state.lmul_type;
+
+  XReg vlen = VLEN;
+  XReg vlmax;
+  if (lmul_type == VectorLmulType::Multiply) {
+    vlmax = (vlen << state.log2_lmul) >> state.log2_sew;
+  } else {
+    # (lmul_type == VectorLmulType::Divide)
+    vlmax = (vlen >> state.log2_lmul) >> state.log2_sew;
+  }
 
   for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    if (v_mask_elem_active?(vm, i)) {
-      Bits<128> a = v_elem_read(vs2, i, state.log2_sew);
-      Bits<128> b = v_elem_read(vs1, i, state.log2_sew);
-      v_elem_write(vd, i, state.log2_sew, a + b);
-    }
+    U32 start_bit_pos = i * state.sew;
+    U32 end_bit_pos = start_bit_pos + state.sew - 1;
+    V[vd][end_bit_pos:start_bit_pos] = V[vs2][end_bit_pos:start_bit_pos] + V[vs1][end_bit_pos:start_bit_pos];
   }
 
   CSR[vstart].VALUE = 0;
-  mark_v_state_dirty();

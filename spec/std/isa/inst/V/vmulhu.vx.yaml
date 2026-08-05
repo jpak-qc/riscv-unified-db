@@ -6,12 +6,12 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmulhu.vx
-long_name: "Vector unsigned multiply high half, scalar, vx"
+long_name: No synopsis available
 description: |
-  Multiplies each unsigned SEW-wide vs2 element by the scalar xs1 (zero-extended to SEW), writing the upper SEW bits of the 2*SEW product into vd. Both operands zero-extend to 2*SEW for the multiplication. Inactive elements under vm mask control are undisturbed.
+  No description available.
 definedBy:
   extension:
-    name: Zve32x
+    name: Zvl32b
 assembly: vd, vs2, xs1, vm
 encoding:
   match: 100100-----------110-----1010111
@@ -31,13 +31,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  VectorState state = vector_state();
-  Bits<64> scalar_val = X[xs1][state.sew - 1:0];
-  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    if (v_mask_elem_active?(vm, i)) {
-      v_elem_write(vd, i, state.log2_sew, (v_elem_read(vs2, i, state.log2_sew) * {64'b0, scalar_val})[2 * state.sew - 1:state.sew]);
-    }
-  }
-  CSR[vstart].VALUE = 0;
-  mark_v_state_dirty();

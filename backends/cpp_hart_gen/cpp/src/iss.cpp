@@ -141,13 +141,6 @@ int ParseCommandLine(int argc, char *argv[], Options &options)
 
 int main(int argc, char *argv[])
 {
-  // Force unbuffered stdout so ISS behavior is consistent whether stdout
-  // is a tty or redirected to a file/pipe. Without this, the large JSON config
-  // dump fully buffers stdout, changing heap layout and triggering UB in the
-  // generated hart code. Note: _IOLBF is silently ignored for non-tty streams;
-  // _IONBF always works.
-  setvbuf(stdout, nullptr, _IONBF, 0);
-
   Options opts;
   int result;
 
@@ -282,9 +275,8 @@ int InstructionSetSimulator::CreateMemoryMap(std::filesystem::path memMapPath,
     auto range = elfReader.mem_range();
     m_memMap.base = range.first;
     m_memMap.size = range.second - range.first;
-    //Round up to whole page, plus one guard page so tests that access data at
-    //base+roundedSize (e.g. fault-first probe one page past the last section) don't segfault
-    m_memMap.size = (((range.second - range.first) + 0xffful) & ~0xffful) + 0x1000ul;
+    //Round up to whole page
+    m_memMap.size = ((range.second - range.first) + 0xffful) & ~0xffful;
     return 0;
   }
 
@@ -297,31 +289,7 @@ int InstructionSetSimulator::Run()
 
   udb::ElfReader elfReader(m_opts.elfFilePath.c_str());
   auto entryPC = elfReader.loadLoadableSegments(*m_pSoC);
-  elfReader.patchCUnimpToNop(*m_pSoC);
   m_pHart->reset(entryPC);
-
-  // Fix 4: pre-initialize mtvec to entryPC so early traps don't redirect to 0
-  {
-    udb::CsrBase* pMtvec = m_pHart->csr(0x305);
-    if (pMtvec) {
-      pMtvec->sw_write(udb::Bits<64>(entryPC), udb::Bits<7>(64));
-    }
-  }
-
-  // Fix 6: pre-initialize mstatus with MPP=M (bits 12:11=11), FS=Dirty (bits 14:13=11),
-  // VS=Dirty (bits 10:9=11) so floating-point and vector state is accessible
-  {
-    udb::CsrBase* pMstatus = m_pHart->csr(0x300);
-    if (pMstatus) {
-      // MPP=0x1800, FS=0x6000, VS=0x600
-      pMstatus->sw_write(udb::Bits<64>(0x7E00ULL), udb::Bits<7>(64));
-    }
-  }
-
-  // Fix 6: pre-initialize all GPRs to 0 (x0 is hardwired 0 but set_xreg ignores it)
-  for (int i = 0; i <= 31; i++) {
-    m_pHart->set_xreg(i, 0);
-  }
 
   if(m_opts.gdbMode)
     result = ListenForConnection();
@@ -744,27 +712,8 @@ int InstructionSetSimulator::OnKill(uint64_t uiProcId)
   // reload the elf
   udb::ElfReader elfReader(m_opts.elfFilePath.c_str());
   auto entryPC = elfReader.loadLoadableSegments(*m_pSoC);
-  elfReader.patchCUnimpToNop(*m_pSoC);
   // reset the hart
   m_pHart->reset(entryPC);
-
-  // Re-apply post-reset initializations (mirrors Run())
-  {
-    udb::CsrBase* pMtvec = m_pHart->csr(0x305);
-    if (pMtvec) {
-      pMtvec->sw_write(udb::Bits<64>(entryPC), udb::Bits<7>(64));
-    }
-  }
-  {
-    udb::CsrBase* pMstatus = m_pHart->csr(0x300);
-    if (pMstatus) {
-      pMstatus->sw_write(udb::Bits<64>(0x7E00ULL), udb::Bits<7>(64));
-    }
-  }
-  for (int i = 0; i <= 31; i++) {
-    m_pHart->set_xreg(i, 0);
-  }
-
   // set the ISS state
   SetInitState(m_opts);
   return 0;

@@ -32,5 +32,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_f_ok($encoding);
-  X[xd] = $signed(f64_to_ui32(F[fs1], rm_to_mode(rm, $encoding)));

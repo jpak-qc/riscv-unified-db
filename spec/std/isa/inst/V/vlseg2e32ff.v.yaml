@@ -3,18 +3,15 @@
 
 # yaml-language-server: $schema=../../../../schemas/inst_schema.json
 
-$schema: "inst_schema.json#"
+$schema: inst_schema.json#
 kind: instruction
 name: vlseg2e32ff.v
-long_name: "Vector segmented load 2 elements of 32 bits, fault-first"
+long_name: Vector segmented load 2 elements of 32 bits, fault-first
 description: |
-  Loads 2 segments of 32-bit elements from memory starting at address in xs1 register,
-  using vector mask vm, and stores results in vector register vd. This is a fault-first
-  operation: a fault on element 0 raises normally; a fault on element i > 0 trims CSR[vl]
-  to i and stops without raising. The effective element width is 32 bits.
+  Loads 2 segments of 32-bit elements from memory starting at address in xs1 register, using vector mask vm, and stores results in vector register vd. This is a fault-first operation that stops on the first fault. The effective element width is 32 bits.
 definedBy:
   extension:
-    name: Zve32x
+    name: Zvl32b
 assembly: vd, (xs1), vm
 encoding:
   match: 001000-10000-----110-----0000111
@@ -32,109 +29,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  XReg virtual_address = X[xs1];
-  PrivilegeMode ldst_mode = effective_ldst_mode();
-  Boolean trimmed = false;
-  VectorState state = vector_state();
-  U32 emul_reg = (state.lmul_type == VectorLmulType::Multiply) ? (32'b1 << state.log2_lmul) : 1;
-  U32 new_vl = CSR[vl].VALUE;
-
-  for (U32 i = CSR[vstart].VALUE; (i < CSR[vl].VALUE) && trimmed == false; i++) {
-    if (v_mask_elem_active?(vm, i)) {
-      # Declare per-field translation result slots (populated by probe phase below)
-      TranslationResult tr_0;
-      TranslationResult tr_1;
-      Boolean element_faulted = false;
-      ExceptionCode fcode;
-      PrivilegeMode fmode;
-      XReg ftval;
-
-      # Probe phase: check translate + PMP/PMA for all 2 fields of this element.
-      # Stop probing at the first fault but continue tracking fault info.
-            # Field 0: probe translate + PMP/PMA
-            if (element_faulted == false) {
-              XReg addr_0 = virtual_address + (i * 2 + 0) * 4;
-              if (!VECTOR_LS_MISALIGNED_LEGAL && !is_naturally_aligned(32, addr_0)) {
-                element_faulted = true;
-                fcode = ExceptionCode::LoadAddressMisaligned;
-                fmode = mode();
-                ftval = addr_0;
-              }
-              if (!element_faulted && CSR[misa].S == 1) {
-                TranslationFaultResult tprobe_0 = translate_probe(addr_0, MemoryOperation::Read, ldst_mode, $encoding);
-                if (tprobe_0.has_fault) {
-                  element_faulted = true;
-                  fcode = tprobe_0.fault_code;
-                  fmode = tprobe_0.from_mode;
-                  ftval = tprobe_0.tval;
-                } else {
-                  tr_0 = tprobe_0.result;
-                }
-              } else if (!element_faulted) {
-                tr_0.paddr = addr_0;
-              }
-              if (element_faulted == false) {
-                TranslationFaultResult aprobe_0 = access_check_probe(tr_0.paddr, 32, addr_0, MemoryOperation::Read, ExceptionCode::LoadAccessFault, ldst_mode);
-                if (aprobe_0.has_fault) {
-                  element_faulted = true;
-                  fcode = aprobe_0.fault_code;
-                  fmode = aprobe_0.from_mode;
-                  ftval = aprobe_0.tval;
-                }
-              }
-            }
-            # Field 1: probe translate + PMP/PMA
-            if (element_faulted == false) {
-              XReg addr_1 = virtual_address + (i * 2 + 1) * 4;
-              if (!VECTOR_LS_MISALIGNED_LEGAL && !is_naturally_aligned(32, addr_1)) {
-                element_faulted = true;
-                fcode = ExceptionCode::LoadAddressMisaligned;
-                fmode = mode();
-                ftval = addr_1;
-              }
-              if (!element_faulted && CSR[misa].S == 1) {
-                TranslationFaultResult tprobe_1 = translate_probe(addr_1, MemoryOperation::Read, ldst_mode, $encoding);
-                if (tprobe_1.has_fault) {
-                  element_faulted = true;
-                  fcode = tprobe_1.fault_code;
-                  fmode = tprobe_1.from_mode;
-                  ftval = tprobe_1.tval;
-                } else {
-                  tr_1 = tprobe_1.result;
-                }
-              } else if (!element_faulted) {
-                tr_1.paddr = addr_1;
-              }
-              if (element_faulted == false) {
-                TranslationFaultResult aprobe_1 = access_check_probe(tr_1.paddr, 32, addr_1, MemoryOperation::Read, ExceptionCode::LoadAccessFault, ldst_mode);
-                if (aprobe_1.has_fault) {
-                  element_faulted = true;
-                  fcode = aprobe_1.fault_code;
-                  fmode = aprobe_1.from_mode;
-                  ftval = aprobe_1.tval;
-                }
-              }
-            }
-
-      if (element_faulted) {
-        if (i == 0) {
-          # Forward progress guarantee: fault on first active element always raises.
-          raise(fcode, fmode, ftval);
-        }
-        # Trim vl to elements completed so far and stop (fault-only-first semantics).
-        new_vl = i;
-        trimmed = true;
-      } else {
-        # All 2 fields are safe: write them using saved physical addresses.
-            v_elem_write(vd + 0 * emul_reg, i, 5, {96'b0, read_physical_memory(32, tr_0.paddr)[31:0]});
-            v_elem_write(vd + 1 * emul_reg, i, 5, {96'b0, read_physical_memory(32, tr_1.paddr)[31:0]});
-      }
-    }
-  }
-
-  if (trimmed) {
-    CSR[vl].VALUE = new_vl;
-  }
-  CSR[vstart].VALUE = 0;
-  mark_v_state_dirty();

@@ -85,8 +85,7 @@ module Idl
           rf_name = var_type.sub_type.name
           return [[rf_name, index.value(symtab)]]
         else
-          # var is not itself a register file — recurse in case it's a nested access like V[v0][i]
-          return var.find_src_registers(symtab)
+          return []
         end
       end
       value_else(value_result) do
@@ -99,19 +98,13 @@ module Idl
             raise ComplexRegDetermination
           end
         else
-          return var.find_src_registers(symtab)
+          return []
         end
       end
     end
   end
 
   class AryElementAssignmentAst
-    def find_src_registers(symtab)
-      # The LHS of an array-element assignment (e.g. V[vd][i] = expr) is a destination,
-      # not a source. Only walk the RHS value for source registers.
-      rhs.find_src_registers(symtab)
-    end
-
     def find_dst_registers(symtab)
       # Identify the base variable and the register index based on assignment shape.
       # F[rd] = v    → lhs is IdAst(F),              reg_idx = idx
@@ -147,12 +140,6 @@ module Idl
   end
 
   class AryRangeAssignmentAst
-    def find_src_registers(symtab)
-      # The LHS of a range assignment (e.g. V[vd][end:start] = expr) is a destination.
-      # Only walk the RHS value for source registers.
-      rhs.find_src_registers(symtab)
-    end
-
     def find_dst_registers(symtab)
       return [] unless variable.is_a?(Idl::AryElementAccessAst)
 

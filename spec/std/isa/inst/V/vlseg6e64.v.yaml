@@ -11,7 +11,7 @@ description: |
   Loads 6 segments of 64-bit elements from memory starting at address in xs1 register, using vector mask vm, and stores results in vector register vd. The effective element width is 64 bits regardless of SEW setting.
 definedBy:
   extension:
-    name: Zve32x
+    name: Zvl32b
 assembly: vd, (xs1), vm
 encoding:
   match: 101000-00000-----111-----0000111
@@ -29,22 +29,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  VectorState state = vector_state();
-  U32 emul_reg = (state.lmul_type == VectorLmulType::Multiply) ? (32'b1 << state.log2_lmul) : 1;
-  U32 elems_per_reg = VLEN >> 6;
-  XReg virtual_address = X[xs1];
-  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    if (v_mask_elem_active?(vm, i)) {
-      CSR[vstart].VALUE = i;
-      for (U32 j = 0; j < 6; j++) {
-        U32 reg_off = i / elems_per_reg;
-        U32 start_bit_f = (i % elems_per_reg) * 64;
-        XReg elem_addr = virtual_address + (i * 6 + j) * 8;
-        v_check_load_alignment(64, elem_addr);
-        V[vd + j * emul_reg + reg_off][start_bit_f + 63:start_bit_f] = read_memory(64, elem_addr, $encoding)[63:0];
-      }
-    }
-  }
-  CSR[vstart].VALUE = 0;
-  mark_v_state_dirty();

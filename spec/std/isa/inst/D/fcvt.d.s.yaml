@@ -34,11 +34,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_f_ok($encoding);
-  RoundingMode mode = rm_to_mode(rm, $encoding);
-  Bits<32> sp_val = F[fs1][31:0];
-  if (F[fs1][63:32] != 32'hffffffff) {
-    sp_val = SP_CANONICAL_NAN;
-  }
-  F[fd] = f32_to_f64(sp_val, mode);
-  mark_f_state_dirty();

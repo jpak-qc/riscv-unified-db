@@ -15,7 +15,7 @@ description: |
   regardless of vstart. The vstart CSR is reset to 0 after execution.
 definedBy:
   extension:
-    name: Zve32x
+    name: Zvl32b
 assembly: xd, vs2
 encoding:
   match: 0100001-----00000010-----1010111
@@ -31,17 +31,9 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
   VectorState state = vector_state();
 
-  # vmv.x.s copies element 0 of vs2 to xd, sign-extending to XLEN.
-  # Element 0 is always in the base register of the group (no group math needed).
-  # Scalar destination: no mask, no vstart gating, no vector state dirtied.
-  # V spec §17.4: if vl=0, rd is written with 0.
-  if (CSR[vl].VALUE == 0) {
-    X[xd] = 0;
-  } else {
-    X[xd] = $signed(V[vs2][state.sew-1:0]);
-  }
+  # vmv.x.s copies element 0 of vs2 to xd, sign-extending to XLEN
+  X[xd] = $signed(V[vs2][state.sew-1:0]);
 
   CSR[vstart].VALUE = 0;

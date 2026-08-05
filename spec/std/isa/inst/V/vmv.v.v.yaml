@@ -11,7 +11,7 @@ description: |
   Copies elements from vector register vs2 to vector register vd, using vector mask vm. This operation performs a simple register-to-register copy.
 definedBy:
   extension:
-    name: Zve32x
+    name: Zvl32b
 assembly: vd, vs1
 encoding:
   match: 010111100000-----000-----1010111
@@ -27,12 +27,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  VectorState state = vector_state();
-  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    if (v_mask_elem_active?(1'b1, i)) {
-      v_elem_write(vd, i, state.log2_sew, v_elem_read(vs1, i, state.log2_sew));
-    }
-  }
-  CSR[vstart].VALUE = 0;
-  mark_v_state_dirty();

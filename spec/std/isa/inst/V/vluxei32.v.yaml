@@ -11,7 +11,7 @@ description: |
   Loads 1 segment of 32-bit elements from memory using unordered access pattern with index register vs1, starting at address in xs1 register, using vector mask vm, and stores results in vector register vd. The effective element width is 32 bits.
 definedBy:
   extension:
-    name: Zve32x
+    name: Zvl32b
 assembly: vd, (xs1), vs2, vm
 encoding:
   match: 000001-----------110-----0000111
@@ -31,31 +31,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  VectorState state = vector_state();
-  XReg virtual_address = X[xs1];
-  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    if (v_mask_elem_active?(vm, i)) {
-      # Index from vs2 at EEW=32 (log2_eew=5); data at SEW
-      XReg idx = v_elem_read(vs2, i, 5)[31:0];
-      Bits<128> data;
-      if (state.sew == 8) {
-        data = {120'b0, read_memory(8,  virtual_address + idx, $encoding)[7:0]};
-      } else if (state.sew == 16) {
-        XReg load_addr = virtual_address + idx;
-        v_check_load_alignment(16, load_addr);
-        data = {112'b0, read_memory(16, load_addr, $encoding)[15:0]};
-      } else if (state.sew == 32) {
-        XReg load_addr = virtual_address + idx;
-        v_check_load_alignment(32, load_addr);
-        data = {96'b0,  read_memory(32, load_addr, $encoding)[31:0]};
-      } else {
-        XReg load_addr = virtual_address + idx;
-        v_check_load_alignment(64, load_addr);
-        data = {64'b0,  read_memory(64, load_addr, $encoding)[63:0]};
-      }
-      v_elem_write(vd, i, state.log2_sew, data);
-    }
-  }
-  CSR[vstart].VALUE = 0;
-  mark_v_state_dirty();

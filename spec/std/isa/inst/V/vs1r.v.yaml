@@ -11,7 +11,7 @@ description: |
   Stores 1 segment of elements from vector register vs2 to memory starting at address in xs1 register with stride in xs2, using vector mask vm. The effective element width is determined by SEW setting.
 definedBy:
   extension:
-    name: Zve32x
+    name: Zvl32b
 assembly: vs3, (xs1)
 encoding:
   match: 000000101000-----000-----0100111
@@ -27,19 +27,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok($encoding);
-  XReg virtual_address = X[xs1];
-  U32 bytes_per_reg = VLEN / 8;
-  U32 cur_byte = CSR[vstart].VALUE;
-  U32 total_bytes = 1 * bytes_per_reg;
-  if (cur_byte < total_bytes) {
-    for (U32 j = cur_byte / bytes_per_reg; j < 1; j++) {
-      U32 start_i = (j == cur_byte / bytes_per_reg) ? cur_byte % bytes_per_reg : 0;
-      for (U32 i = start_i; i < bytes_per_reg; i++) {
-        U32 e = j * bytes_per_reg + i;
-        write_memory(8, virtual_address + e, V[vs3 + j][i*8+7:i*8], $encoding);
-      }
-    }
-  }
-  CSR[vstart].VALUE = 0;
-  mark_v_state_dirty();

@@ -6,12 +6,12 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmv.s.x
-long_name: "Move integer scalar to vector element 0"
+long_name: No synopsis available
 description: |
-  Writes element 0 of vd with the SEW-wide value from integer register xs1. The write occurs only when vl > 0 and vstart == 0; if vl == 0, element 0 is unchanged. Masking does not apply; all other elements are unaffected.
+  No description available.
 definedBy:
   extension:
-    name: Zve32x
+    name: Zvl32b
 assembly: vd, xs1
 encoding:
   match: 010000100000-----110-----1010111
@@ -27,13 +27,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  VectorState state = vector_state();
-  # Writes element 0 only; executes regardless of vstart/vl (scalar dest semantics
-  # apply to scalar *source* instructions, not this write, but the spec is clear:
-  # if vl > 0, element 0 is written; if vl == 0, element 0 is unchanged).
-  if (CSR[vl].VALUE > 0 && CSR[vstart].VALUE == 0) {
-    v_elem_write(vd, 0, state.log2_sew, {64'b0, X[xs1][63:0]});
-  }
-  CSR[vstart].VALUE = 0;
-  mark_v_state_dirty();

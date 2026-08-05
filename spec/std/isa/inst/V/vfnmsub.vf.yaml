@@ -6,12 +6,12 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfnmsub.vf
-long_name: "Vector fp negated multiply-subtract, vector-scalar"
+long_name: No synopsis available
 description: |
-  Performs element-wise negated fused multiply-subtract vd[i] = -(fs1 * vd[i]) + vs2[i] in SEW-wide floating-point for active elements (vm-masked). fs1 is NaN-boxed when D is implemented; vd is both multiplicand and destination; the product is negated before adding vs2. Inactive elements are undisturbed; rounding uses fcsr.FRM.
+  No description available.
 definedBy:
   extension:
-    name: Zve32f
+    name: Zvl32b
 assembly: vd, fs1, vs2, vm
 encoding:
   match: 101011-----------101-----1010111
@@ -31,29 +31,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  check_f_ok($encoding);
-  VectorState state = vector_state();
-  RoundingMode rmode = rm_to_mode(CSR[fcsr].FRM, $encoding);
-  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    if (v_mask_elem_active?(vm, i)) {
-      # SEW=32 uses f32; SEW=64 uses f64 (legal because Zve64d requires Zve32f).
-      if (state.log2_sew == 6) {
-        Bits<64> b = F[fs1][63:0];
-        Bits<64> vs2v = v_elem_read(vs2, i, 6)[63:0];
-        Bits<64> vdv  = v_elem_read(vd,  i, 6)[63:0];
-        v_elem_write(vd, i, 6, {64'b0, f64_muladd(b, vdv, vs2v, F64MulAddOp::Softfloat_f64_mulAdd_subProd, rmode)});
-      } else {
-        Bits<32> b = F[fs1][31:0];
-        if (implemented?(ExtensionName::D) && F[fs1][63:32] != 32'hffffffff) {
-          b = SP_CANONICAL_NAN;
-        }
-        Bits<32> vdv  = v_elem_read(vd,  i, 5)[31:0];
-        Bits<32> vs2v = v_elem_read(vs2, i, 5)[31:0];
-        v_elem_write(vd, i, 5, {96'b0, f32_muladd(b, vdv, vs2v, F32MulAddOp::Softfloat_mulAdd_subProd, rmode)});
-      }
-    }
-  }
-  CSR[vstart].VALUE = 0;
-  mark_f_state_dirty();
-  mark_v_state_dirty();

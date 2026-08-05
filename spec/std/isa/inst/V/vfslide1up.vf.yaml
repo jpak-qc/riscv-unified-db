@@ -6,12 +6,12 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vfslide1up.vf
-long_name: "Vector FP slide up by one and insert scalar"
+long_name: No synopsis available
 description: |
-  Shifts active elements of vs2 toward higher indices by one, writing vs2[i-1] into vd[i] for i >= 1; position 0 receives the scalar value from FP register fs1. For SEW=32 when the D extension is present, fs1 must be NaN-boxed (upper 32 bits all-ones); a non-boxed value is replaced by the canonical NaN. vs2 and vd must be distinct registers.
+  No description available.
 definedBy:
   extension:
-    name: Zve32f
+    name: Zvl32b
 assembly: vd, vs2, fs1, vm
 encoding:
   match: 001110-----------101-----1010111
@@ -31,31 +31,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  check_f_ok($encoding);
-  if (vs2 == vd) { raise(ExceptionCode::IllegalInstruction, mode(), $encoding); }
-  VectorState state = vector_state();
-  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    if (v_mask_elem_active?(vm, i)) {
-      # SEW=32 uses f32; SEW=64 uses f64 (legal because Zve64d requires Zve32f).
-      if (state.log2_sew == 6) {
-        if (i == 0) {
-          v_elem_write(vd, i, 6, {64'b0, F[fs1][63:0]});
-        } else {
-          v_elem_write(vd, i, 6, {64'b0, v_elem_read(vs2, i - 1, 6)[63:0]});
-        }
-      } else {
-        if (i == 0) {
-          Bits<32> scalar_fs1 = F[fs1][31:0];
-          if (implemented?(ExtensionName::D) && F[fs1][63:32] != 32'hffffffff) {
-            scalar_fs1 = SP_CANONICAL_NAN;
-          }
-          v_elem_write(vd, i, 5, {96'b0, scalar_fs1});
-        } else {
-          v_elem_write(vd, i, 5, {96'b0, v_elem_read(vs2, i - 1, 5)[31:0]});
-        }
-      }
-    }
-  }
-  CSR[vstart].VALUE = 0;
-  mark_v_state_dirty();

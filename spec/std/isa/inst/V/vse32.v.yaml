@@ -11,7 +11,7 @@ description: |
   Stores 32-bit elements from vector register vs3 to memory starting at address in xs1 register, using vector mask vm. The effective element width is 32 bits regardless of SEW setting.
 definedBy:
   extension:
-    name: Zve32x
+    name: Zvl32b
 assembly: vs3, (xs1), vm
 encoding:
   match: 000000-00000-----110-----0100111
@@ -29,14 +29,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  XReg virtual_address = X[xs1];
-  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    if (v_mask_elem_active?(vm, i)) {
-      XReg elem_addr = virtual_address + i * 4;
-      v_check_store_alignment(32, elem_addr);
-      write_memory(32, elem_addr, v_elem_read(vs3, i, 5)[31:0], $encoding);
-    }
-  }
-  CSR[vstart].VALUE = 0;
-  mark_v_state_dirty();

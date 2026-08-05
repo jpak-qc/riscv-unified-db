@@ -11,7 +11,7 @@ description: |
   Sign-extends elements from vector register vs2 by a factor of 2 and stores results in vector register vd, using vector mask vm. The operation extends SEW to 2×SEW.
 definedBy:
   extension:
-    name: Zve32x
+    name: Zvl32b
 assembly: vd, vs2, vm
 encoding:
   match: 010010------00111010-----1010111
@@ -29,20 +29,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  VectorState state = vector_state();
-  if (state.sew < 16) { raise(ExceptionCode::IllegalInstruction, mode(), $encoding); }
-  U32 log2_src_sew = state.log2_sew - 1;
-  U32 src_sew = state.sew >> 1;
-  U32 elems_per_reg_d   = VLEN >> state.log2_sew;
-  U32 elems_per_reg_src = VLEN >> log2_src_sew;
-  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    if (v_mask_elem_active?(vm, i)) {
-      U32 d_reg   = i / elems_per_reg_d;    U32 d_bit   = (i % elems_per_reg_d) * state.sew;
-      U32 src_reg = i / elems_per_reg_src;  U32 src_bit = (i % elems_per_reg_src) * src_sew;
-      Bits<128> val = $signed(V[vs2 + src_reg][src_bit + src_sew - 1:src_bit]);
-      V[vd + d_reg][d_bit + state.sew - 1:d_bit] = val[state.sew - 1:0];
-    }
-  }
-  CSR[vstart].VALUE = 0;
-  mark_v_state_dirty();

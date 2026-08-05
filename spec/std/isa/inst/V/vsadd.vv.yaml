@@ -6,12 +6,12 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vsadd.vv
-long_name: "Vector signed saturating addition"
+long_name: "Vector unsigned addition"
 description: |
-  Performs signed saturating addition on elements from vector registers vs2 and vs1 and stores results in vector register vd, using vector mask vm. Results that overflow the signed SEW-bit range are clamped to the range endpoint and the vxsat flag is set.
+  Performs unsigned addition on elements from vector registers vs2 and vs1 and stores results in vector register vd, using vector mask vm. The operation follows standard unsigned arithmetic rules.
 definedBy:
   extension:
-    name: Zve32x
+    name: Zvl32b
 assembly: vd, vs2, vs1, vm
 encoding:
   match: 100001-----------000-----1010111
@@ -31,14 +31,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  VectorState state = vector_state();
-  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    if (v_mask_elem_active?(vm, i)) {
-      Bits<128> a = $signed(v_elem_read(vs2, i, state.log2_sew)[state.sew - 1:0]);
-      Bits<128> b = $signed(v_elem_read(vs1, i, state.log2_sew)[state.sew - 1:0]);
-      v_elem_write(vd, i, state.log2_sew, sat_signed(a + b, state.sew));
-    }
-  }
-  CSR[vstart].VALUE = 0;
-  mark_v_state_dirty();

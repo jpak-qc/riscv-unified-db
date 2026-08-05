@@ -6,12 +6,12 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmaxu.vx
-long_name: "Vector unsigned integer maximum, vector-scalar"
+long_name: No synopsis available
 description: |
-  Writes max(vs2[i], xs1) into vd[i] for each active SEW-wide element using unsigned comparison, where xs1 is zero-extended to SEW bits. Inactive elements are undisturbed.
+  No description available.
 definedBy:
   extension:
-    name: Zve32x
+    name: Zvl32b
 assembly: vd, vs2, xs1, vm
 encoding:
   match: 000110-----------100-----1010111
@@ -31,13 +31,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  VectorState state = vector_state();
-  Bits<64> scalar_val = X[xs1][state.sew - 1:0];
-  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    if (v_mask_elem_active?(vm, i)) {
-      v_elem_write(vd, i, state.log2_sew, (v_elem_read(vs2, i, state.log2_sew)[state.sew - 1:0] > {64'b0, scalar_val}[state.sew - 1:0]) ? v_elem_read(vs2, i, state.log2_sew) : {64'b0, scalar_val});
-    }
-  }
-  CSR[vstart].VALUE = 0;
-  mark_v_state_dirty();

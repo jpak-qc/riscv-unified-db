@@ -6,12 +6,12 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmul.vv
-long_name: "Vector integer multiply, return low half, vv"
+long_name: No synopsis available
 description: |
-  Multiplies corresponding SEW-wide elements of vs2 and vs1, writing the low SEW bits of each full-width product into vd; the upper half of each product is discarded. Inactive elements under vm mask control are undisturbed.
+  No description available.
 definedBy:
   extension:
-    name: Zve32x
+    name: Zvl32b
 assembly: vd, vs2, vs1, vm
 encoding:
   match: 100101-----------010-----1010111
@@ -31,12 +31,3 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  VectorState state = vector_state();
-  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    if (v_mask_elem_active?(vm, i)) {
-      v_elem_write(vd, i, state.log2_sew, (v_elem_read(vs2, i, state.log2_sew) * v_elem_read(vs1, i, state.log2_sew))[state.sew - 1:0]);
-    }
-  }
-  CSR[vstart].VALUE = 0;
-  mark_v_state_dirty();

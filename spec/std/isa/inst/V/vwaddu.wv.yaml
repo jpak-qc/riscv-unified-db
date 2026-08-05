@@ -6,12 +6,12 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vwaddu.wv
-long_name: "Widening unsigned add: 2xSEW vector plus SEW vector"
+long_name: No synopsis available
 description: |
-  Adds each 2*SEW-wide element of vs2 to the zero-extended SEW-wide element of vs1, writing the 2*SEW result to vd. vs2 is treated as already holding 2*SEW elements; vs1 elements are zero-extended before the add. Masked per vm bit; inactive elements are undisturbed.
+  No description available.
 definedBy:
   extension:
-    name: Zve32x
+    name: Zvl32b
 assembly: vd, vs2, vs1, vm
 encoding:
   match: 110100-----------010-----1010111
@@ -31,19 +31,3 @@ access:
   vu: always
 data_independent_timing: true
 operation(): |
-  check_v_ok_vtype($encoding);
-  VectorState state = vector_state();
-  U32 elems_per_reg_s = VLEN >> state.log2_sew;
-  U32 elems_per_reg_d = VLEN >> (state.log2_sew + 1);
-  U32 sew2 = state.sew * 2;
-  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    if (v_mask_elem_active?(vm, i)) {
-      U32 s_reg = i / elems_per_reg_s;  U32 s_bit = (i % elems_per_reg_s) * state.sew;
-      U32 d_reg = i / elems_per_reg_d;  U32 d_bit = (i % elems_per_reg_d) * sew2;
-      Bits<128> a = V[vs2 + d_reg][d_bit + sew2 - 1:d_bit];
-      Bits<128> b = V[vs1 + s_reg][s_bit + state.sew - 1:s_bit];
-      V[vd + d_reg][d_bit + sew2 - 1:d_bit] = (a + b)[sew2 - 1:0];
-    }
-  }
-  CSR[vstart].VALUE = 0;
-  mark_v_state_dirty();

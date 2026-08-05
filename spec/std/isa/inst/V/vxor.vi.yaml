@@ -11,7 +11,7 @@ description: |
   Performs bitwise XOR operation on elements from vector register vs2 and immediate value and stores results in vector register vd, using vector mask vm.
 definedBy:
   extension:
-    name: Zve32x
+    name: Zvl32b
 assembly: vd, vs2, imm, vm
 encoding:
   match: 001011-----------011-----1010111
@@ -35,13 +35,3 @@ pseudoinstructions:
     to: vnot.v vd, vs2, vm
 data_independent_timing: false
 operation(): |
-  check_v_ok_vtype($encoding);
-  VectorState state = vector_state();
-  Bits<64> sext_imm = $signed(imm);
-  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    if (v_mask_elem_active?(vm, i)) {
-      v_elem_write(vd, i, state.log2_sew, v_elem_read(vs2, i, state.log2_sew) ^ {64'b0, sext_imm});
-    }
-  }
-  CSR[vstart].VALUE = 0;
-  mark_v_state_dirty();
