@@ -32,3 +32,26 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
+  check_f_ok($encoding);
+
+  Bits<64> dp_value_a = F[fs1];
+  Bits<64> dp_value_b = F[fs2];
+
+  # IEEE 2019 maximumNumber: return canonical NaN if either operand is NaN
+  if (is_dp_nan?(dp_value_a) || is_dp_nan?(dp_value_b)) {
+    if (is_dp_signaling_nan?(dp_value_a) || is_dp_signaling_nan?(dp_value_b)) {
+      set_fp_flag(FpFlag::NV);
+    }
+    F[fd] = DP_CANONICAL_NAN;
+  } else {
+    Boolean sign_a = dp_value_a[63] == 1;
+    Boolean sign_b = dp_value_b[63] == 1;
+    Boolean a_lt_b;
+    if (sign_a != sign_b) {
+      a_lt_b = sign_a;
+    } else {
+      a_lt_b = (dp_value_a != dp_value_b) && (sign_a != (dp_value_a < dp_value_b));
+    }
+    F[fd] = a_lt_b ? dp_value_b : dp_value_a;
+  }
+  mark_f_state_dirty();

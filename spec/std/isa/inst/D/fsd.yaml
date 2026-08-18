@@ -32,3 +32,6 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
+  check_f_ok($encoding);
+  XReg virtual_address = X[xs1] + $signed(imm);
+  write_memory(64, virtual_address, F[fs2][63:0], $encoding);

@@ -33,3 +33,6 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
+  check_f_ok($encoding);
+  # Move bits 63:32 of double-precision register fs1 to integer register xd
+  X[xd] = F[fs1][63:32];

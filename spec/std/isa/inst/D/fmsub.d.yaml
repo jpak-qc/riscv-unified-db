@@ -35,3 +35,7 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
+  check_f_ok($encoding);
+  RoundingMode mode = rm_to_mode(rm, $encoding);
+  F[fd] = f64_muladd(F[fs1], F[fs2], F[fs3], F32MulAddOp::Softfloat_mulAdd_subC, mode);
+  mark_f_state_dirty();

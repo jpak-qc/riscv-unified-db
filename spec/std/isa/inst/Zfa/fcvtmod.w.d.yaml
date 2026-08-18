@@ -40,3 +40,49 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
+  check_f_ok($encoding);
+  # Always rounds toward zero (RTZ), modulo 2^32 semantics
+  Bits<1>  sign = signF64UI(F[fs1]);
+  Bits<16> exp  = expF64UI(F[fs1]);
+  Bits<64> sig  = fracF64UI(F[fs1]);
+
+  if (exp == 11'h7FF) {
+    # Infinity and NaN convert to zero; set NV
+    if (sig != 0) {
+      set_fp_flag(FpFlag::NV);
+    } else {
+      set_fp_flag(FpFlag::NV);
+    }
+    X[xd] = 0;
+  } else if (exp == 0) {
+    # Zero or subnormal - result is zero
+    if (sig != 0) {
+      set_fp_flag(FpFlag::NX);
+    }
+    X[xd] = 0;
+  } else {
+    sig = sig | 64'h0010000000000000;
+    Bits<16> shiftDist = exp - 16'h0433;
+    Bits<64> result;
+    if ($signed(shiftDist) >= 0s) {
+      # |value| >= 2^52, shift left and take lower 32 bits
+      result = sig << shiftDist;
+    } else {
+      # Round toward zero - truncate fractional bits
+      Bits<16> rightShift = -shiftDist;
+      Bits<64> roundedSig;
+      if ($signed(rightShift) >= 64s) {
+        set_fp_flag(FpFlag::NX);
+        roundedSig = 0;
+      } else {
+        Bits<64> fracBits = sig & ((64'h1 << rightShift) - 1);
+        roundedSig = sig >> rightShift;
+        if (fracBits != 0) { set_fp_flag(FpFlag::NX); }
+      }
+      result = roundedSig;
+    }
+    # Take lower 32 bits and sign-extend
+    Bits<32> result32 = result[31:0];
+    Bits<32> signed_result = (sign == 1) ? -result32 : result32;
+    X[xd] = $signed(signed_result);
+  }

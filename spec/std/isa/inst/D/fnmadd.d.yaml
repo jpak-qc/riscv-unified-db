@@ -36,3 +36,10 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
+  check_f_ok($encoding);
+  RoundingMode mode = rm_to_mode(rm, $encoding);
+  # fnmadd: -(fs1 * fs2) - fs3 = -(fs1 * fs2) + (-fs3)
+  # Negate fs3 by flipping its sign bit, then use subProd op
+  Bits<64> fs3_negated = F[fs3] ^ 64'h8000000000000000;
+  F[fd] = f64_muladd(F[fs1], F[fs2], fs3_negated, F32MulAddOp::Softfloat_mulAdd_subProd, mode);
+  mark_f_state_dirty();
