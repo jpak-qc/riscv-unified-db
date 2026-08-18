@@ -35,3 +35,8 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
+  check_f_ok($encoding);
+  # Move pair of integer registers to double-precision register
+  # xs1 supplies bits 31:0, xs2 supplies bits 63:32
+  F[fd] = {X[xs2][31:0], X[xs1][31:0]};
+  mark_f_state_dirty();

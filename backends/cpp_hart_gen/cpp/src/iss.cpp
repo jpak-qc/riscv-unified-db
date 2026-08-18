@@ -141,6 +141,10 @@ int ParseCommandLine(int argc, char *argv[], Options &options)
 
 int main(int argc, char *argv[])
 {
+  // Force unbuffered stdout so output reaches the test harness immediately
+  // even when stdout is piped/redirected (as it is during ACT4 test runs).
+  setvbuf(stdout, nullptr, _IONBF, 0);
+
   Options opts;
   int result;
 
@@ -290,6 +294,27 @@ int InstructionSetSimulator::Run()
   udb::ElfReader elfReader(m_opts.elfFilePath.c_str());
   auto entryPC = elfReader.loadLoadableSegments(*m_pSoC);
   m_pHart->reset(entryPC);
+
+  // Pre-initialize mtvec to entryPC so early traps don't redirect to address 0
+  {
+    udb::CsrBase* pMtvec = m_pHart->csr(0x305);
+    if (pMtvec) {
+      pMtvec->sw_write(udb::Bits<64>(entryPC), udb::Bits<7>(64));
+    }
+  }
+
+  // Pre-initialize mstatus: MPP=M (bits 12:11=11), FS=Dirty (14:13=11), VS=Dirty (10:9=11)
+  {
+    udb::CsrBase* pMstatus = m_pHart->csr(0x300);
+    if (pMstatus) {
+      pMstatus->sw_write(udb::Bits<64>(0x7E00ULL), udb::Bits<7>(64));
+    }
+  }
+
+  // Pre-initialize all GPRs to 0
+  for (int i = 0; i <= 31; i++) {
+    m_pHart->set_xreg(i, 0);
+  }
 
   if(m_opts.gdbMode)
     result = ListenForConnection();
@@ -714,6 +739,22 @@ int InstructionSetSimulator::OnKill(uint64_t uiProcId)
   auto entryPC = elfReader.loadLoadableSegments(*m_pSoC);
   // reset the hart
   m_pHart->reset(entryPC);
+  // Re-apply post-reset initializations
+  {
+    udb::CsrBase* pMtvec = m_pHart->csr(0x305);
+    if (pMtvec) {
+      pMtvec->sw_write(udb::Bits<64>(entryPC), udb::Bits<7>(64));
+    }
+  }
+  {
+    udb::CsrBase* pMstatus = m_pHart->csr(0x300);
+    if (pMstatus) {
+      pMstatus->sw_write(udb::Bits<64>(0x7E00ULL), udb::Bits<7>(64));
+    }
+  }
+  for (int i = 0; i <= 31; i++) {
+    m_pHart->set_xreg(i, 0);
+  }
   // set the ISS state
   SetInitState(m_opts);
   return 0;

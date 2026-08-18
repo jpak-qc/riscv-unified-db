@@ -60,6 +60,9 @@ namespace udb {
 
       // subclasses only need to override these functions:
       virtual uint64_t read(uint64_t addr, size_t bytes) {
+        if (addr < m_offset || addr - m_offset + bytes > m_data.size()) {
+          return 0;
+        }
         MemAccessRange memAccessData(addr, bytes);
         this->Notify(MEMREAD_EVENT, &memAccessData);
 
@@ -78,6 +81,9 @@ namespace udb {
       }
 
       void write(uint64_t addr, uint64_t data, size_t bytes) {
+        if (addr < m_offset || addr - m_offset + bytes > m_data.size()) {
+          return;
+        }
         MemAccess memAccess(addr, bytes, data);
         switch (bytes) {
           case 1:
@@ -166,6 +172,8 @@ namespace udb {
     void order_pgtbl_reads_after_vmafence() {}
 
     uint64_t read_physical_memory_8(uint64_t paddr) {
+      // NS16550 UART stub at 0x10000000: LSR bit 5 (THR empty) always set
+      if (paddr == 0x10000005ULL) return 0x20;
       return m_memory.read(paddr, 1);
     }
     uint64_t read_physical_memory_16(uint64_t paddr) {
@@ -178,6 +186,8 @@ namespace udb {
       return m_memory.read(paddr, 8);
     }
     void write_physical_memory_8(uint64_t paddr, uint64_t value) {
+      // NS16550 UART stub at 0x10000000: print characters to stdout
+      if (paddr == 0x10000000ULL) { putchar(static_cast<int>(value & 0xff)); return; }
       m_memory.write(paddr, value, 1);
     }
     void write_physical_memory_16(uint64_t paddr, uint64_t value) {

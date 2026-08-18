@@ -30,3 +30,40 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
+  check_f_ok($encoding);
+  # Load one of 32 predefined DP constants based on xs1 field
+  Bits<64> result;
+  if (xs1 == 0) { result = 64'hBFF0000000000000; }
+  else if (xs1 == 1) { result = 64'h0010000000000000; }
+  else if (xs1 == 2) { result = 64'h3EF0000000000000; }
+  else if (xs1 == 3) { result = 64'h3F00000000000000; }
+  else if (xs1 == 4) { result = 64'h3F70000000000000; }
+  else if (xs1 == 5) { result = 64'h3F80000000000000; }
+  else if (xs1 == 6) { result = 64'h3FB0000000000000; }
+  else if (xs1 == 7) { result = 64'h3FC0000000000000; }
+  else if (xs1 == 8) { result = 64'h3FD0000000000000; }
+  else if (xs1 == 9) { result = 64'h3FD4000000000000; }
+  else if (xs1 == 10) { result = 64'h3FD8000000000000; }
+  else if (xs1 == 11) { result = 64'h3FDC000000000000; }
+  else if (xs1 == 12) { result = 64'h3FE0000000000000; }
+  else if (xs1 == 13) { result = 64'h3FE4000000000000; }
+  else if (xs1 == 14) { result = 64'h3FE8000000000000; }
+  else if (xs1 == 15) { result = 64'h3FEC000000000000; }
+  else if (xs1 == 16) { result = 64'h3FF0000000000000; }
+  else if (xs1 == 17) { result = 64'h3FF4000000000000; }
+  else if (xs1 == 18) { result = 64'h3FF8000000000000; }
+  else if (xs1 == 19) { result = 64'h3FFC000000000000; }
+  else if (xs1 == 20) { result = 64'h4000000000000000; }
+  else if (xs1 == 21) { result = 64'h4004000000000000; }
+  else if (xs1 == 22) { result = 64'h4008000000000000; }
+  else if (xs1 == 23) { result = 64'h4010000000000000; }
+  else if (xs1 == 24) { result = 64'h4020000000000000; }
+  else if (xs1 == 25) { result = 64'h4040000000000000; }
+  else if (xs1 == 26) { result = 64'h4060000000000000; }
+  else if (xs1 == 27) { result = 64'h40C0000000000000; }
+  else if (xs1 == 28) { result = 64'h4120000000000000; }
+  else if (xs1 == 29) { result = 64'h41E0000000000000; }
+  else if (xs1 == 30) { result = 64'h41F0000000000000; }
+  else { result = 64'h7FF0000000000000; }
+  F[fd] = result;
+  mark_f_state_dirty();
