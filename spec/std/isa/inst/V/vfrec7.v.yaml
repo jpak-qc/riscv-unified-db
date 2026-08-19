@@ -38,7 +38,54 @@ operation(): |
       U32 reg_off = i / elems_per_reg;
       U32 start_bit = (i % elems_per_reg) * state.sew;
       U32 end_bit = start_bit + state.sew - 1;
-      if (state.sew == 32) {
+      if (state.sew == 16) {
+        Bits<16> a = V[vs2 + reg_off][end_bit:start_bit];
+        Bits<1> sign_a = a[15];
+        Bits<5> exp_a = a[14:10];
+        Bits<10> frac_a = a[9:0];
+        Bits<16> result;
+        if (exp_a == 5'h1F && frac_a != 0) {
+          if (is_hp_signaling_nan?(a)) { set_fp_flag(FpFlag::NV); }
+          result = HP_CANONICAL_NAN;
+        } else if (exp_a == 0 && frac_a == 0) {
+          set_fp_flag(FpFlag::DZ);
+          result = packToF16UI(sign_a, 5'h1F, 0);
+        } else if (exp_a == 5'h1F) {
+          result = packToF16UI(sign_a, 0, 0);
+        } else {
+          Bits<8> norm_exp;
+          Bits<10> norm_frac;
+          if (exp_a == 0) {
+            Bits<8> lz = count_leading_zeros(10, frac_a);
+            norm_exp = -(lz);
+            norm_frac = frac_a << (lz + 1);
+          } else {
+            norm_exp = exp_a;
+            norm_frac = frac_a;
+          }
+          Bits<7> sig_out = vfrec7_sig(norm_frac[9:3]);
+          Bits<16> norm_exp_extended =
+            (exp_a == 0 && norm_exp[7] == 1'b1) ? (16'hFF00 | norm_exp) : norm_exp;
+          Bits<16> out_exp_full = 16'h001D - norm_exp_extended;
+          if (out_exp_full == 16'h0000 || out_exp_full == 16'hFFFF) {
+            Bits<8> shift = (out_exp_full == 16'h0000) ? 1 : 2;
+            Bits<16> subnorm_sig = (16'h0400 | (sig_out `<< 3)) >> shift;
+            result = packToF16UI(sign_a, 0, subnorm_sig);
+          } else if (out_exp_full > 16'h001E) {
+            set_fp_flag(FpFlag::OF);
+            set_fp_flag(FpFlag::NX);
+            if ((mode == RoundingMode::RNE) || (mode == RoundingMode::RMM) ||
+                ((sign_a == 1'b1) ? (mode == RoundingMode::RDN) : (mode == RoundingMode::RUP))) {
+              result = packToF16UI(sign_a, 5'h1F, 0);
+            } else {
+              result = packToF16UI(sign_a, 5'h1E, 16'h03FF);
+            }
+          } else {
+            result = packToF16UI(sign_a, out_exp_full[4:0], sig_out `<< 3);
+          }
+        }
+        V[vd + reg_off][end_bit:start_bit] = result;
+      } else if (state.sew == 32) {
         Bits<32> a = V[vs2 + reg_off][end_bit:start_bit];
         Bits<1>  sign_a = signF32UI(a);
         Bits<8>  exp_a  = expF32UI(a);
@@ -193,13 +240,25 @@ operation(): |
           (table_idx == 125) ? 1 :
           (table_idx == 126) ? 1 :
           0;
-          Bits<16> out_exp_full = 16'h00FD - norm_exp;
+          # norm_exp is two's-complement only for subnormal inputs. Normal
+          # exponents above 127 must remain unsigned.
+          Bits<16> norm_exp_extended = (exp_a == 0 && norm_exp[7] == 1'b1) ? (16'hFF00 | norm_exp) : norm_exp;
+          Bits<16> out_exp_full = 16'h00FD - norm_exp_extended;
           Bits<8> out_exp = out_exp_full[7:0];
-          if ($signed(out_exp_full) == 0 || $signed(out_exp_full) == -1) {
+          if (out_exp_full == 16'h0000 || out_exp_full == 16'hFFFF) {
             # Subnormal output: output exponent is 0, shift significand
-            Bits<8> shift = (out_exp_full == 0) ? 1 : 2;
+            Bits<8> shift = (out_exp_full == 16'h0000) ? 1 : 2;
             Bits<23> subnorm_sig = (32'h800000 | sig_out << 16) >> shift;
             result = packToF32UI(sign_a, 0, subnorm_sig);
+          } else if (out_exp_full > 16'h00FE) {
+            set_fp_flag(FpFlag::OF);
+            set_fp_flag(FpFlag::NX);
+            if ((mode == RoundingMode::RNE) || (mode == RoundingMode::RMM) ||
+                ((sign_a == 1'b1) ? (mode == RoundingMode::RDN) : (mode == RoundingMode::RUP))) {
+              result = packToF32UI(sign_a, 8'hFF, 0);
+            } else {
+              result = packToF32UI(sign_a, 8'hFE, 23'h7FFFFF);
+            }
           } else {
             result = packToF32UI(sign_a, out_exp, sig_out << 16);
           }
@@ -361,10 +420,19 @@ operation(): |
           (table_idx == 126) ? 1 :
           0;
           Bits<16> out_exp_full = 16'h07FD - norm_exp;
-          if ($signed(out_exp_full) == 0 || $signed(out_exp_full) == -1) {
-            Bits<16> shift = (out_exp_full == 0) ? 1 : 2;
+          if (out_exp_full == 16'h0000 || out_exp_full == 16'hFFFF) {
+            Bits<16> shift = (out_exp_full == 16'h0000) ? 1 : 2;
             Bits<64> subnorm_sig = (64'h10000000000000 | sig_out `<< 45) >> shift;
             result = packToF64UI(sign_a, 0, subnorm_sig);
+          } else if (out_exp_full > 16'h07FE) {
+            set_fp_flag(FpFlag::OF);
+            set_fp_flag(FpFlag::NX);
+            if ((mode == RoundingMode::RNE) || (mode == RoundingMode::RMM) ||
+                ((sign_a == 1'b1) ? (mode == RoundingMode::RDN) : (mode == RoundingMode::RUP))) {
+              result = packToF64UI(sign_a, 11'h7FF, 0);
+            } else {
+              result = packToF64UI(sign_a, 11'h7FE, 52'hFFFFFFFFFFFFF);
+            }
           } else {
             result = packToF64UI(sign_a, out_exp_full, sig_out `<< 45);
           }

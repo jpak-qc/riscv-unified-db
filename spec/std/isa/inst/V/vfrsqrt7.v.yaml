@@ -37,7 +37,43 @@ operation(): |
       U32 reg_off = i / elems_per_reg;
       U32 start_bit = (i % elems_per_reg) * state.sew;
       U32 end_bit = start_bit + state.sew - 1;
-      if (state.sew == 32) {
+      if (state.sew == 16) {
+        Bits<16> a = V[vs2 + reg_off][end_bit:start_bit];
+        Bits<1> sign_a = a[15];
+        Bits<5> exp_a = a[14:10];
+        Bits<10> frac_a = a[9:0];
+        Bits<16> result;
+        if (exp_a == 5'h1F && frac_a != 0) {
+          if (is_hp_signaling_nan?(a)) { set_fp_flag(FpFlag::NV); }
+          result = HP_CANONICAL_NAN;
+        } else if (sign_a == 1'b1 && (exp_a != 0 || frac_a != 0)) {
+          set_fp_flag(FpFlag::NV);
+          result = HP_CANONICAL_NAN;
+        } else if (exp_a == 0 && frac_a == 0) {
+          set_fp_flag(FpFlag::DZ);
+          result = packToF16UI(sign_a, 5'h1F, 0);
+        } else if (exp_a == 5'h1F) {
+          result = packToF16UI(0, 0, 0);
+        } else {
+          Bits<8> norm_exp;
+          Bits<10> norm_frac;
+          if (exp_a == 0) {
+            Bits<8> lz = count_leading_zeros(10, frac_a);
+            norm_exp = -(lz);
+            norm_frac = frac_a << (lz + 1);
+          } else {
+            norm_exp = exp_a;
+            norm_frac = frac_a;
+          }
+          Bits<7> table_idx = (norm_exp[0:0] `<< 6) | norm_frac[9:4];
+          Bits<7> sig_out = vfrsqrt7_sig(table_idx);
+          Bits<16> norm_exp_extended =
+            (exp_a == 0 && norm_exp[7] == 1'b1) ? (16'hFF00 | norm_exp) : norm_exp;
+          Bits<16> out_exp = (16'h002C - norm_exp_extended) >> 1;
+          result = packToF16UI(0, out_exp[4:0], sig_out `<< 3);
+        }
+        V[vd + reg_off][end_bit:start_bit] = result;
+      } else if (state.sew == 32) {
         Bits<32> a = V[vs2 + reg_off][end_bit:start_bit];
         Bits<1>  sign_a = signF32UI(a);
         Bits<8>  exp_a  = expF32UI(a);
@@ -195,7 +231,10 @@ operation(): |
           (table_idx == 125) ? 55 :
           (table_idx == 126) ? 54 :
           53;
-          XReg out_exp_full = (16'h017C - norm_exp) >> 1;
+          # norm_exp is two's-complement only for subnormal inputs. Normal
+          # exponents above 127 must remain unsigned.
+          Bits<16> norm_exp_extended = (exp_a == 0 && norm_exp[7] == 1'b1) ? (16'hFF00 | norm_exp) : norm_exp;
+          Bits<16> out_exp_full = (16'h017C - norm_exp_extended) >> 1;
           Bits<8> out_exp = out_exp_full[7:0];
           result = packToF32UI(0, out_exp, sig_out << 16);
         }
