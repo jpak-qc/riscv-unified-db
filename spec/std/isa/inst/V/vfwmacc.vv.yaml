@@ -46,7 +46,12 @@ operation(): |
       U32 dst_reg_off = i / dst_elems_per_reg;
       U32 dst_start = (i % dst_elems_per_reg) * (state.sew << 1);
       U32 dst_end = dst_start + (state.sew << 1) - 1;
-      if (state.sew == 32) {
+      if (state.sew == 16) {
+        Bits<32> a = f16_to_f32(V[vs2 + src_reg_off][src_end:src_start]);
+        Bits<32> b = f16_to_f32(V[vs1 + src_reg_off][src_end:src_start]);
+        Bits<32> c = V[vd + dst_reg_off][dst_end:dst_start];
+        V[vd + dst_reg_off][dst_end:dst_start] = f32_muladd(a, b, c, F32MulAddOp::Softfloat_mulAdd_addC, mode);
+      } else if (state.sew == 32) {
         Bits<64> vs2_f64 = f32_to_f64(V[vs2 + src_reg_off][src_end:src_start]);
         Bits<64> vs1_f64 = f32_to_f64(V[vs1 + src_reg_off][src_end:src_start]);
         Bits<64> vd_f64 = V[vd + dst_reg_off][dst_end:dst_start];

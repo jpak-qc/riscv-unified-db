@@ -13,6 +13,18 @@ require "idlc/passes/find_src_registers"
 CPP_HART_GEN_SRC = $root / "backends" / "cpp_hart_gen"
 CPP_HART_GEN_DST = $resolver.gen_path / "cpp_hart_gen"
 
+def resolved_spec_inputs(config_name)
+  resolved_spec_path = $resolver.resolved_spec_path(config_name)
+  source_spec_path = $root / "spec"
+  FileList[source_spec_path / "**" / "*.yaml"] +
+    FileList[source_spec_path / "**" / "*.isa"] +
+    FileList[source_spec_path / "**" / "*.idl"] +
+    FileList[$root / "cfgs" / "**" / "*.yaml"] +
+    FileList[resolved_spec_path / "**" / "*.yaml"] +
+    FileList[resolved_spec_path / "isa" / "**" / "*.isa"] +
+    FileList[resolved_spec_path / "isa" / "**" / "*.idl"]
+end
+
 OPTION_STR = <<~DESC_OPTIONS.freeze
   Options:
 
@@ -85,7 +97,7 @@ rule %r{#{CPP_HART_GEN_DST}/[^/]+/include/udb/[^/]+\.h(xx)?\.unformatted$} => pr
     "#{CPP_HART_GEN_SRC}/templates/#{fname}.erb",
     __FILE__
   ] + Dir.glob(CPP_HART_GEN_SRC / "lib" / "**" / "*") \
-  + FileList[$resolver.resolved_spec_path(configs_build_name[0][0]) / "**" / "*.yaml"]
+  + resolved_spec_inputs(configs_build_name[0][0])
 } do |t|
   configs, = configs_build_name
   config_name = configs[0]
@@ -138,7 +150,7 @@ rule %r{#{CPP_HART_GEN_DST}/.*/include/udb/cfgs/[^/]+/[^/]+\.h(xx)?\.unformatted
     "#{CPP_HART_GEN_SRC}/lib/csr_template_helpers.rb",
     __FILE__
   ] \
-  + FileList[$resolver.resolved_spec_path(config_name) / "**" / "*.yaml"]
+  + resolved_spec_inputs(config_name)
 } do |t|
   parts = t.name.split("/")
   filename = parts[-1].sub(/\.unformatted$/, "")

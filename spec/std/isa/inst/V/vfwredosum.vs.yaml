@@ -36,18 +36,28 @@ operation(): |
   RoundingMode mode = rm_to_mode(3'b111, $encoding);
   U32 src_elems_per_reg = VLEN >> state.log2_sew;
   U32 dst_elems_per_reg = VLEN >> (state.log2_sew + 1);
-  Bits<64> acc = V[vs1][63:0];
+  Bits<32> acc_f32 = V[vs1][31:0];
+  Bits<64> acc_f64 = V[vs1][63:0];
   for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
     if (vm == 1'b1 || V[0][i] == 1'b1) {
       U32 src_reg_off = i / src_elems_per_reg;
       U32 src_start = (i % src_elems_per_reg) * state.sew;
       U32 src_end = src_start + state.sew - 1;
-      if (state.sew == 32) {
+      if (state.sew == 16) {
+        Bits<32> elem = f16_to_f32(V[vs2 + src_reg_off][src_end:src_start]);
+        acc_f32 = f32_add(acc_f32, elem, mode);
+      } else if (state.sew == 32) {
         Bits<64> elem = f32_to_f64(V[vs2 + src_reg_off][src_end:src_start]);
-        acc = f64_add(acc, elem, mode);
+        acc_f64 = f64_add(acc_f64, elem, mode);
       }
     }
   }
-  V[vd][63:0] = acc;
+  if (CSR[vl].VALUE > 0) {
+    if (state.sew == 16) {
+      V[vd][31:0] = acc_f32;
+    } else if (state.sew == 32) {
+      V[vd][63:0] = acc_f64;
+    }
+  }
   mark_f_state_dirty();
   CSR[vstart].VALUE = 0;
