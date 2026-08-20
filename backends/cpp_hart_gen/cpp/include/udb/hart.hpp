@@ -250,6 +250,18 @@ namespace udb {
                         PossiblyUnknownBits<64> len) {
       return m_soc.pma_applies_Q_(attr, start_paddr.get(), len.get());
     }
+    bool physical_memory_accessible_Q_(PossiblyUnknownBits<64> start_paddr,
+                                       PossiblyUnknownBits<64> len,
+                                       const MemoryOperation& op) {
+      return m_soc.physical_memory_accessible_Q_(start_paddr.get(), len.get(), op);
+    }
+    template <typename LenType, typename AddrType, typename EncodingType>
+    bool read_memory_accessible_Q_(const LenType& len,
+                                   const AddrType& virtual_address,
+                                   const EncodingType&) {
+      return m_soc.physical_memory_accessible_Q_(virtual_address.get(), len.get(),
+                                                MemoryOperation::Read);
+    }
 
     // external interrupt interface
     virtual void set_mmode_ext_int() = 0;

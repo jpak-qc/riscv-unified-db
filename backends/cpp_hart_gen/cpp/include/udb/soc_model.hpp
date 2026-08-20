@@ -54,6 +54,11 @@ namespace udb {
       s.read_physical_memory_64(static_cast<uint64_t>(0))
     } -> std::same_as<uint64_t>;
     {
+      s.physical_memory_accessible_Q_(static_cast<uint64_t>(0),
+                                      static_cast<uint64_t>(0),
+                                      MemoryOperation::ValueType{})
+    } -> std::same_as<uint8_t>;
+    {
       s.write_physical_memory_8(static_cast<uint64_t>(0),
                                 static_cast<uint64_t>(0))
     };

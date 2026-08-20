@@ -12,6 +12,7 @@ require "idlc/passes/find_src_registers"
 
 CPP_HART_GEN_SRC = $root / "backends" / "cpp_hart_gen"
 CPP_HART_GEN_DST = $resolver.gen_path / "cpp_hart_gen"
+UDB_RUBY_INPUTS = FileList[$root / "tools" / "ruby-gems" / "udb" / "lib" / "**" / "*.rb"]
 
 def resolved_spec_inputs(config_name)
   resolved_spec_path = $resolver.resolved_spec_path(config_name)
@@ -22,7 +23,8 @@ def resolved_spec_inputs(config_name)
     FileList[$root / "cfgs" / "**" / "*.yaml"] +
     FileList[resolved_spec_path / "**" / "*.yaml"] +
     FileList[resolved_spec_path / "isa" / "**" / "*.isa"] +
-    FileList[resolved_spec_path / "isa" / "**" / "*.idl"]
+    FileList[resolved_spec_path / "isa" / "**" / "*.idl"] +
+    UDB_RUBY_INPUTS
 end
 
 OPTION_STR = <<~DESC_OPTIONS.freeze
@@ -55,38 +57,54 @@ DESC
 
 # copy the includes to dst
 rule %r{#{CPP_HART_GEN_DST}/.*/include/udb/.*\.hpp$} => proc { |tname|
-  [(CPP_HART_GEN_SRC / "cpp" / "include" / "udb" / File.basename(tname)).to_s]
+  [
+    (CPP_HART_GEN_SRC / "cpp" / "include" / "udb" / File.basename(tname)).to_s,
+    __FILE__,
+  ]
 } do |t|
   src_path = CPP_HART_GEN_SRC / "cpp" / "include" / "udb" / File.basename(t.name)
   FileUtils.mkdir_p File.dirname(t.name)
-  FileUtils.ln_s src_path, t.name
+  FileUtils.rm_f(t.name) if File.symlink?(t.name)
+  FileUtils.cp src_path, t.name
 end
 
 # copy the includes to dst
 rule %r{#{CPP_HART_GEN_DST}/.*/include/udb/.*\.h$} => proc { |tname|
-  [(CPP_HART_GEN_SRC / "c" / "include" / "udb" / File.basename(tname)).to_s]
+  [
+    (CPP_HART_GEN_SRC / "c" / "include" / "udb" / File.basename(tname)).to_s,
+    __FILE__,
+  ]
 } do |t|
   src_path = CPP_HART_GEN_SRC / "c" / "include" / "udb" / File.basename(t.name)
   FileUtils.mkdir_p File.dirname(t.name)
-  FileUtils.ln_s src_path, t.name
+  FileUtils.rm_f(t.name) if File.symlink?(t.name)
+  FileUtils.cp src_path, t.name
 end
 
 # copy the srcs to dst
 rule %r{#{CPP_HART_GEN_DST}/.*/src/.*\.cpp$} => proc { |tname|
-  [(CPP_HART_GEN_SRC / "cpp" / "src" / File.basename(tname)).to_s]
+  [
+    (CPP_HART_GEN_SRC / "cpp" / "src" / File.basename(tname)).to_s,
+    __FILE__,
+  ]
 } do |t|
   src_path = CPP_HART_GEN_SRC / "cpp" / "src" / File.basename(t.name)
   FileUtils.mkdir_p File.dirname(t.name)
-  FileUtils.ln_s src_path, t.name
+  FileUtils.rm_f(t.name) if File.symlink?(t.name)
+  FileUtils.cp src_path, t.name
 end
 
 # copy the tests to dst
 rule %r{#{CPP_HART_GEN_DST}/.*/test/.*\.cpp$} => proc { |tname|
-  [(CPP_HART_GEN_SRC / "cpp" / "test" / File.basename(tname)).to_s]
+  [
+    (CPP_HART_GEN_SRC / "cpp" / "test" / File.basename(tname)).to_s,
+    __FILE__,
+  ]
 } do |t|
   src_path = CPP_HART_GEN_SRC / "cpp" / "test" / File.basename(t.name)
   FileUtils.mkdir_p File.dirname(t.name)
-  FileUtils.ln_s src_path, t.name
+  FileUtils.rm_f(t.name) if File.symlink?(t.name)
+  FileUtils.cp src_path, t.name
 end
 
 # rule for generating when the thing being generated is not config-specific
@@ -183,7 +201,7 @@ rule %r{#{CPP_HART_GEN_DST}/.*/src/cfgs/[^/]+/[^/]+\.cxx\.unformatted$} => proc 
     "#{CPP_HART_GEN_SRC}/lib/template_helpers.rb",
     "#{CPP_HART_GEN_SRC}/lib/csr_template_helpers.rb",
     __FILE__
-  ]
+  ] + resolved_spec_inputs(config_name)
 } do |t|
   parts = t.name.split("/")
   filename = parts[-1].sub(/\.unformatted$/, "")
