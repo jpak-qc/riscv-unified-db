@@ -571,6 +571,30 @@ builtin function pma_applies? {
   }
 }
 
+builtin function physical_memory_accessible? {
+  returns Boolean
+  arguments
+    Bits<PHYS_ADDR_WIDTH> paddr,  #< Start of the physical address region
+    U32                   len,    #< Size of the region, in bits
+    MemoryOperation       op      #< Access type
+  description {
+    Checks if the execution environment can complete a physical memory access
+    for the entire region [paddr, paddr + len).
+  }
+}
+
+builtin function read_memory_accessible? {
+  returns Boolean
+  arguments
+    U32 LEN,
+    XReg virtual_address,
+    Bits<INSTR_ENC_SIZE> encoding
+  description {
+    Checks if a read from the execution environment's physical memory map can
+    complete for the entire region [virtual_address, virtual_address + LEN).
+  }
+}
+
 builtin function atomic_check_then_write_32 {
   returns Boolean
   arguments

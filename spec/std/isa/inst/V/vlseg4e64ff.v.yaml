@@ -46,13 +46,28 @@ operation(): |
   } else {
     dat_emul = 1;
   }
+  Boolean faulted = false;
   for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
-    if (vm == 1'b1 || V[0][i] == 1'b1) {
-      U32 reg_off = i / elems_per_reg;
-      U32 start_bit = (i % elems_per_reg) * 64;
-      U32 end_bit = start_bit + 63;
-      for (U32 f = 0; f < 4; f++) {
-        V[vd + f * dat_emul + reg_off][end_bit:start_bit] = read_memory(64, virtual_address + (i * 4 + f) * 8, $encoding)[63:0];
+    if (!faulted && (vm == 1'b1 || V[0][i] == 1'b1)) {
+      if (i != 0) {
+        for (U32 f = 0; f < 4; f++) {
+          if (!faulted) {
+            XReg field_address = virtual_address + (i * 4 + f) * 8;
+            if (!read_memory_accessible?(64, field_address, $encoding)) {
+              CSR[vl].VALUE = i;
+              faulted = true;
+            }
+          }
+        }
+      }
+      if (!faulted) {
+        U32 reg_off = i / elems_per_reg;
+        U32 start_bit = (i % elems_per_reg) * 64;
+        U32 end_bit = start_bit + 63;
+        for (U32 f = 0; f < 4; f++) {
+          XReg field_address = virtual_address + (i * 4 + f) * 8;
+          V[vd + f * dat_emul + reg_off][end_bit:start_bit] = read_memory(64, field_address, $encoding)[63:0];
+        }
       }
     }
   }

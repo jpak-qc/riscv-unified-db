@@ -50,8 +50,8 @@ void <%= name_of(:csr_field, cfg_arch, csr.name, field.name) %><SocType>::reset(
   <%- ast = field.pruned_reset_value_ast -%>
   <%- if ast.nil? -%>
   <%- v = field.reset_value -%>
-  <%- if v == "UNDEFINED_LEGAL" || v == "UNDEFINED_LEGAL_DETERMINISTIC" -%>
-  _hw_write(0_b); // zero is always a legal reset value
+  <%- if v == "UNDEFINED_LEGAL" -%>
+  m_value = ValueType(); // default constructor is entirely undefined
   <%- else -%>
   <%- if cfg_arch.multi_xlen? && field.dynamic_location? -%>
   _hw_write(<%= v %>_b, m_hart->xlen().to_defined());

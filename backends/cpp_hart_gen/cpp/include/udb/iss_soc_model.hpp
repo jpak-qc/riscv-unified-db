@@ -4,6 +4,8 @@
 
 #include <cstdint>
 #include <cstdio>
+#include <optional>
+#include <stdexcept>
 #include <vector>
 
 #include "udb/soc_model.hpp"
@@ -60,9 +62,7 @@ namespace udb {
 
       // subclasses only need to override these functions:
       virtual uint64_t read(uint64_t addr, size_t bytes) {
-        if (addr < m_offset || addr - m_offset + bytes > m_data.size()) {
-          return 0;
-        }
+        check_bounds(addr, bytes);
         MemAccessRange memAccessData(addr, bytes);
         this->Notify(MEMREAD_EVENT, &memAccessData);
 
@@ -81,9 +81,7 @@ namespace udb {
       }
 
       void write(uint64_t addr, uint64_t data, size_t bytes) {
-        if (addr < m_offset || addr - m_offset + bytes > m_data.size()) {
-          return;
-        }
+        check_bounds(addr, bytes);
         MemAccess memAccess(addr, bytes, data);
         switch (bytes) {
           case 1:
@@ -102,6 +100,16 @@ namespace udb {
             __builtin_unreachable();
         }
         this->Notify(MEMWRITE_EVENT, &memAccess);
+      }
+
+      bool contains(uint64_t addr, size_t bytes) const {
+        if (addr < m_offset) {
+          return false;
+        }
+
+        const uint64_t offset = addr - m_offset;
+        const uint64_t size = m_data.size();
+        return offset <= size && bytes <= size - offset;
       }
 
       int memcpy_from_host(uint64_t guest_paddr, const uint8_t *host_ptr,
@@ -128,6 +136,26 @@ namespace udb {
       }
 
      private:
+      void check_bounds(uint64_t addr, size_t bytes) const {
+        if (contains(addr, bytes)) {
+          return;
+        }
+
+        if (addr < m_offset) {
+          throw std::out_of_range(fmt::format(
+              "Physical memory access below the configured RAM region: address 0x{:x}, size {}",
+              addr, bytes));
+        }
+
+        const uint64_t offset = addr - m_offset;
+        const uint64_t size = m_data.size();
+        if (offset > size || bytes > size - offset) {
+          throw std::out_of_range(fmt::format(
+              "Physical memory access outside the configured RAM region: address 0x{:x}, size {}",
+              addr, bytes));
+        }
+      }
+
       std::vector<uint8_t> m_data;
       uint64_t m_offset;
       uint8_t *m_addend = nullptr;
@@ -142,8 +170,12 @@ namespace udb {
     };
 
    public:
-    IssSocModel(uint64_t size, uint64_t base_addr)
-        : m_memory(size, base_addr, this) {}
+    IssSocModel(uint64_t size, uint64_t base_addr,
+                std::optional<uint64_t> uart_base = std::nullopt,
+                std::optional<uint64_t> clint_base = std::nullopt)
+        : m_memory(size, base_addr, this),
+          m_uart_base(uart_base),
+          m_clint_base(clint_base) {}
     IssSocModel() = delete;
     ~IssSocModel() = default;
 
@@ -172,31 +204,77 @@ namespace udb {
     void order_pgtbl_reads_after_vmafence() {}
 
     uint64_t read_physical_memory_8(uint64_t paddr) {
-      // NS16550 UART stub at 0x10000000: LSR bit 5 (THR empty) always set
-      if (paddr == 0x10000005ULL) return 0x20;
+      if (is_uart_address(paddr)) {
+        return uart_read(paddr - *m_uart_base);
+      }
+      if (is_clint_address(paddr)) {
+        return clint_read(paddr - *m_clint_base, 1);
+      }
       return m_memory.read(paddr, 1);
     }
     uint64_t read_physical_memory_16(uint64_t paddr) {
+      if (is_clint_address(paddr)) {
+        return clint_read(paddr - *m_clint_base, 2);
+      }
       return m_memory.read(paddr, 2);
     }
     uint64_t read_physical_memory_32(uint64_t paddr) {
+      if (is_clint_address(paddr)) {
+        return clint_read(paddr - *m_clint_base, 4);
+      }
       return m_memory.read(paddr, 4);
     }
     uint64_t read_physical_memory_64(uint64_t paddr) {
+      if (is_clint_address(paddr)) {
+        return clint_read(paddr - *m_clint_base, 8);
+      }
       return m_memory.read(paddr, 8);
     }
+    uint8_t physical_memory_accessible_Q_(uint64_t paddr, uint64_t len,
+                                          MemoryOperation::ValueType op) const {
+      if (len == 0 || (len % 8) != 0) {
+        return 0;
+      }
+
+      const size_t bytes = len / 8;
+      if (op == MemoryOperation::Fetch) {
+        return m_memory.contains(paddr, bytes);
+      }
+
+      return m_memory.contains(paddr, bytes) ||
+             is_uart_access(paddr, bytes) ||
+             is_clint_access(paddr, bytes);
+    }
     void write_physical_memory_8(uint64_t paddr, uint64_t value) {
-      // NS16550 UART stub at 0x10000000: print characters to stdout
-      if (paddr == 0x10000000ULL) { putchar(static_cast<int>(value & 0xff)); return; }
+      if (is_uart_address(paddr)) {
+        uart_write(paddr - *m_uart_base, value);
+        return;
+      }
+      if (is_clint_address(paddr)) {
+        clint_write(paddr - *m_clint_base, value, 1);
+        return;
+      }
       m_memory.write(paddr, value, 1);
     }
     void write_physical_memory_16(uint64_t paddr, uint64_t value) {
+      if (is_clint_address(paddr)) {
+        clint_write(paddr - *m_clint_base, value, 2);
+        return;
+      }
       m_memory.write(paddr, value, 2);
     }
     void write_physical_memory_32(uint64_t paddr, uint64_t value) {
+      if (is_clint_address(paddr)) {
+        clint_write(paddr - *m_clint_base, value, 4);
+        return;
+      }
       m_memory.write(paddr, value, 4);
     }
     void write_physical_memory_64(uint64_t paddr, uint64_t value) {
+      if (is_clint_address(paddr)) {
+        clint_write(paddr - *m_clint_base, value, 8);
+        return;
+      }
       m_memory.write(paddr, value, 8);
     }
 
@@ -367,7 +445,119 @@ namespace udb {
     void sync_write_after_read_device(bool, uint32_t) {}
 
    private:
+    static constexpr uint64_t kUartSize = 8;
+    static constexpr uint64_t kUartThrOffset = 0;
+    static constexpr uint64_t kUartLsrOffset = 5;
+    static constexpr uint64_t kClintSize = 0xc000;
+    static constexpr uint64_t kClintMsipOffset = 0x0000;
+    static constexpr uint64_t kClintMtimecmpOffset = 0x4000;
+    static constexpr uint64_t kClintMtimeOffset = 0xbff8;
+
+    bool is_uart_address(uint64_t paddr) const {
+      return m_uart_base.has_value() && paddr >= *m_uart_base &&
+             paddr - *m_uart_base < kUartSize;
+    }
+
+    bool is_uart_access(uint64_t paddr, size_t bytes) const {
+      return m_uart_base.has_value() && paddr >= *m_uart_base &&
+             paddr - *m_uart_base <= kUartSize &&
+             bytes <= kUartSize - (paddr - *m_uart_base);
+    }
+
+    bool is_clint_address(uint64_t paddr) const {
+      return m_clint_base.has_value() && paddr >= *m_clint_base &&
+             paddr - *m_clint_base < kClintSize;
+    }
+
+    bool is_clint_access(uint64_t paddr, size_t bytes) const {
+      if (!is_clint_address(paddr)) {
+        return false;
+      }
+
+      const uint64_t offset = paddr - *m_clint_base;
+      return clint_access_fits(offset, bytes, kClintMsipOffset, 4) ||
+             clint_access_fits(offset, bytes, kClintMtimecmpOffset, 8) ||
+             clint_access_fits(offset, bytes, kClintMtimeOffset, 8);
+    }
+
+    uint64_t uart_read(uint64_t offset) const {
+      // Minimal NS16550 console model: the transmit holding register is
+      // always ready and unimplemented registers read as zero.
+      return offset == kUartLsrOffset ? 0x20 : 0;
+    }
+
+    void uart_write(uint64_t offset, uint64_t value) {
+      if (offset == kUartThrOffset) {
+        std::putchar(static_cast<int>(value & 0xff));
+        std::fflush(stdout);
+      }
+    }
+
+    static bool clint_access_fits(uint64_t offset, size_t bytes,
+                                  uint64_t register_offset,
+                                  size_t register_bytes) {
+      return offset >= register_offset &&
+             offset - register_offset <= register_bytes &&
+             bytes <= register_bytes - (offset - register_offset);
+    }
+
+    static uint64_t low_bits_mask(size_t bytes) {
+      return bytes == sizeof(uint64_t) ? ~uint64_t{0}
+                                       : (uint64_t{1} << (bytes * 8)) - 1;
+    }
+
+    static uint64_t read_clint_register(uint64_t value, uint64_t offset,
+                                        uint64_t register_offset,
+                                        size_t bytes) {
+      return (value >> ((offset - register_offset) * 8)) & low_bits_mask(bytes);
+    }
+
+    static void write_clint_register(uint64_t& register_value, uint64_t value,
+                                     uint64_t offset, uint64_t register_offset,
+                                     size_t bytes) {
+      const uint64_t shift = (offset - register_offset) * 8;
+      const uint64_t mask = low_bits_mask(bytes) << shift;
+      register_value = (register_value & ~mask) | ((value & low_bits_mask(bytes)) << shift);
+    }
+
+    uint64_t clint_read(uint64_t offset, size_t bytes) const {
+      if (clint_access_fits(offset, bytes, kClintMsipOffset, 4)) {
+        return read_clint_register(m_clint_msip, offset, kClintMsipOffset, bytes);
+      }
+      if (clint_access_fits(offset, bytes, kClintMtimecmpOffset, 8)) {
+        return read_clint_register(m_clint_mtimecmp, offset, kClintMtimecmpOffset, bytes);
+      }
+      if (clint_access_fits(offset, bytes, kClintMtimeOffset, 8)) {
+        return read_clint_register(m_clint_mtime, offset, kClintMtimeOffset, bytes);
+      }
+      throw std::out_of_range(fmt::format(
+          "Unsupported CLINT access: offset 0x{:x}, size {}", offset, bytes));
+    }
+
+    void clint_write(uint64_t offset, uint64_t value, size_t bytes) {
+      if (clint_access_fits(offset, bytes, kClintMsipOffset, 4)) {
+        write_clint_register(m_clint_msip, value, offset, kClintMsipOffset, bytes);
+        m_clint_msip &= 0xffffffff;
+        return;
+      }
+      if (clint_access_fits(offset, bytes, kClintMtimecmpOffset, 8)) {
+        write_clint_register(m_clint_mtimecmp, value, offset, kClintMtimecmpOffset, bytes);
+        return;
+      }
+      if (clint_access_fits(offset, bytes, kClintMtimeOffset, 8)) {
+        write_clint_register(m_clint_mtime, value, offset, kClintMtimeOffset, bytes);
+        return;
+      }
+      throw std::out_of_range(fmt::format(
+          "Unsupported CLINT access: offset 0x{:x}, size {}", offset, bytes));
+    }
+
     DenseMemory m_memory;
+    std::optional<uint64_t> m_uart_base;
+    std::optional<uint64_t> m_clint_base;
+    uint64_t m_clint_msip = 0;
+    uint64_t m_clint_mtimecmp = ~uint64_t{0};
+    uint64_t m_clint_mtime = 0;
 
   };
 

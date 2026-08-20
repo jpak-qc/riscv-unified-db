@@ -51,6 +51,10 @@ struct NullSocModel {
   uint64_t read_physical_memory_16(uint64_t) { return 0; }
   uint64_t read_physical_memory_32(uint64_t) { return 0; }
   uint64_t read_physical_memory_64(uint64_t) { return 0; }
+  uint8_t physical_memory_accessible_Q_(uint64_t, uint64_t,
+                                        udb::MemoryOperation::ValueType) {
+    return 1;
+  }
   void write_physical_memory_8(uint64_t, uint64_t) {}
   void write_physical_memory_16(uint64_t, uint64_t) {}
   void write_physical_memory_32(uint64_t, uint64_t) {}

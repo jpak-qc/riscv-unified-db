@@ -53,18 +53,32 @@
     sd   t0, 0(t1);                       \
     1: j 1b;                              \
 
-// IO macros — no console available in UDB ISS bare-metal; leave as no-ops.
+// IO macros — emit ACT4 summary strings through the ISS minimal UART.
 #define RVMODEL_IO_INIT(_R1, _R2, _R3)
-#define RVMODEL_IO_WRITE_STR(_R1, _R2, _R3, _STR_PTR)
+#define RVMODEL_IO_WRITE_STR(_R1, _R2, _R3, _STR_PTR) \
+1:                           ;                        \
+  lbu  _R1, 0(_STR_PTR)      ;                        \
+  beqz _R1, 3f               ;                        \
+2:                           ;                        \
+  li   _R2, 0x10000005       ;                        \
+  lbu  _R3, 0(_R2)           ;                        \
+  andi _R3, _R3, 0x20        ;                        \
+  beqz _R3, 2b               ;                        \
+  li   _R2, 0x10000000       ;                        \
+  sb   _R1, 0(_R2)           ;                        \
+  addi _STR_PTR, _STR_PTR, 1 ;                        \
+  j 1b                       ;                        \
+3:
 #define RVMODEL_DATA_BEGIN
 #define RVMODEL_DATA_END
 
-// Timer and interrupt macros — no interrupt/timer support in UDB bare-metal ISS.
-// Define as no-ops to satisfy check_defines.h requirements.
+// The minimal CLINT model accepts register accesses but does not generate timer
+// or software interrupts. The common ACT4 startup code clears mtimecmp even
+// for these unprivileged vector suites, so use the platform's real addresses.
 #define RVMODEL_INTERRUPT_LATENCY  0
 #define RVMODEL_TIMER_INT_SOON_DELAY  0
-#define RVMODEL_MTIME_ADDRESS  0
-#define RVMODEL_MTIMECMP_ADDRESS  0
+#define RVMODEL_MTIME_ADDRESS  0x0200BFF8
+#define RVMODEL_MTIMECMP_ADDRESS  0x02004000
 #define RVMODEL_SET_MEXT_INT(_R1, _R2)
 #define RVMODEL_CLR_MEXT_INT(_R1, _R2)
 #define RVMODEL_SET_MSW_INT(_R1, _R2)
@@ -73,6 +87,6 @@
 #define RVMODEL_CLR_SEXT_INT(_R1, _R2)
 #define RVMODEL_SET_SSW_INT(_R1, _R2)
 #define RVMODEL_CLR_SSW_INT(_R1, _R2)
-#define RVMODEL_MSIP_ADDRESS  0
+#define RVMODEL_MSIP_ADDRESS  0x02000000
 
 #endif // RVMODEL_MACROS_H
