@@ -239,6 +239,7 @@ struct TranslationResult {
   Bits<PHYS_ADDR_WIDTH> paddr;
   Pbmt pbmt;
   PteFlags pte_flags;
+  Bits<4> pams;
 }
 
 struct CachedTranslationResult {
@@ -1274,21 +1275,25 @@ function effective_ldst_mode {
 }
 
 
-function pmp_check {
+function pmp_check_as_mode {
   returns Boolean
-  arguments Bits<PHYS_ADDR_WIDTH> paddr, U32 access_size, MemoryOperation type
+  arguments
+    Bits<PHYS_ADDR_WIDTH> paddr,
+    U32 access_size,
+    MemoryOperation type,
+    PrivilegeMode access_mode
   description {
-    Given a physical address and operation type, return whether or not the access is allowed by PMP.
+    Given a physical address, operation type, and effective privilege mode,
+    return whether or not the access is allowed by PMP.
   }
   body {
-    PrivilegeMode mode = effective_ldst_mode();
     PmpMatchResult match_result;
     PmpCfg cfg;
 
     (match_result, cfg) = pmp_match(paddr, access_size);
 
     if (match_result == PmpMatchResult::FullMatch) {
-      if (mode == PrivilegeMode::M && (cfg.L == 0)) {
+      if (access_mode == PrivilegeMode::M && (cfg.L == 0)) {
         # when the region is not locked, all M-mode access pass
         return true;
       }
@@ -1304,7 +1309,7 @@ function pmp_check {
       }
     } else if (match_result == PmpMatchResult::NoMatch) {
       # with no matched, M-mode passes and everything else fails
-      if (mode == PrivilegeMode::M) {
+      if (access_mode == PrivilegeMode::M) {
         return true;
       } else {
         return false;
@@ -1317,6 +1322,241 @@ function pmp_check {
     }
 
     # fall-through passes
+    return true;
+  }
+}
+
+function pmp_check {
+  returns Boolean
+  arguments Bits<PHYS_ADDR_WIDTH> paddr, U32 access_size, MemoryOperation type
+  description {
+    Given a physical address and operation type, return whether or not the
+    access is allowed by PMP using the effective privilege mode for an
+    explicit load or store.
+  }
+  body {
+    return pmp_check_as_mode(paddr, access_size, type, effective_ldst_mode());
+  }
+}
+
+function mpt_xwr_allows {
+  returns Boolean
+  arguments Bits<3> xwr, MemoryOperation type
+  description {
+    Returns whether an MPT X/W/R permission tuple permits an access. The two
+    write-without-read encodings are reserved and never permit an access.
+  }
+  body {
+    if (xwr == 0b010 || xwr == 0b110) {
+      return false;
+    }
+
+    if (type == MemoryOperation::Fetch) {
+      return xwr[2] == 1;
+    } else if (type == MemoryOperation::Read) {
+      return xwr[0] == 1;
+    } else if (type == MemoryOperation::Write) {
+      return xwr[1] == 1;
+    } else {
+      assert(type == MemoryOperation::ReadModifyWrite, "Unexpected memory operation");
+      return xwr[1] == 1 && xwr[0] == 1;
+    }
+  }
+}
+
+function mpt_mpte_readable? {
+  returns Boolean
+  arguments Bits<PHYS_ADDR_WIDTH> mpte_paddr, U32 mpte_size
+  description {
+    Returns whether an implicit MPT-entry read is permitted by PMA and PMP.
+    MPT walks access their entries as implicit M-mode accesses and must not
+    recursively invoke MPT protection.
+  }
+  body {
+    if (!pma_applies?(PmaAttribute::HardwarePageTableRead, mpte_paddr, mpte_size)) {
+      return false;
+    }
+    if (NUM_PMP_ENTRIES > 0 &&
+        !pmp_check_as_mode(mpte_paddr, mpte_size, MemoryOperation::Read, PrivilegeMode::M)) {
+      return false;
+    }
+    return true;
+  }
+}
+
+function mpt_page_walk_32 {
+  returns Boolean
+  arguments Bits<PHYS_ADDR_WIDTH> paddr, MemoryOperation type
+  description {
+    Looks up a single supervisor physical address in a Smmpt34 memory
+    protection table.
+  }
+  body {
+    # Smmpt34 protects a 34-bit supervisor physical address space.
+    if (paddr >> 34 != 0) {
+      return false;
+    }
+
+    Bits<PHYS_ADDR_WIDTH> table_paddr = CSR[mmpt].PPN << 12;
+
+    for (U32 i = 1; i >= 0; i--) {
+      U32 index;
+      if (i == 1) {
+        index = (paddr >> 25) & 0x1ff;
+      } else {
+        index = (paddr >> 15) & 0x3ff;
+      }
+
+      Bits<PHYS_ADDR_WIDTH> mpte_paddr = table_paddr + index * 4;
+      if (!mpt_mpte_readable?(mpte_paddr, 32)) {
+        return false;
+      }
+
+      Bits<32> mpte = read_physical_memory(32, mpte_paddr);
+      if (mpte[0] == 0) {
+        return false;
+      }
+
+      if (mpte[1] == 0) {
+        # Non-leaf entries contain only a PPN. N is reserved in a pointer.
+        if (mpte[9:2] != 0 || i == 0) {
+          return false;
+        }
+        table_paddr = mpte[31:10] << 12;
+      } else {
+        # Bits 7:3 are reserved in all valid leaf MPTEs.
+        if (mpte[7:3] != 0) {
+          return false;
+        }
+
+        Bits<3> xwr;
+        if (mpte[2] == 1) {
+          # Smmpt34 currently defines only G=6 for NAPOT leaf entries.
+          if (mpte[31:16] != 0 || mpte[11] != 0 || mpte[15:12] != 6) {
+            return false;
+          }
+          xwr = mpte[10:8];
+        } else {
+          U32 pi = (i == 0) ? paddr[14:12] : paddr[24:22];
+          xwr = mpte[10 + 3*pi:8 + 3*pi];
+        }
+        return mpt_xwr_allows(xwr, type);
+      }
+    }
+    unreachable();
+  }
+}
+
+function mpt_page_walk_64 {
+  returns Boolean
+  arguments
+    Bits<PHYS_ADDR_WIDTH> paddr,
+    U32 protected_pa_width,
+    U32 levels,
+    Boolean root_is_32k,
+    MemoryOperation type
+  description {
+    Looks up a single supervisor physical address in a Smmpt43, Smmpt52, or
+    Smmpt64 memory protection table.
+  }
+  body {
+    if (protected_pa_width < 64 && paddr >> protected_pa_width != 0) {
+      return false;
+    }
+
+    Bits<PHYS_ADDR_WIDTH> table_paddr = CSR[mmpt].PPN << 12;
+
+    for (U32 i = levels - 1; i >= 0; i--) {
+      U32 index_width = (root_is_32k && i == levels - 1) ? 12 : 9;
+      U32 index = (paddr >> (16 + 9*i)) & ((1 << index_width) - 1);
+      Bits<PHYS_ADDR_WIDTH> mpte_paddr = table_paddr + index * 8;
+      if (!mpt_mpte_readable?(mpte_paddr, 64)) {
+        return false;
+      }
+
+      Bits<64> mpte = read_physical_memory(64, mpte_paddr);
+      if (mpte[0] == 0) {
+        return false;
+      }
+
+      if (mpte[1] == 0) {
+        # Non-leaf entries contain only a PPN. N and the low reserved field
+        # must be zero, as must the high reserved field.
+        if (mpte[63:54] != 0 || mpte[9:2] != 0 || i == 0) {
+          return false;
+        }
+        table_paddr = mpte[53:10] << 12;
+      } else {
+        # Bits 7:3 are reserved in all valid leaf MPTEs.
+        if (mpte[7:3] != 0) {
+          return false;
+        }
+
+        Bits<3> xwr;
+        if (mpte[2] == 1) {
+          # Smmpt43/52/64 currently define only G=4 for NAPOT leaves.
+          if (mpte[63:16] != 0 || mpte[11] != 0 || mpte[15:12] != 4) {
+            return false;
+          }
+          xwr = mpte[10:8];
+        } else {
+          if (mpte[63:56] != 0) {
+            return false;
+          }
+          U32 pi = (i == 0) ? paddr[15:12] :
+                               ((paddr >> (12 + 9*i)) & 0xf);
+          xwr = mpte[10 + 3*pi:8 + 3*pi];
+        }
+        return mpt_xwr_allows(xwr, type);
+      }
+    }
+    unreachable();
+  }
+}
+
+function mpt_check {
+  returns Boolean
+  arguments Bits<PHYS_ADDR_WIDTH> paddr, U32 access_size, MemoryOperation type
+  description {
+    Returns whether a physical access is permitted by the active Smmpt MPT.
+    Each byte is checked so an access that spans MPT permission ranges is
+    rejected unless every byte is permitted.
+  }
+  body {
+    if (MXLEN == 32) {
+      if (CSR[mmpt].MODE == 0) {
+        return true;
+      }
+      if (!implemented?(ExtensionName::Smmpt34) || CSR[mmpt].MODE != 1) {
+        return false;
+      }
+      for (U32 byte = 0; byte < access_size / 8; byte++) {
+        if (!mpt_page_walk_32(paddr + byte, type)) {
+          return false;
+        }
+      }
+    } else {
+      if (CSR[mmpt].MODE == 0) {
+        return true;
+      }
+      for (U32 byte = 0; byte < access_size / 8; byte++) {
+        if (CSR[mmpt].MODE == 1 && implemented?(ExtensionName::Smmpt43)) {
+          if (!mpt_page_walk_64(paddr + byte, 43, 3, false, type)) {
+            return false;
+          }
+        } else if (CSR[mmpt].MODE == 2 && implemented?(ExtensionName::Smmpt52)) {
+          if (!mpt_page_walk_64(paddr + byte, 52, 4, false, type)) {
+            return false;
+          }
+        } else if (CSR[mmpt].MODE == 3 && implemented?(ExtensionName::Smmpt64)) {
+          if (!mpt_page_walk_64(paddr + byte, 64, 5, true, type)) {
+            return false;
+          }
+        } else {
+          return false;
+        }
+      }
+    }
     return true;
   }
 }
@@ -1344,6 +1584,14 @@ function access_check {
       if (!pmp_check(paddr[PHYS_ADDR_WIDTH-1:0], access_size, type)) {
         raise(fault_type, from_mode, vaddr);
       }
+    }
+
+    # Smmpt protects explicit accesses and implicit VS/G-stage page-table
+    # accesses made with an effective privilege mode below M.
+    if (implemented?(ExtensionName::Smsd) &&
+        from_mode != PrivilegeMode::M &&
+        !mpt_check(paddr, access_size, type)) {
+      raise(fault_type, from_mode, vaddr);
     }
   }
 }
@@ -1592,6 +1840,7 @@ function translate_gstage {
     if (!implemented?(ExtensionName::H) || effective_mode == PrivilegeMode::S || effective_mode == PrivilegeMode::U) {
       # there is no gstage page walk
       result.paddr = gpaddr;
+      result.pams = 0;
       return result;
     }
 
@@ -1601,6 +1850,7 @@ function translate_gstage {
     if (GSTAGE_MODE_BARE && CSR[hgatp].MODE == $bits(HgatpMode::Bare)) {
       # bare mode
       result.paddr = gpaddr;
+      result.pams = 0;
       return result;
     } else if (SV32X4_TRANSLATION && CSR[hgatp].MODE == $bits(HgatpMode::Sv32x4)) {
       # Sv39
@@ -2001,9 +2251,12 @@ function gstage_page_walk {
         }
 
         # ensure remaining PPN bits are zero, otherwise there is a misaligned super page
-        if ((i > 0) && (pte[(i-1)*VPN_SIZE:0] != 0)) {
+        if ((i > 0) && (pte[i*VPN_SIZE + 10:10] != 0)) {
           raise_guest_page_fault(op, gpaddr, vaddr, tinst, effective_mode);
         }
+
+        Bits<PA_SIZE> paddr_base = pte[PA_SIZE-3:i*VPN_SIZE + 10] `<< (i*VPN_SIZE + 12);
+        Bits<PA_SIZE> offset = gpaddr[i*VPN_SIZE + 11:0];
 
         # check access and dirty bits
         if ((pte_flags.A == 0)         # access is clear
@@ -2050,11 +2303,12 @@ function gstage_page_walk {
               i = i + 1;
             } else {
               # successful translation and update
-              result.paddr = pte_paddr;
+              result.paddr = paddr_base + offset;
               if ((xlen() == 64) && (PTESIZE >= 64)) {
                 result.pbmt = $enum(Pbmt, pte[62:61]);
               }
               result.pte_flags = pte_flags;
+              result.pams = ((VA_SIZE != 32) && pamse) ? pte[60:57] : 0;
               return result;
             }
           } else {
@@ -2062,6 +2316,15 @@ function gstage_page_walk {
             raise_guest_page_fault(op, gpaddr, vaddr, tinst, effective_mode);
           }
         }
+
+        # translation succeeded
+        result.paddr = paddr_base + offset;
+        if ((xlen() == 64) && (PTESIZE >= 64)) {
+          result.pbmt = $enum(Pbmt, pte[62:61]);
+        }
+        result.pte_flags = pte_flags;
+        result.pams = ((VA_SIZE != 32) && pamse) ? pte[60:57] : 0;
+        return result;
 
       } else {
         # pointer to next level
@@ -2414,6 +2677,7 @@ function stage1_page_walk {
                 result.pbmt = pte_phys.pbmt == Pbmt::PMA ? $enum(Pbmt, pte[62:61]) : pte_phys.pbmt;
               }
               result.pte_flags = pte_flags;
+              result.pams = pamse ? pte[60:57] : pte_phys.pams;
               return result;
             }
           } else {
@@ -2436,6 +2700,7 @@ function stage1_page_walk {
           result.pbmt = pte_phys.pbmt == Pbmt::PMA ? $enum(Pbmt, pte[62:61]) : pte_phys.pbmt;
         }
         result.pte_flags = pte_flags;
+        result.pams = pamse ? pte[60:57] : pte_phys.pams;
         return result;
       } else {
         # found a pointer to the next level
@@ -2517,6 +2782,7 @@ function translate {
     if (effective_mode == PrivilegeMode::M) {
       # there is no translation in M-mode
       result.paddr = vaddr;
+      result.pams = 0;
       return result;
     }
 
@@ -2537,6 +2803,7 @@ function translate {
 
     if (translation_mode == SatpMode::Bare) {
       result.paddr = vaddr;
+      result.pams = 0;
     } else if (xlen() == 32 && translation_mode == SatpMode::Sv32) {
       # Sv32 page table walk
       result = stage1_page_walk(32, 34, 32, 2, vaddr, op, effective_mode, encoding);
