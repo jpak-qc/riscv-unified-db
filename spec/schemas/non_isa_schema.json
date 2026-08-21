@@ -65,6 +65,81 @@
         "additionalProperties": false
       }
     },
+    "register_blocks": {
+      "type": "array",
+      "description": "Structured register-block definitions for a non-ISA specification whose base address is platform-defined.",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "description",
+          "alignment",
+          "endianness",
+          "registers"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$"
+          },
+          "description": {
+            "$ref": "schema_defs.json#/$defs/spec_text"
+          },
+          "alignment": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "endianness": {
+            "enum": ["little", "big"]
+          },
+          "registers": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/non_isa_register" }
+          },
+          "operation_layouts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["name", "opcode", "description", "registers"],
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "pattern": "^[A-Z][A-Z0-9_]*$"
+                },
+                "opcode": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 255
+                },
+                "description": {
+                  "$ref": "schema_defs.json#/$defs/spec_text"
+                },
+                "registers": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["name", "fields"],
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "pattern": "^[a-z][a-z0-9_]*$"
+                      },
+                      "fields": {
+                        "type": "array",
+                        "items": { "$ref": "#/$defs/non_isa_register_field" }
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
     "references": {
       "type": "array",
       "description": "External references and links",
@@ -98,5 +173,58 @@
       "description": "License under which this specification is released"
     }
   },
-  "additionalProperties": false
+  "additionalProperties": false,
+  "$defs": {
+    "non_isa_register_field": {
+      "type": "object",
+      "required": ["name", "location", "description"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9_]*$"
+        },
+        "location": {
+          "oneOf": [
+            { "type": "integer", "minimum": 0 },
+            { "type": "string", "pattern": "^[0-9]+-[0-9]+$" }
+          ]
+        },
+        "access": {
+          "enum": ["RO", "RW", "WARL"]
+        },
+        "description": {
+          "$ref": "schema_defs.json#/$defs/spec_text"
+        }
+      },
+      "additionalProperties": false
+    },
+    "non_isa_register": {
+      "type": "object",
+      "required": ["name", "offset", "length", "access", "description"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "offset": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "length": {
+          "enum": [32, 64]
+        },
+        "access": {
+          "enum": ["RO", "RW"]
+        },
+        "description": {
+          "$ref": "schema_defs.json#/$defs/spec_text"
+        },
+        "fields": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/non_isa_register_field" }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
 }

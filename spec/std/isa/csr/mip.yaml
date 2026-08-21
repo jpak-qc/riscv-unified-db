@@ -425,6 +425,18 @@ fields:
     definedBy:
       extension:
         name: Sscofpmf
+  MSDEIP:
+    location: 14
+    description: |
+      *Machine Supervisor-domain External Interrupt Pending*
+
+      Set when any enabled supervisor interrupt domain has a pending external
+      interrupt. This is the pending bit for the Smsdia MSDEI interrupt.
+    type: RO-H
+    reset_value: 0
+    definedBy:
+      extension:
+        name: Smsdia
 sw_read(): |
   # OR in the hidden smode external interrupt
   return

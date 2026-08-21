@@ -1,0 +1,225 @@
+# Copyright (c) RISC-V International
+# SPDX-License-Identifier: CC-BY-4.0
+
+# yaml-language-server: $schema=../../schemas/non_isa_schema.json
+
+$schema: non_isa_schema.json#
+kind: non-isa specification
+name: IomptChecker
+long_name: I/O Memory Protection Table Checker
+version: "0.9.0"
+description: |
+  An I/O MPT Checker classifies device-originated transactions by supervisor
+  domain and checks the associated MPT before a transaction is allowed to reach
+  memory. The checker uses a platform-defined, memory-mapped register block.
+
+  This record captures the register interface only. It deliberately does not
+  model device transport, cache invalidation completion, MPT enforcement, or
+  error delivery behavior.
+register_blocks:
+  - name: iompt_checker
+    description: |
+      Register block for one I/O MPT Checker instance. The base address is
+      platform-defined and must be at least 8-byte aligned. All registers use
+      little-endian byte order and support aligned 32-bit accesses.
+    alignment: 8
+    endianness: little
+    registers:
+      - name: capabilities
+        offset: 0
+        length: 32
+        access: RO
+        description: Reports I/O MPT Checker capabilities.
+        fields:
+          - name: VER
+            location: 7-0
+            access: RO
+            description: Major/minor specification version.
+          - name: CUSTOM
+            location: 31-28
+            access: RO
+            description: Implementation-defined capability bits.
+      - name: status
+        offset: 4
+        length: 32
+        access: RO
+        description: Reports completion status of the most recently requested operation.
+        fields:
+          - name: CODE
+            location: 7-0
+            access: RO
+            description: Operation status code; one denotes successful completion.
+          - name: BUSY
+            location: 31
+            access: RO
+            description: Set while a command or control change is in progress.
+      - name: control
+        offset: 8
+        length: 32
+        access: RW
+        description: Selects the operating mode of the I/O MPT Checker.
+        fields:
+          - name: MODE
+            location: 3-0
+            access: WARL
+            description: "0: Off; 1: Bare; 2: On; 3-13 reserved; 14-15 custom."
+      - name: command
+        offset: 12
+        length: 32
+        access: RW
+        description: Starts an operation using the opcode and operation-specific operands.
+        fields:
+          - name: OP
+            location: 7-0
+            access: WARL
+            description: Operation opcode.
+      - name: data1
+        offset: 16
+        length: 64
+        access: RW
+        description: First operation-specific input/output operand.
+      - name: data2
+        offset: 24
+        length: 64
+        access: RW
+        description: Second operation-specific input/output operand.
+    operation_layouts:
+      - name: IOFENCE
+        opcode: 1
+        description: Commits previously processed I/O requests and configuration updates to the global ordering point.
+        registers:
+          - name: command
+            fields:
+              - name: OP
+                location: 7-0
+                description: Must be `IOFENCE` (1).
+      - name: SET_SDCL_ENTRY
+        opcode: 2
+        description: Configures a supervisor-domain classification rule.
+        registers:
+          - name: command
+            fields:
+              - name: RULEID
+                location: 15-8
+                description: Supervisor-domain classification rule identifier.
+          - name: data1
+            fields:
+              - name: SRC_IDT
+                location: 3-0
+                description: Source identifier type.
+              - name: SRC_IDM
+                location: 5-4
+                description: Source identifier matching mode.
+              - name: TEE_FLT
+                location: 7-6
+                description: Trusted-execution-environment transaction filter.
+              - name: SRC_ID
+                location: 31-8
+                description: Source identifier or identifier range endpoint.
+              - name: IOMMU_ID
+                location: 39-32
+                description: IOMMU instance identifier.
+              - name: SDID
+                location: 45-40
+                description: Supervisor-domain identifier assigned by the rule.
+      - name: GET_SDCL_ENTRY
+        opcode: 3
+        description: Reads a supervisor-domain classification rule into `data1`.
+        registers:
+          - name: command
+            fields:
+              - name: RULEID
+                location: 15-8
+                description: Supervisor-domain classification rule identifier.
+      - name: SET_SDCFG_ENTRY
+        opcode: 4
+        description: Configures MPT and QoS state for a supervisor domain.
+        registers:
+          - name: command
+            fields:
+              - name: SDID
+                location: 13-8
+                description: Supervisor-domain identifier.
+          - name: data1
+            fields:
+              - name: MPT_MODE
+                location: 3-0
+                description: MPT mode selected for this supervisor domain.
+              - name: MBE
+                location: 4
+                description: MPT access endianness; zero is little-endian.
+              - name: MXL
+                location: 5
+                description: Selects the RV64 or RV32 MPT mode encoding table.
+              - name: PPN
+                location: 53-10
+                description: Root MPT physical page number.
+          - name: data2
+            fields:
+              - name: S_RCID
+                location: 11-0
+                description: Supervisor resource-control identifier base.
+              - name: S_MCID
+                location: 27-16
+                description: Supervisor monitoring-counter identifier base.
+              - name: SRL
+                location: 35-32
+                description: Supervisor RCID length.
+              - name: SML
+                location: 39-36
+                description: Supervisor MCID length.
+              - name: SQRID
+                location: 43-40
+                description: Supervisor QoS register-interface identifier.
+              - name: SSRM
+                location: 44
+                description: Supervisor RCID range mode.
+              - name: SSMM
+                location: 45
+                description: Supervisor MCID range mode.
+      - name: GET_SDCFG_ENTRY
+        opcode: 5
+        description: Reads MPT and QoS state for a supervisor domain into `data1` and `data2`.
+        registers:
+          - name: command
+            fields:
+              - name: SDID
+                location: 13-8
+                description: Supervisor-domain identifier.
+      - name: MPTINVAL
+        opcode: 6
+        description: Invalidates checker-cached information from one or more memory protection tables.
+        registers:
+          - name: command
+            fields:
+              - name: SDID
+                location: 13-8
+                description: Optional supervisor-domain identifier.
+              - name: SDIDV
+                location: 15
+                description: Indicates whether the SDID operand is valid.
+          - name: data1
+            fields:
+              - name: PPNV
+                location: 0
+                description: Indicates whether the PPN operand is valid.
+              - name: S
+                location: 1
+                description: Selects a NAPOT range when PPNV is set.
+              - name: PPN
+                location: 53-10
+                description: Optional physical-page-number or NAPOT-range operand.
+sections:
+  - title: I/O MPT Checker Register Interface
+    content: |
+      The structured `register_blocks` data above is the normative machine-readable
+      layout for the v0.9.0 I/O MPT Checker programming interface. `data1` and
+      `data2` are interpreted only in the context of the selected `command.OP`.
+references:
+  - title: RISC-V Smmtt Specification v0.9.0
+    url: https://github.com/riscv/riscv-smmtt/tree/v0.9.0
+    description: Source specification for the I/O MPT Checker interface.
+license:
+  name: Creative Commons Attribution 4.0 International
+  id: CC-BY-4.0
+  url: https://creativecommons.org/licenses/by/4.0/

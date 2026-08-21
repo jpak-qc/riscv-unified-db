@@ -1,0 +1,31 @@
+# Copyright (c) RISC-V International
+# SPDX-License-Identifier: CC-BY-4.0
+
+# yaml-language-server: $schema=../../../../schemas/csr_schema.json
+
+$schema: csr_schema.json#
+kind: csr
+name: msideie
+long_name: Machine Supervisor-domain External Interrupt Enable
+address: 0x74F
+writable: true
+priv_mode: M
+length: 64
+definedBy:
+  extension:
+    name: Smsdia
+description: |
+  Selects supervisor interrupt domains that may generate the machine
+  supervisor-domain external interrupt (MSDEI). The lower 32 bits are available
+  through this CSR on RV32; `msideieh` aliases the upper half.
+fields:
+  INTERRUPTS:
+    location: 63-0
+    description: Enable bit for each implemented supervisor interrupt domain.
+    type: RW-R
+    reset_value: 0
+    sw_write(csr_value): |
+      if (SIDN_MAX == 63) {
+        return csr_value.INTERRUPTS;
+      }
+      return csr_value.INTERRUPTS & ((64'1 `<< (SIDN_MAX + 1)) - 1);

@@ -1,0 +1,32 @@
+# Copyright (c) RISC-V International
+# SPDX-License-Identifier: CC-BY-4.0
+
+# yaml-language-server: $schema=../../../schemas/ext_schema.json
+
+$schema: ext_schema.json#
+kind: extension
+name: Smsd
+long_name: Supervisor Domains
+description: |
+  The Smsd extension introduces supervisor domains. It supplies the machine-mode
+  configuration required to select a supervisor-domain identifier and a memory
+  protection table (MPT) for execution below M-mode.
+
+  The extension defines the `mmpt` and `msdcfg` CSRs. `mmpt` selects the active
+  MPT and its local supervisor-domain identifier (`SDID`); `msdcfg` holds the
+  optional supervisor-domain configuration supplied by the companion Smmtt
+  extensions.
+
+  `MFENCE.PA` and `MINVAL.PA` are specified by Smmtt, but v0.9.0 does not assign
+  their funct7 encodings. Consequently they are intentionally not represented as
+  instruction records here.
+type: privileged
+versions:
+  - version: "0.9.0"
+    state: development
+    repositories:
+      - url: https://github.com/riscv/riscv-smmtt
+        branch: v0.9.0
+requirements:
+  extension:
+    name: S

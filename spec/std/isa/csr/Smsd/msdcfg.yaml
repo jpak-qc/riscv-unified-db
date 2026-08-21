@@ -1,0 +1,127 @@
+# Copyright (c) RISC-V International
+# SPDX-License-Identifier: CC-BY-4.0
+
+# yaml-language-server: $schema=../../../../schemas/csr_schema.json
+
+$schema: csr_schema.json#
+kind: csr
+name: msdcfg
+long_name: Machine Supervisor Domain Configuration
+address: 0x74E
+writable: true
+priv_mode: M
+length: MXLEN
+definedBy:
+  extension:
+    name: Smsd
+description: |
+  `msdcfg` holds optional state associated with the active supervisor domain.
+  Fields belonging to an unimplemented optional supervisor-domain extension are
+  read-only zero.
+fields:
+  SIDN:
+    location: 5-0
+    long_name: Supervisor interrupt domain number
+    description: |
+      Selects the supervisor interrupt domain associated with the active
+      supervisor domain. Legal values range from zero through `SIDN_MAX`.
+    definedBy:
+      extension:
+        name: Smsdia
+    type: RW-R
+    reset_value: 0
+    sw_write(csr_value): |
+      if (csr_value.SIDN <= SIDN_MAX) {
+        return csr_value.SIDN;
+      }
+      return CSR[msdcfg].SIDN;
+  SEDA:
+    location: 6
+    long_name: Supervisor external-debug allow
+    description: |
+      Permits external debug of execution below M-mode while M-mode external
+      debug is disabled. This field is saved and restored with the supervisor
+      domain.
+    definedBy:
+      extension:
+        name: Smsdedbga
+    type: RW
+    reset_value: 0
+  SETA:
+    location: 7
+    long_name: Supervisor external-trace allow
+    description: |
+      Permits external trace of execution below M-mode while M-mode external
+      trace is disabled. This field is saved and restored with the supervisor
+      domain.
+    definedBy:
+      extension:
+        name: Smsdetrca
+    type: RW
+    reset_value: 0
+  SSRM:
+    location: 22
+    long_name: Supervisor RCID range mode
+    description: |
+      Selects whether `srmcfg.RCID` is a low-bit subrange (zero) or a direct,
+      upper-bounded range (one). Direct mode is illegal when `SRL` equals
+      `RCID_WIDTH`.
+    definedBy:
+      extension:
+        name: Smsdqosid
+    type: RW-R
+    reset_value: 0
+    sw_write(csr_value): |
+      if (csr_value.SSRM == 0 || csr_value.SRL < RCID_WIDTH) {
+        return csr_value.SSRM;
+      }
+      return 0;
+  SSMM:
+    location: 23
+    long_name: Supervisor MCID range mode
+    description: |
+      Selects whether `srmcfg.MCID` is a low-bit subrange (zero) or a direct,
+      upper-bounded range (one). Direct mode is illegal when `SML` equals
+      `MCID_WIDTH`.
+    definedBy:
+      extension:
+        name: Smsdqosid
+    type: RW-R
+    reset_value: 0
+    sw_write(csr_value): |
+      if (csr_value.SSMM == 0 || csr_value.SML < MCID_WIDTH) {
+        return csr_value.SSMM;
+      }
+      return 0;
+  SRL:
+    location: 27-24
+    long_name: Supervisor RCID length
+    description: |
+      Number of low `srmcfg.RCID` bits allocated to the active supervisor
+      domain. Values from zero through `RCID_WIDTH` are legal.
+    definedBy:
+      extension:
+        name: Smsdqosid
+    type: RW-R
+    reset_value: 0
+    sw_write(csr_value): |
+      if (csr_value.SRL <= RCID_WIDTH) {
+        return csr_value.SRL;
+      }
+      return CSR[msdcfg].SRL;
+  SML:
+    location: 31-28
+    long_name: Supervisor MCID length
+    description: |
+      Number of low `srmcfg.MCID` bits allocated to the active supervisor
+      domain. Values from zero through `MCID_WIDTH` are legal.
+    definedBy:
+      extension:
+        name: Smsdqosid
+    type: RW-R
+    reset_value: 0
+    sw_write(csr_value): |
+      if (csr_value.SML <= MCID_WIDTH) {
+        return csr_value.SML;
+      }
+      return CSR[msdcfg].SML;

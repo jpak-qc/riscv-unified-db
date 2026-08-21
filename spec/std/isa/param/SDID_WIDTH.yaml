@@ -1,0 +1,19 @@
+# Copyright (c) RISC-V International
+# SPDX-License-Identifier: CC-BY-4.0
+
+# yaml-language-server: $schema=../../../schemas/param_schema.json
+
+$schema: param_schema.json#
+kind: parameter
+name: SDID_WIDTH
+long_name: Number of implemented supervisor-domain identifier bits
+description: |
+  Number of low-order writable bits in `mmpt.SDID`. Smmtt v0.9.0 limits this
+  value to six bits.
+schema:
+  type: integer
+  minimum: 0
+  maximum: 6
+definedBy:
+  extension:
+    name: Smsd

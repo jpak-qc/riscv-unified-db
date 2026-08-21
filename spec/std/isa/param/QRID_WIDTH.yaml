@@ -1,0 +1,18 @@
+# Copyright (c) RISC-V International
+# SPDX-License-Identifier: CC-BY-4.0
+
+# yaml-language-server: $schema=../../../schemas/param_schema.json
+
+$schema: param_schema.json#
+kind: parameter
+name: QRID_WIDTH
+long_name: Number of implemented QoS register-interface identifier bits
+description: |
+  Number of low-order writable bits in `mrmcfg.QRID` and `mnrmcfg.QRID`.
+schema:
+  type: integer
+  minimum: 0
+  maximum: 4
+definedBy:
+  extension:
+    name: Smqosid

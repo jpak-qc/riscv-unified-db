@@ -1,0 +1,25 @@
+# Copyright (c) RISC-V International
+# SPDX-License-Identifier: CC-BY-4.0
+
+# yaml-language-server: $schema=../../../schemas/ext_schema.json
+
+$schema: ext_schema.json#
+kind: extension
+name: Smmpt34
+long_name: 34-bit Machine Memory Protection Table
+description: |
+  Smmpt34 defines the RV32, two-level memory protection table format for a
+  34-bit supervisor physical address space. It is selected by `mmpt.MODE=1` on
+  RV32 systems.
+type: privileged
+versions:
+  - version: "0.9.0"
+    state: development
+    repositories:
+      - url: https://github.com/riscv/riscv-smmtt
+        branch: v0.9.0
+requirements:
+  allOf:
+    - xlen: 32
+    - extension:
+        name: Smsd

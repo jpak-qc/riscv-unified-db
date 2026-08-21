@@ -1,0 +1,25 @@
+# Copyright (c) RISC-V International
+# SPDX-License-Identifier: CC-BY-4.0
+
+# yaml-language-server: $schema=../../../schemas/ext_schema.json
+
+$schema: ext_schema.json#
+kind: extension
+name: Smmpt43
+long_name: 43-bit Machine Memory Protection Table
+description: |
+  Smmpt43 defines the RV64, three-level memory protection table format for a
+  43-bit supervisor physical address space. It is selected by `mmpt.MODE=1` on
+  RV64 systems.
+type: privileged
+versions:
+  - version: "0.9.0"
+    state: development
+    repositories:
+      - url: https://github.com/riscv/riscv-smmtt
+        branch: v0.9.0
+requirements:
+  allOf:
+    - xlen: 64
+    - extension:
+        name: Smsd

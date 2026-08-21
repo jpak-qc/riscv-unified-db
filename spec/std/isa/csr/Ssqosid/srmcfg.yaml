@@ -76,6 +76,16 @@ fields:
           raise(ExceptionCode::VirtualInstruction, mode(), $encoding);
         }
       }
+      if (implemented?(ExtensionName::Smsdqosid)) {
+        if (CSR[msdcfg].SSRM == 0) {
+          return csr_value.RCID & ((1 `<< CSR[msdcfg].SRL) - 1);
+        }
+        if (CSR[msdcfg].SRL < RCID_WIDTH &&
+            csr_value.RCID <= ((1 `<< RCID_WIDTH) - (1 `<< CSR[msdcfg].SRL) - 1)) {
+          return csr_value.RCID;
+        }
+        return UNDEFINED_LEGAL_DETERMINISTIC;
+      }
       return csr_value.RCID & ((1 `<< RCID_WIDTH) - 1);
 
   MCID:
@@ -97,6 +107,16 @@ fields:
         if (virtual_mode?()) {
           raise(ExceptionCode::VirtualInstruction, mode(), $encoding);
         }
+      }
+      if (implemented?(ExtensionName::Smsdqosid)) {
+        if (CSR[msdcfg].SSMM == 0) {
+          return csr_value.MCID & ((1 `<< CSR[msdcfg].SML) - 1);
+        }
+        if (CSR[msdcfg].SML < MCID_WIDTH &&
+            csr_value.MCID <= ((1 `<< MCID_WIDTH) - (1 `<< CSR[msdcfg].SML) - 1)) {
+          return csr_value.MCID;
+        }
+        return UNDEFINED_LEGAL_DETERMINISTIC;
       }
       return csr_value.MCID & ((1 `<< MCID_WIDTH) - 1);
 

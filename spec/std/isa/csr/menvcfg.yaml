@@ -154,6 +154,19 @@ fields:
         name: Sstc
     type: RW
     reset_value: UNDEFINED_LEGAL
+  PAMSE:
+    location: 60
+    description: |
+      *Physical Address Metadata Selector Enable*
+
+      Enables the Svpams physical-address metadata selector in S-stage and
+      G-stage address translation. When clear, the PAMS field in RV64 page
+      table entries is reserved.
+    definedBy:
+      extension:
+        name: Svpams
+    type: RW
+    reset_value: UNDEFINED_LEGAL
   PBMTE:
     location: 62
     description: |

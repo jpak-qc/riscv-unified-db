@@ -1,0 +1,23 @@
+# Copyright (c) RISC-V International
+# SPDX-License-Identifier: CC-BY-4.0
+
+# yaml-language-server: $schema=../../../schemas/ext_schema.json
+
+$schema: ext_schema.json#
+kind: extension
+name: Smsdedbga
+long_name: Supervisor Domain External Debug Allow Control
+description: |
+  Smsdedbga adds the per-supervisor-domain external-debug allow state
+  (`msdcfg.SEDA`). When external M-mode debug is disabled, this state controls
+  whether modes less privileged than M may be externally debugged.
+type: privileged
+versions:
+  - version: "0.9.0"
+    state: development
+    repositories:
+      - url: https://github.com/riscv/riscv-smmtt
+        branch: v0.9.0
+requirements:
+  extension:
+    name: Smsd

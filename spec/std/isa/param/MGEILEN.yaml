@@ -1,0 +1,22 @@
+# Copyright (c) RISC-V International
+# SPDX-License-Identifier: CC-BY-4.0
+
+# yaml-language-server: $schema=../../../schemas/param_schema.json
+
+$schema: param_schema.json#
+kind: parameter
+name: MGEILEN
+long_name: Maximum enabled guest interrupt-file index
+description: |
+  Number of low-order `mgeien.GIF` bits implemented by Smgeien. Bit zero is
+  the separate `mgeien.A` control and is not included in this count.
+schema:
+  type: integer
+  minimum: 0
+  maximum: 63
+definedBy:
+  extension:
+    name: Smgeien
+requirements:
+  idl(): |
+    MXLEN == 32 -> MGEILEN <= 31;

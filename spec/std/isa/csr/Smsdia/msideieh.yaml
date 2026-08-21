@@ -1,0 +1,38 @@
+# Copyright (c) RISC-V International
+# SPDX-License-Identifier: CC-BY-4.0
+
+# yaml-language-server: $schema=../../../../schemas/csr_schema.json
+
+$schema: csr_schema.json#
+kind: csr
+name: msideieh
+long_name: Machine Supervisor-domain External Interrupt Enable High
+address: 0x75F
+writable: true
+priv_mode: M
+length: 32
+definedBy:
+  allOf:
+    - xlen: 32
+    - extension:
+        name: Smsdia
+description: Upper 32-bit alias of `msideie` for RV32.
+fields:
+  INTERRUPTS:
+    location: 31-0
+    alias: msideie.INTERRUPTS[63:32]
+    description: Upper 32-bit alias of `msideie.INTERRUPTS`.
+    type: RW-R
+    reset_value: 0
+    sw_write(csr_value): |
+      if (SIDN_MAX < 32) {
+        CSR[msideie].INTERRUPTS[63:32] = 0;
+        return 0;
+      }
+      if (SIDN_MAX == 63) {
+        CSR[msideie].INTERRUPTS[63:32] = csr_value.INTERRUPTS;
+        return CSR[msideie].INTERRUPTS[63:32];
+      }
+      CSR[msideie].INTERRUPTS[63:32] =
+        csr_value.INTERRUPTS & ((32'1 `<< (SIDN_MAX - 31)) - 1);
+      return CSR[msideie].INTERRUPTS[63:32];

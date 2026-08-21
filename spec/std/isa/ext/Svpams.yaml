@@ -1,0 +1,35 @@
+# Copyright (c) RISC-V International
+# SPDX-License-Identifier: CC-BY-4.0
+
+# yaml-language-server: $schema=../../../schemas/ext_schema.json
+
+$schema: ext_schema.json#
+kind: extension
+name: Svpams
+long_name: Supervisor-domain Physical Address Metadata Selector
+description: |
+  Svpams adds the four-bit physical-address metadata selector (`PAMS`) to
+  RV64 page-table entries and the `PAMSE` enables in `menvcfg` and `henvcfg`.
+  The selector chooses one of sixteen implementation-defined metadata
+  qualifiers for a translated physical address.
+
+  The v0.9.0 document describes sixteen metadata CSRs but assigns neither CSR
+  numbers nor names. Their metadata format is therefore documented by this
+  extension but no unallocated CSR records are created.
+type: privileged
+versions:
+  - version: "0.9.0"
+    state: development
+    repositories:
+      - url: https://github.com/riscv/riscv-smmtt
+        branch: v0.9.0
+requirements:
+  allOf:
+    - extension:
+        anyOf:
+          - name: Sv39
+          - name: Sv48
+          - name: Sv57
+    - not:
+        extension:
+          name: Svrsw60t59b

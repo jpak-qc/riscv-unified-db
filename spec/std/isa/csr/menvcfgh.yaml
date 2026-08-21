@@ -33,6 +33,18 @@ fields:
         name: Sstc
     type: RW
     reset_value: UNDEFINED_LEGAL
+  PAMSE:
+    location: 28
+    alias: menvcfg.PAMSE
+    description: |
+      *Physical Address Metadata Selector Enable*
+
+      Alias of `menvcfg.PAMSE`.
+    definedBy:
+      extension:
+        name: Svpams
+    type: RW
+    reset_value: UNDEFINED_LEGAL
   PBMTE:
     location: 30
     alias: menvcfg.PBMTE

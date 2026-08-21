@@ -1,0 +1,26 @@
+# Copyright (c) RISC-V International
+# SPDX-License-Identifier: CC-BY-4.0
+
+# yaml-language-server: $schema=../../../schemas/ext_schema.json
+
+$schema: ext_schema.json#
+kind: extension
+name: Ssgeien
+long_name: Supervisor Guest External Interrupt Enables for Supervisor Domains
+description: |
+  Ssgeien supplies the supervisor-visible portion of guest interrupt-file
+  sharing. It permits non-contiguous guest interrupt files and enables the
+  selected supervisor domain to access only the guest files granted by M-mode.
+type: privileged
+versions:
+  - version: "0.9.0"
+    state: development
+    repositories:
+      - url: https://github.com/riscv/riscv-smmtt
+        branch: v0.9.0
+requirements:
+  extension:
+    allOf:
+      - name: Smsdia
+      - name: Ssaia
+      - name: H

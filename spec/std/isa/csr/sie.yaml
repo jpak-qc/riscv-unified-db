@@ -73,3 +73,20 @@ fields:
     definedBy:
       extension:
         name: Sscofpmf
+  MSDEIE:
+    location: 14
+    alias: mie.MSDEIE
+    description: |
+      Delegated enable for the machine supervisor-domain external interrupt.
+      It is writable only when `mideleg.MSDEI` is set.
+    type: RW-R
+    sw_write(csr_value): |
+      if (CSR[mideleg].MSDEI == 1'b1) {
+        CSR[mie].MSDEIE = csr_value.MSDEIE;
+        return csr_value.MSDEIE;
+      }
+      return 1'b0;
+    reset_value: 0
+    definedBy:
+      extension:
+        name: Smsdia

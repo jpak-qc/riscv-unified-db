@@ -1,0 +1,82 @@
+# Copyright (c) RISC-V International
+# SPDX-License-Identifier: CC-BY-4.0
+
+# yaml-language-server: $schema=../../../../schemas/csr_schema.json
+
+$schema: csr_schema.json#
+kind: csr
+name: mmpt
+long_name: Machine Memory Protection Table Configuration
+address: 0x382
+writable: true
+priv_mode: M
+length: MXLEN
+definedBy:
+  extension:
+    name: Smsd
+description: |
+  `mmpt` selects the active memory protection table for accesses made below
+  M-mode. It holds the root table physical page number, the hart-local
+  supervisor-domain identifier, and the selected Smmpt mode.
+fields:
+  MODE:
+    location_rv32: 31-30
+    location_rv64: 63-60
+    long_name: Memory protection table mode
+    description: |
+      Selects Bare or an implemented Smmpt format. Unsupported values are WARL.
+      In Bare mode, `PPN` is forced to zero.
+    type: RW-R
+    reset_value: 0
+    sw_write(csr_value): |
+      if (xlen() == 32) {
+        if (csr_value.MODE == 0 && csr_value.PPN == 0) {
+          return 0;
+        }
+        if (implemented?(ExtensionName::Smmpt34) && csr_value.MODE == 1) {
+          return 1;
+        }
+      } else {
+        if (csr_value.MODE == 0 && csr_value.PPN == 0) {
+          return 0;
+        }
+        if (implemented?(ExtensionName::Smmpt43) && csr_value.MODE == 1) {
+          return 1;
+        }
+        if (implemented?(ExtensionName::Smmpt52) && csr_value.MODE == 2) {
+          return 2;
+        }
+        if (implemented?(ExtensionName::Smmpt64) && csr_value.MODE == 3) {
+          return 3;
+        }
+      }
+      return CSR[mmpt].MODE;
+  SDID:
+    location_rv32: 29-24
+    location_rv64: 55-50
+    long_name: Supervisor-domain identifier
+    description: |
+      Hart-local identifier associated with the active supervisor domain. The
+      low `SDID_WIDTH` bits are implemented first.
+    type: RW-R
+    reset_value: 0
+    sw_write(csr_value): |
+      return csr_value.SDID & ((1 `<< SDID_WIDTH) - 1);
+  PPN:
+    location_rv32: 21-0
+    location_rv64: 43-0
+    long_name: Memory protection table root physical page number
+    description: |
+      Physical page number of the active root MPT. The value is zero in Bare
+      mode. Smmpt64 roots are 32 KiB aligned, so their low three PPN bits are
+      read-only zero.
+    type: RW-R
+    reset_value: 0
+    sw_write(csr_value): |
+      if (csr_value.MODE == 0) {
+        return 0;
+      }
+      if (xlen() == 64 && csr_value.MODE == 3) {
+        return csr_value.PPN & ~7;
+      }
+      return csr_value.PPN;

@@ -127,6 +127,23 @@ fields:
       return (implemented?(ExtensionName::Sstc)) ? CsrFieldType::RO : CsrFieldType::RW;
     reset_value(): |
       return (implemented?(ExtensionName::Sstc)) ? UNDEFINED_LEGAL : 0;
+  PAMSE:
+    location: 60
+    description: |
+      *Physical Address Metadata Selector Enable*
+
+      Enables the Svpams PAMS field for VS-stage translation. This field reads
+      as zero when `menvcfg.PAMSE` is zero.
+    definedBy:
+      extension:
+        name: Svpams
+    type: RW
+    reset_value: UNDEFINED_LEGAL
+    sw_write(csr_value): |
+      if (CSR[menvcfg].PAMSE == 0) {
+        return 0;
+      }
+      return csr_value.PAMSE;
   PBMTE:
     location: 62
     description: |
@@ -348,6 +365,10 @@ sw_read(): |
   if (implemented?(ExtensionName::Svpbmt) && CSR[menvcfg].PBMTE == 0) {
     # henvcfg.PBMTE must read-as-zero
     value = value & ~(1 `<< 62);
+  }
+  if (implemented?(ExtensionName::Svpams) && CSR[menvcfg].PAMSE == 0) {
+    # henvcfg.PAMSE must read-as-zero
+    value = value & ~(1 `<< 60);
   }
   if (implemented?(ExtensionName::Svadu) && CSR[menvcfg].ADUE == 0) {
     # henvcfg.ADUE must read-as-zero

@@ -172,3 +172,14 @@ fields:
     definedBy:
       extension:
         name: Sscofpmf
+  MSDEIP:
+    location: 14
+    alias: mip.MSDEIP
+    description: |
+      Read-only delegated view of `mip.MSDEIP`. It reads zero unless
+      `mideleg.MSDEI` is set.
+    type: RO-H
+    reset_value: 0
+    definedBy:
+      extension:
+        name: Smsdia

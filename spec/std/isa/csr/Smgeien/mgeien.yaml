@@ -1,0 +1,43 @@
+# Copyright (c) RISC-V International
+# SPDX-License-Identifier: CC-BY-4.0
+
+# yaml-language-server: $schema=../../../../schemas/csr_schema.json
+
+$schema: csr_schema.json#
+kind: csr
+name: mgeien
+long_name: Machine Guest External Interrupt Enable
+address: 0x74D
+writable: true
+priv_mode: M
+length: MXLEN
+definedBy:
+  extension:
+    name: Smgeien
+description: |
+  Grants the active supervisor domain access to guest interrupt files in its
+  selected supervisor interrupt domain. `A` controls whether all external
+  interrupts contribute to `msideip` for that domain.
+fields:
+  A:
+    location: 0
+    long_name: All external interrupts summary enable
+    description: |
+      When set, `msideip` summarizes all external interrupts for the selected
+      supervisor interrupt domain.
+    type: RW
+    reset_value: 0
+  GIF:
+    location_rv32: 31-1
+    location_rv64: 63-1
+    long_name: Guest interrupt-file enables
+    description: |
+      Each set bit grants access to the matching guest interrupt file. The low
+      `MGEILEN` bits are implemented first.
+    type: RW-R
+    reset_value: 0
+    sw_write(csr_value): |
+      if (MGEILEN == 63) {
+        return csr_value.GIF;
+      }
+      return csr_value.GIF & ((1 `<< MGEILEN) - 1);

@@ -1,0 +1,29 @@
+# Copyright (c) RISC-V International
+# SPDX-License-Identifier: CC-BY-4.0
+
+# yaml-language-server: $schema=../../../../schemas/csr_schema.json
+
+$schema: csr_schema.json#
+kind: csr
+name: msideip
+long_name: Machine Supervisor-domain External Interrupt Pending
+address: 0xF4F
+writable: false
+priv_mode: M
+length: 64
+definedBy:
+  extension:
+    name: Smsdia
+description: |
+  Each bit summarizes the external interrupts pending in the supervisor
+  interrupt domain with the corresponding number. The lower 32 bits are
+  available through this CSR on RV32; `msideiph` aliases the upper half.
+fields:
+  INTERRUPTS:
+    location: 63-0
+    description: |
+      Pending summary for each supervisor interrupt domain. A bit is set when
+      its domain has a pending supervisor external interrupt or enabled guest
+      external interrupt.
+    type: RO-H
+    reset_value: 0

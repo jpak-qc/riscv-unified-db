@@ -202,3 +202,15 @@ fields:
     definedBy:
       extension:
         name: Sscofpmf
+  MSDEI:
+    location: 14
+    description: |
+      *Machine Supervisor-domain External Interrupt delegation*
+
+      When set, the Smsdia MSDEI interrupt is delegated to S-mode. It is never
+      delegatable to VS-mode.
+    type: RW
+    reset_value: 0
+    definedBy:
+      extension:
+        name: Smsdia

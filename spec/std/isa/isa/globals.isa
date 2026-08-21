@@ -182,6 +182,59 @@ bitfield (10) PteFlags {
   V 0 # valid
 }
 
+# Memory protection table entry layouts.  Smmpt34 uses a 32-bit MPTE; the
+# RV64 Smmpt formats use the same 64-bit MPTE layout.  Fields intentionally
+# overlap because PPN is meaningful only for a non-leaf entry, whereas XWR
+# and G are meaningful only for leaf entries.
+bitfield (32) Smmpt34Mpte {
+  PPN 31-10
+  XWR7 31-29
+  XWR6 28-26
+  XWR5 25-23
+  XWR4 22-20
+  XWR3 19-17
+  XWR2 16-14
+  G 15-12
+  XWR1 13-11
+  XWR 10-8
+  XWR0 10-8
+  ReservedNonLeaf 9-2
+  ReservedLeaf 7-3
+  N 2
+  L 1
+  V 0
+}
+
+# Smmpt43, Smmpt52, and Smmpt64 share this MPTE format.  Smmpt64 differs
+# only in the size and alignment of its root table.
+bitfield (64) Smmpt64Mpte {
+  ReservedNonLeaf 63-54
+  ReservedNonNapotLeaf 63-56
+  XWR15 55-53
+  PPN 53-10
+  XWR14 52-50
+  XWR13 49-47
+  XWR12 46-44
+  XWR11 43-41
+  XWR10 40-38
+  XWR9 37-35
+  XWR8 34-32
+  XWR7 31-29
+  XWR6 28-26
+  XWR5 25-23
+  XWR4 22-20
+  XWR3 19-17
+  XWR2 16-14
+  G 15-12
+  XWR1 13-11
+  XWR 10-8
+  XWR0 10-8
+  ReservedLeaf 7-3
+  N 2
+  L 1
+  V 0
+}
+
 struct TranslationResult {
   Bits<PHYS_ADDR_WIDTH> paddr;
   Pbmt pbmt;
@@ -213,7 +266,8 @@ struct VmaOrderType {
 bitfield (64) Sv39PageTableEntry {
   N 63
   PBMT 62-61
-  Reserved 60-54
+  PAMS 60-57
+  Reserved 56-54
   PPN2 53-28
   PPN1 27-19
   PPN0 18-10
@@ -1852,6 +1906,7 @@ function gstage_page_walk {
     Boolean mxr = for_final_vs_pte && (CSR[mstatus].MXR == 1);
     Boolean pbmte = implemented?(ExtensionName::Svpbmt) && CSR[menvcfg].PBMTE == 1;
     Boolean adue = implemented?(ExtensionName::Svadu) && CSR[menvcfg].ADUE == 1;
+    Boolean pamse = implemented?(ExtensionName::Svpams) && CSR[menvcfg].PAMSE == 1;
 
     # set up the value that will be written into mtinst/htinst, if required
     Bits<32> tinst = tinst_value_for_guest_page_fault(op, encoding, for_final_vs_pte);
@@ -1881,12 +1936,15 @@ function gstage_page_walk {
       PteFlags pte_flags = pte[9:0];
 
       if (xlen() == 64) {
-        # check if any reserved bits are set
-        # Sv32 has no reserved bits, and Sv39/48/57 all have reserved bits at 58:54
-        if ((VA_SIZE != 32) && (pte[58:54] != 0)) {
+        # Sv32 has no PAMS field. When enabled, PAMS occupies bits 60:57;
+        # otherwise Sv39/48/57 reserve bits 58:54 as before.
+        if ((VA_SIZE != 32) && pamse && (pte[56:54] != 0)) {
           raise_guest_page_fault(op, gpaddr, vaddr, tinst, effective_mode);
         }
-        if (!implemented?(ExtensionName::Svrsw60t59b)) {
+        if ((VA_SIZE != 32) && !pamse && (pte[58:54] != 0)) {
+          raise_guest_page_fault(op, gpaddr, vaddr, tinst, effective_mode);
+        }
+        if (!pamse && !implemented?(ExtensionName::Svrsw60t59b)) {
           if ((PTESIZE >= 64) && pte[60:59] != 0) {
             # 60:59 are reserved if Svrsw60t59b is not supported
             raise_guest_page_fault(op, gpaddr, vaddr, tinst, effective_mode);
@@ -2023,6 +2081,11 @@ function gstage_page_walk {
             raise_guest_page_fault(op, gpaddr, vaddr, tinst, effective_mode);
           }
 
+          if ((VA_SIZE != 32) && pamse && (pte[60:57] != 0)) {
+            # PAMS is only defined in leaf PTEs
+            raise_guest_page_fault(op, gpaddr, vaddr, tinst, effective_mode);
+          }
+
           if ((VA_SIZE != 32) && pte[63] != 0) {
             # N must be zero in a pointer PTE
             raise_guest_page_fault(op, gpaddr, vaddr, tinst, effective_mode);
@@ -2120,6 +2183,23 @@ function stage1_page_walk {
       }
     }
 
+    # Physical-address metadata selector enable?
+    Boolean pamse;
+    if ((xlen() == 32) || VA_SIZE == 32) {
+      pamse = false;
+    } else {
+      if (CSR[misa].H == 1 && (effective_mode == PrivilegeMode::VS || effective_mode == PrivilegeMode::VU)) {
+        # With an active G-stage, the G-stage PAMS selects the metadata and
+        # VS-stage PAMS is reserved.
+        pamse = implemented?(ExtensionName::Svpams) &&
+                CSR[henvcfg].PAMSE == 1 &&
+                GSTAGE_MODE_BARE &&
+                CSR[hgatp].MODE == $bits(HgatpMode::Bare);
+      } else {
+        pamse = implemented?(ExtensionName::Svpams) && CSR[menvcfg].PAMSE == 1;
+      }
+    }
+
     # make execute readable?
     Boolean mxr;
     if (CSR[misa].H == 1 && (effective_mode == PrivilegeMode::VS || effective_mode == PrivilegeMode::VU)) {
@@ -2175,9 +2255,12 @@ function stage1_page_walk {
       # shadow stack page?
       Boolean ss_page = (pte_flags.R == 0) && (pte_flags.W == 1) && (pte_flags.X == 0);
 
-      # check if any reserved bits are set
-      # Sv32 has no reserved bits, and Sv39/48/57 all have reserved bits at 58:54
-      if ((xlen() == 64) && (VA_SIZE != 32) && (pte[58:54] != 0)) {
+      # Sv32 has no PAMS field. When enabled, PAMS occupies bits 60:57 and
+      # leaves only bits 56:54 reserved.
+      if ((xlen() == 64) && (VA_SIZE != 32) && pamse && (pte[56:54] != 0)) {
+        raise(page_fault_code, mode(), vaddr);
+      }
+      if ((xlen() == 64) && (VA_SIZE != 32) && !pamse && (pte[58:54] != 0)) {
         raise(page_fault_code, mode(), vaddr);
       }
 
@@ -2206,7 +2289,7 @@ function stage1_page_walk {
           }
         }
 
-        if (!implemented?(ExtensionName::Svrsw60t59b)) {
+        if (!pamse && !implemented?(ExtensionName::Svrsw60t59b)) {
           if ((PTESIZE >= 64) && pte[60:59] != 0) {
             # 60:59 are reserved if Svrsw60t59b is not supported
             raise (page_fault_code, mode(), vaddr);
@@ -2369,6 +2452,11 @@ function stage1_page_walk {
 
         if ((xlen() == 64) && (VA_SIZE != 32) && (pte[62:61] != 0)) {
           # PBMT must be zero in a pointer PTE
+          raise (page_fault_code, mode(), vaddr);
+        }
+
+        if ((xlen() == 64) && (VA_SIZE != 32) && pamse && (pte[60:57] != 0)) {
+          # PAMS is only defined in leaf PTEs
           raise (page_fault_code, mode(), vaddr);
         }
 

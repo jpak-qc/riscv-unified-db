@@ -48,6 +48,21 @@ fields:
       return (implemented?(ExtensionName::Sstc)) ? CsrFieldType::RO : CsrFieldType::RW;
     reset_value(): |
       return (implemented?(ExtensionName::Sstc)) ? UNDEFINED_LEGAL : 0;
+  PAMSE:
+    location: 28
+    alias: henvcfg.PAMSE
+    description: |
+      *Physical Address Metadata Selector Enable*
+
+      Alias of `henvcfg.PAMSE`.
+    definedBy:
+      extension:
+        name: Svpams
+    type: RW-R
+    reset_value: UNDEFINED_LEGAL
+    sw_write(csr_value): |
+      CSR[henvcfg].PAMSE = csr_value.PAMSE;
+      return CSR[henvcfg].PAMSE;
   PBMTE:
     location: 30
     alias: henvcfg.PBMTE

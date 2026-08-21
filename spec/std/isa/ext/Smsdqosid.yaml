@@ -1,0 +1,27 @@
+# Copyright (c) RISC-V International
+# SPDX-License-Identifier: CC-BY-4.0
+
+# yaml-language-server: $schema=../../../schemas/ext_schema.json
+
+$schema: ext_schema.json#
+kind: extension
+name: Smsdqosid
+long_name: Supervisor Domain Quality-of-Service Identifiers
+description: |
+  Smsdqosid partitions QoS identifier namespaces between supervisor domains. It
+  adds `mnrmcfg` and the `SRL`, `SML`, `SSRM`, and `SSMM` fields of `msdcfg`, and
+  constrains writes to `srmcfg.RCID` and `srmcfg.MCID` to the selected domain's
+  allocation.
+type: privileged
+versions:
+  - version: "0.9.0"
+    state: development
+    repositories:
+      - url: https://github.com/riscv/riscv-smmtt
+        branch: v0.9.0
+requirements:
+  extension:
+    allOf:
+      - name: Smsd
+      - name: Smqosid
+      - name: Ssqosid

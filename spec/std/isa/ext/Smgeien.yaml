@@ -1,0 +1,26 @@
+# Copyright (c) RISC-V International
+# SPDX-License-Identifier: CC-BY-4.0
+
+# yaml-language-server: $schema=../../../schemas/ext_schema.json
+
+$schema: ext_schema.json#
+kind: extension
+name: Smgeien
+long_name: Machine Guest External Interrupt Enables for Supervisor Domains
+description: |
+  Smgeien lets M-mode grant a supervisor domain access to a selected subset of
+  guest interrupt files in its supervisor interrupt domain. It defines the
+  `mgeien` CSR and requires `mvien[9]` to be writable.
+type: privileged
+versions:
+  - version: "0.9.0"
+    state: development
+    repositories:
+      - url: https://github.com/riscv/riscv-smmtt
+        branch: v0.9.0
+requirements:
+  extension:
+    allOf:
+      - name: Smsdia
+      - name: Smaia
+      - name: H

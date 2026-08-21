@@ -1,0 +1,45 @@
+# Copyright (c) RISC-V International
+# SPDX-License-Identifier: CC-BY-4.0
+
+# yaml-language-server: $schema=../../../../schemas/csr_schema.json
+
+$schema: csr_schema.json#
+kind: csr
+name: mnrmcfg
+long_name: Machine Next-Privilege Resource Management Configuration
+address: 0x781
+writable: true
+priv_mode: M
+length: MXLEN
+definedBy:
+  extension:
+    name: Smsdqosid
+description: |
+  Configures the QoS identifiers supplied to requests made below M-mode. The
+  `msdcfg` range controls determine how the RCID and MCID values combine with
+  the values programmed in `srmcfg`.
+fields:
+  RCID:
+    location: 11-0
+    long_name: Next-privilege Resource Control Identifier
+    description: Base resource-control identifier for requests below M-mode.
+    type: RW-R
+    reset_value: 0
+    sw_write(csr_value): |
+      return csr_value.RCID & ((1 `<< RCID_WIDTH) - 1);
+  MCID:
+    location: 27-16
+    long_name: Next-privilege Monitoring Counter Identifier
+    description: Base monitoring counter identifier for requests below M-mode.
+    type: RW-R
+    reset_value: UNDEFINED_LEGAL
+    sw_write(csr_value): |
+      return csr_value.MCID & ((1 `<< MCID_WIDTH) - 1);
+  QRID:
+    location: 31-28
+    long_name: Next-privilege QoS Register Interface Identifier
+    description: QoS register-interface identifier for requests below M-mode.
+    type: RW-R
+    reset_value: 0
+    sw_write(csr_value): |
+      return csr_value.QRID & ((1 `<< QRID_WIDTH) - 1);

@@ -103,3 +103,12 @@ fields:
       extension:
         name: Sscofpmf
     reset_value: 0
+  MSDEIE:
+    location: 14
+    description: |
+      Enables the machine supervisor-domain external interrupt (MSDEI).
+    type: RW
+    reset_value: 0
+    definedBy:
+      extension:
+        name: Smsdia

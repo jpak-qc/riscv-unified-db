@@ -1,0 +1,44 @@
+# Copyright (c) RISC-V International
+# SPDX-License-Identifier: CC-BY-4.0
+
+# yaml-language-server: $schema=../../../../schemas/csr_schema.json
+
+$schema: csr_schema.json#
+kind: csr
+name: mrmcfg
+long_name: Machine Resource Management Configuration
+address: 0x381
+writable: true
+priv_mode: M
+length: MXLEN
+definedBy:
+  extension:
+    name: Smqosid
+description: |
+  Configures the QoS register-interface, resource-control, and monitoring
+  identifiers attached to requests with effective privilege mode M.
+fields:
+  RCID:
+    location: 11-0
+    long_name: Resource Control Identifier
+    description: Machine-mode resource control identifier.
+    type: RW-R
+    reset_value: 0
+    sw_write(csr_value): |
+      return csr_value.RCID & ((1 `<< RCID_WIDTH) - 1);
+  MCID:
+    location: 27-16
+    long_name: Monitoring Counter Identifier
+    description: Machine-mode monitoring counter identifier.
+    type: RW-R
+    reset_value: UNDEFINED_LEGAL
+    sw_write(csr_value): |
+      return csr_value.MCID & ((1 `<< MCID_WIDTH) - 1);
+  QRID:
+    location: 31-28
+    long_name: QoS Register Interface Identifier
+    description: Machine-mode QoS register-interface identifier.
+    type: RW-R
+    reset_value: 0
+    sw_write(csr_value): |
+      return csr_value.QRID & ((1 `<< QRID_WIDTH) - 1);
