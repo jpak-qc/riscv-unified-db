@@ -26,7 +26,14 @@ implemented_extensions:
   - [C, "2.0"]
   - [M, "2.0"]
   - [Zicsr, "2.0"]
+  - [Zbkb, "1.0.0"]
+  - [Zbkc, "1.0.0"]
+  - [Zknd, "1.0.0"]
+  - [Zkne, "1.0.0"]
+  - [Zknh, "1.0.0"]
   - [Zkr, "1.0.0"]
+  - [Zksh, "1.0.0"]
+  - [Zksed, "1.0.0"]
   - [Zicntr, "2.0"]
   - [Smrnmi, "1.0"]
   - [S, "1.11.0"]
@@ -152,6 +159,23 @@ uint32_t csr_instruction(uint16_t csr, uint8_t funct3, uint8_t rd,
          (static_cast<uint32_t>(rd) << 7) | 0x73;
 }
 
+uint32_t r_instruction(uint8_t funct7, uint8_t funct3, uint8_t rd,
+                       uint8_t rs1, uint8_t rs2, uint8_t opcode = 0x33) {
+  return (static_cast<uint32_t>(funct7) << 25) |
+         (static_cast<uint32_t>(rs2) << 20) |
+         (static_cast<uint32_t>(rs1) << 15) |
+         (static_cast<uint32_t>(funct3) << 12) |
+         (static_cast<uint32_t>(rd) << 7) | opcode;
+}
+
+uint32_t i_instruction(uint16_t funct12, uint8_t rd, uint8_t rs1,
+                       uint8_t funct3 = 0b001) {
+  return (static_cast<uint32_t>(funct12) << 20) |
+         (static_cast<uint32_t>(rs1) << 15) |
+         (static_cast<uint32_t>(funct3) << 12) |
+         (static_cast<uint32_t>(rd) << 7) | 0x13;
+}
+
 udb::HartBase<udb::IssSocModel>* create_seed_hart(
     ScriptedEntropySocModel& soc) {
   return udb::HartFactory::create("rv64", 0, cfg_yaml,
@@ -247,6 +271,142 @@ TEST_CASE("seed enforces lower-privilege access controls", "[seed]") {
                                                                0)) ==
           StopReason::InstLimitReached);
   REQUIRE(soc.poll_count == 2);
+
+  delete hart;
+}
+
+TEST_CASE("Zbkb and Zbkc instructions match known-answer vectors", "[crypto]") {
+  ScriptedEntropySocModel soc(1024 * 1024, 0);
+  auto* hart = create_seed_hart(soc);
+
+  hart->reset(0);
+  hart->set_xreg(1, 0x0123456789abcdef);
+  hart->set_xreg(2, 0xfedcba9876543210);
+  REQUIRE(execute_at_current_mode(hart, soc, r_instruction(0x04, 0b100, 5, 1,
+                                                            2)) ==
+          StopReason::InstLimitReached);
+  REQUIRE(hart->xreg(5) == 0x7654321089abcdef);
+
+  REQUIRE(execute_at_current_mode(hart, soc, r_instruction(0x04, 0b111, 5, 1,
+                                                            2)) ==
+          StopReason::InstLimitReached);
+  REQUIRE(hart->xreg(5) == 0x00000000000010ef);
+
+  hart->set_xreg(2, 0xfedcba987654fedc);
+  REQUIRE(execute_at_current_mode(hart, soc, r_instruction(0x04, 0b100, 5, 1,
+                                                            2, 0x3b)) ==
+          StopReason::InstLimitReached);
+  REQUIRE(hart->xreg(5) == 0xfffffffffedccdef);
+
+  hart->set_xreg(1, 0x8000000000000000);
+  hart->set_xreg(2, 0x0000000000000002);
+  REQUIRE(execute_at_current_mode(hart, soc, r_instruction(0x05, 0b010, 5, 1,
+                                                            2)) ==
+          StopReason::InstLimitReached);
+  REQUIRE(hart->xreg(5) == 0x0000000000000002);
+
+  delete hart;
+}
+
+TEST_CASE("AES RV64 instructions match known-answer vectors", "[crypto]") {
+  ScriptedEntropySocModel soc(1024 * 1024, 0);
+  auto* hart = create_seed_hart(soc);
+
+  hart->reset(0);
+  hart->set_xreg(1, 0x0706050403020100);
+  hart->set_xreg(2, 0x0f0e0d0c0b0a0908);
+  REQUIRE(execute_at_current_mode(hart, soc, r_instruction(0x19, 0, 5, 1, 2)) ==
+          StopReason::InstLimitReached);
+  REQUIRE(hart->xreg(5) == 0x7bab01f276676b63);
+
+  REQUIRE(execute_at_current_mode(hart, soc, r_instruction(0x1b, 0, 5, 1, 2)) ==
+          StopReason::InstLimitReached);
+  REQUIRE(hart->xreg(5) == 0x51336d2c455c6a6a);
+
+  REQUIRE(execute_at_current_mode(hart, soc, r_instruction(0x1d, 0, 5, 1, 2)) ==
+          StopReason::InstLimitReached);
+  REQUIRE(hart->xreg(5) == 0x9ed7093038a3f352);
+
+  REQUIRE(execute_at_current_mode(hart, soc, r_instruction(0x1f, 0, 5, 1, 2)) ==
+          StopReason::InstLimitReached);
+  REQUIRE(hart->xreg(5) == 0x6e29192e1c96a313);
+
+  hart->set_xreg(1, 0x7bab01f276676b63);
+  REQUIRE(execute_at_current_mode(hart, soc, i_instruction(0x300, 5, 1)) ==
+          StopReason::InstLimitReached);
+  REQUIRE(hart->xreg(5) == 0xa14f9d50f984d6b2);
+
+  hart->set_xreg(1, 0x0f0e0d0c0b0a0908);
+  REQUIRE(execute_at_current_mode(hart, soc, i_instruction(0x310, 5, 1)) ==
+          StopReason::InstLimitReached);
+  REQUIRE(hart->xreg(5) == 0xfe76abd6fe76abd6);
+
+  REQUIRE(execute_at_current_mode(hart, soc, r_instruction(0x3f, 0, 5, 1, 2)) ==
+          StopReason::InstLimitReached);
+  REQUIRE(hart->xreg(5) == 0x0b0a090804040404);
+
+  REQUIRE(execute_at_current_mode(hart, soc, i_instruction(0x31b, 5, 1)) ==
+          StopReason::Exception);
+
+  delete hart;
+}
+
+TEST_CASE("SHA-2 instructions match known-answer vectors", "[crypto]") {
+  ScriptedEntropySocModel soc(1024 * 1024, 0);
+  auto* hart = create_seed_hart(soc);
+
+  hart->reset(0);
+  hart->set_xreg(1, 0x0123456789abcdef);
+  REQUIRE(execute_at_current_mode(hart, soc, i_instruction(0x102, 5, 1)) ==
+          StopReason::InstLimitReached);
+  REQUIRE(hart->xreg(5) == 0x000000003d5dcc4c);
+  REQUIRE(execute_at_current_mode(hart, soc, i_instruction(0x103, 5, 1)) ==
+          StopReason::InstLimitReached);
+  REQUIRE(hart->xreg(5) == 0xffffffff9f685f13);
+  REQUIRE(execute_at_current_mode(hart, soc, i_instruction(0x100, 5, 1)) ==
+          StopReason::InstLimitReached);
+  REQUIRE(hart->xreg(5) == 0x0000000022210003);
+  REQUIRE(execute_at_current_mode(hart, soc, i_instruction(0x101, 5, 1)) ==
+          StopReason::InstLimitReached);
+  REQUIRE(hart->xreg(5) == 0xffffffffd6316d8a);
+
+  REQUIRE(execute_at_current_mode(hart, soc, i_instruction(0x106, 5, 1)) ==
+          StopReason::InstLimitReached);
+  REQUIRE(hart->xreg(5) == 0x6f92c77c6c4f1aa1);
+  REQUIRE(execute_at_current_mode(hart, soc, i_instruction(0x107, 5, 1)) ==
+          StopReason::InstLimitReached);
+  REQUIRE(hart->xreg(5) == 0x70a3460dbbd4317a);
+  REQUIRE(execute_at_current_mode(hart, soc, i_instruction(0x104, 5, 1)) ==
+          StopReason::InstLimitReached);
+  REQUIRE(hart->xreg(5) == 0xb7c57a100c7ec1ab);
+  REQUIRE(execute_at_current_mode(hart, soc, i_instruction(0x105, 5, 1)) ==
+          StopReason::InstLimitReached);
+  REQUIRE(hart->xreg(5) == 0x7703112333475567);
+
+  delete hart;
+}
+
+TEST_CASE("SM3 and SM4 instructions match known-answer vectors", "[crypto]") {
+  ScriptedEntropySocModel soc(1024 * 1024, 0);
+  auto* hart = create_seed_hart(soc);
+
+  hart->reset(0);
+  hart->set_xreg(1, 0x0123456789abcdef);
+  REQUIRE(execute_at_current_mode(hart, soc, i_instruction(0x108, 5, 1)) ==
+          StopReason::InstLimitReached);
+  REQUIRE(hart->xreg(5) == 0x0000000045ef01ab);
+  REQUIRE(execute_at_current_mode(hart, soc, i_instruction(0x109, 5, 1)) ==
+          StopReason::InstLimitReached);
+  REQUIRE(hart->xreg(5) == 0xffffffff9898dcdc);
+
+  hart->set_xreg(1, 0);
+  hart->set_xreg(2, 0);
+  REQUIRE(execute_at_current_mode(hart, soc, r_instruction(0x18, 0, 5, 1, 2)) ==
+          StopReason::InstLimitReached);
+  REQUIRE(hart->xreg(5) == 0x000000005b5bd58e);
+  REQUIRE(execute_at_current_mode(hart, soc, r_instruction(0x1a, 0, 5, 1, 2)) ==
+          StopReason::InstLimitReached);
+  REQUIRE(hart->xreg(5) == 0xffffffffc01a6bd6);
 
   delete hart;
 }
