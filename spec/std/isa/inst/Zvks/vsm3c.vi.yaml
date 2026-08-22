@@ -29,3 +29,22 @@ access:
   vu: always
 data_independent_timing: true
 operation(): |
+  VectorState state = vector_state();
+  U32 group_registers = vector_register_group_registers(state);
+  U32 destination = vd;
+  U32 source = vs2;
+  Boolean destination_overlaps_source =
+    destination < source + group_registers && source < destination + group_registers;
+  if (state.sew != 32 || !vector_element_group_legal(state, 256, 8) ||
+      destination_overlaps_source) {
+    raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
+  }
+
+  Bits<5> round_group = imm;
+  for (U32 group = CSR[vstart].VALUE / 8; group < CSR[vl].VALUE / 8; group++) {
+    U32 element = group * 8;
+    vector_write_eg256(vd, element, crypto_sm3_compress(
+      vector_read_eg256(vd, element), vector_read_eg256(vs2, element), round_group));
+  }
+
+  CSR[vstart].VALUE = 0;

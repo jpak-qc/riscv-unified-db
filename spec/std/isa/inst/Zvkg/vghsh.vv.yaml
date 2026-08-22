@@ -29,3 +29,49 @@ access:
   vu: always
 data_independent_timing: true
 operation(): |
+  VectorState state = vector_state();
+  if (state.sew != 32 || !vector_element_group_legal(state, 128, 4)) {
+    raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
+  }
+
+  U32 elems_per_reg = VLEN >> state.log2_sew;
+  for (U32 group = CSR[vstart].VALUE / 4; group < CSR[vl].VALUE / 4; group++) {
+    U32 element = group * 4;
+    U32 reg0 = element / elems_per_reg;
+    U32 reg1 = (element + 1) / elems_per_reg;
+    U32 reg2 = (element + 2) / elems_per_reg;
+    U32 reg3 = (element + 3) / elems_per_reg;
+    U32 bit0 = (element % elems_per_reg) * 32;
+    U32 bit1 = ((element + 1) % elems_per_reg) * 32;
+    U32 bit2 = ((element + 2) % elems_per_reg) * 32;
+    U32 bit3 = ((element + 3) % elems_per_reg) * 32;
+
+    Bits<128> partial_hash = {
+      V[vd + reg3][bit3 + 31:bit3],
+      V[vd + reg2][bit2 + 31:bit2],
+      V[vd + reg1][bit1 + 31:bit1],
+      V[vd + reg0][bit0 + 31:bit0]
+    };
+    Bits<128> ciphertext = {
+      V[vs1 + reg3][bit3 + 31:bit3],
+      V[vs1 + reg2][bit2 + 31:bit2],
+      V[vs1 + reg1][bit1 + 31:bit1],
+      V[vs1 + reg0][bit0 + 31:bit0]
+    };
+    Bits<128> hash_subkey = {
+      V[vs2 + reg3][bit3 + 31:bit3],
+      V[vs2 + reg2][bit2 + 31:bit2],
+      V[vs2 + reg1][bit1 + 31:bit1],
+      V[vs2 + reg0][bit0 + 31:bit0]
+    };
+    Bits<128> product = crypto_gcm_gf_mul(
+      crypto_brev8_128(partial_hash ^ ciphertext), crypto_brev8_128(hash_subkey));
+    Bits<128> result = crypto_brev8_128(product);
+
+    V[vd + reg0][bit0 + 31:bit0] = result[31:0];
+    V[vd + reg1][bit1 + 31:bit1] = result[63:32];
+    V[vd + reg2][bit2 + 31:bit2] = result[95:64];
+    V[vd + reg3][bit3 + 31:bit3] = result[127:96];
+  }
+
+  CSR[vstart].VALUE = 0;
