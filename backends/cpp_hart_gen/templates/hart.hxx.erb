@@ -534,6 +534,18 @@ namespace udb {
       return result;
     }
 
+    bool fault_only_first_read_native(uint64_t len, uint64_t virtual_address,
+                                      uint64_t encoding) override {
+      auto fault_only_first_trap_scope = this->suppress_fault_only_first_traps();
+      try {
+        this->append_fault_only_first_read_value(PossiblyUnknownBits<64>{
+            this->read_memory(Bits<32>{len}, Bits<64>{virtual_address}, Bits<64>{encoding})});
+        return true;
+      } catch (const FaultOnlyFirstTrap&) {
+        return false;
+      }
+    }
+
     PrivilegeMode _get_mode() override {
       return current_mode;
     }

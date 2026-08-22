@@ -629,6 +629,10 @@ function raise_guest_page_fault {
     Raise a guest page fault exception.
   }
   body {
+    if (fault_only_first_trap_suppressed?()) {
+      abort_fault_only_first_read();
+    }
+
     ExceptionCode code;
     Boolean write_gpa_in_tval;  # whether or not to write GPA >> 2 into htval/mtval2
 
@@ -692,6 +696,10 @@ function raise {
     Otherwise, the exception will be precise.
   }
   body {
+    if (fault_only_first_trap_suppressed?()) {
+      abort_fault_only_first_read();
+    }
+
     if (!PRECISE_SYNCHRONOUS_EXCEPTIONS) {
       unpredictable("Imprecise synchronous exception");
     } else {
@@ -709,6 +717,10 @@ function raise_precise {
     Raise synchronous exception number `exception_code`.
   }
   body {
+    if (fault_only_first_trap_suppressed?()) {
+      abort_fault_only_first_read();
+    }
+
     PrivilegeMode handling_mode = exception_handling_mode(exception_code);
 
     if (handling_mode == PrivilegeMode::M) {
