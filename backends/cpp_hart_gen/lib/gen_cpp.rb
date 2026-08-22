@@ -1054,7 +1054,10 @@ module Idl
   class ArrayLiteralAst < AstNode
     sig { override.params(symtab: SymbolTable, indent: Integer, indent_spaces: Integer).returns(String) }
     def gen_cpp(symtab, indent = 0, indent_spaces: 2)
-      gen_cpp_as_element_type(symtab, element_nodes.fetch(0).type(symtab), indent_spaces:)
+      element_type = element_nodes.map { |element| element.type(symtab) }.max_by do |type|
+        type.width == :unknown ? Float::INFINITY : type.width
+      end
+      gen_cpp_as_element_type(symtab, element_type, indent_spaces:)
     end
 
     def gen_cpp_as_element_type(symtab, element_type, indent_spaces: 2)

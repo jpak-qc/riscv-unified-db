@@ -8,8 +8,11 @@
 #include <udb/iss_soc_model.hpp>
 #include <udb/stop_reason.h>
 
+#include <array>
 #include <deque>
+#include <filesystem>
 #include <stdexcept>
+#include <string_view>
 
 // Use the rv64-riscv-tests config (known-working fully-configured rv64 with F extension).
 static const std::string cfg_yaml = R"(
@@ -189,12 +192,166 @@ void execute_one(udb::HartBase<udb::IssSocModel>* hart,
   REQUIRE(hart->run_one() == StopReason::InstLimitReached);
 }
 
+constexpr uint64_t kInstructionAddress = 0x100;
+
 int execute_at_current_mode(udb::HartBase<udb::IssSocModel>* hart,
-                            ScriptedEntropySocModel& soc,
-                            uint32_t instruction) {
-  hart->set_pc(0);
-  soc.write_physical_memory_32(0, instruction);
+                            udb::IssSocModel& soc, uint32_t instruction) {
+  hart->set_pc(kInstructionAddress);
+  soc.write_physical_memory_32(kInstructionAddress, instruction);
   return hart->run_one();
+}
+
+constexpr std::string_view kVectorCryptoConfig = "rv64-vector-crypto";
+
+bool vector_crypto_config_available() {
+  for (const std::string_view config : udb::HartFactory::configs()) {
+    if (config == kVectorCryptoConfig) {
+      return true;
+    }
+  }
+  return false;
+}
+
+udb::HartBase<udb::IssSocModel>* create_vector_crypto_hart(
+    udb::IssSocModel& soc) {
+  const std::filesystem::path cfg_path =
+      std::filesystem::path(UDB_ROOT_PATH) / "cfgs" /
+      "rv64-vector-crypto.yaml";
+  return udb::HartFactory::create(std::string(kVectorCryptoConfig), 0,
+                                  cfg_path, soc);
+}
+
+uint32_t vector_setivli_instruction(uint8_t rd, uint8_t avl,
+                                    uint16_t vtypei) {
+  return (0b11u << 30) | (static_cast<uint32_t>(vtypei) << 20) |
+         (static_cast<uint32_t>(avl) << 15) |
+         (0b111u << 12) | (static_cast<uint32_t>(rd) << 7) | 0x57;
+}
+
+uint32_t vector_r_instruction(uint8_t funct6, uint8_t vd, uint8_t vs2,
+                              uint8_t vs1, uint8_t funct3 = 0b010,
+                              uint8_t opcode = 0x57) {
+  return (static_cast<uint32_t>(funct6) << 26) | (1u << 25) |
+         (static_cast<uint32_t>(vs2) << 20) |
+         (static_cast<uint32_t>(vs1) << 15) |
+         (static_cast<uint32_t>(funct3) << 12) |
+         (static_cast<uint32_t>(vd) << 7) | opcode;
+}
+
+uint32_t vector_crypto_instruction(uint8_t funct6, uint8_t vd, uint8_t vs2,
+                                   uint8_t vs1, uint8_t funct3 = 0b010) {
+  return vector_r_instruction(funct6, vd, vs2, vs1, funct3, 0x77);
+}
+
+uint32_t vector_load_instruction(uint8_t vd, uint8_t rs1, uint8_t funct3) {
+  return (1u << 25) | (static_cast<uint32_t>(rs1) << 15) |
+         (static_cast<uint32_t>(funct3) << 12) |
+         (static_cast<uint32_t>(vd) << 7) | 0x07;
+}
+
+uint32_t vector_store_instruction(uint8_t vs3, uint8_t rs1, uint8_t funct3) {
+  return (1u << 25) | (static_cast<uint32_t>(rs1) << 15) |
+         (static_cast<uint32_t>(funct3) << 12) |
+         (static_cast<uint32_t>(vs3) << 7) | 0x27;
+}
+
+void enable_vector_state(udb::HartBase<udb::IssSocModel>* hart,
+                         udb::IssSocModel& soc) {
+  hart->set_xreg(1, 0x600);
+  REQUIRE(execute_at_current_mode(hart, soc,
+                                  csr_instruction(0x300, 0b010, 0, 1)) ==
+          StopReason::InstLimitReached);
+}
+
+void configure_vector(udb::HartBase<udb::IssSocModel>* hart,
+                      udb::IssSocModel& soc, uint8_t vl, uint16_t vtypei) {
+  REQUIRE(execute_at_current_mode(
+              hart, soc, vector_setivli_instruction(0, vl, vtypei)) ==
+          StopReason::InstLimitReached);
+}
+
+uint64_t read_csr(udb::HartBase<udb::IssSocModel>* hart,
+                  udb::IssSocModel& soc, uint16_t csr) {
+  REQUIRE(execute_at_current_mode(hart, soc,
+                                  csr_instruction(csr, 0b010, 2, 0)) ==
+          StopReason::InstLimitReached);
+  return hart->xreg(2);
+}
+
+void write_words(udb::IssSocModel& soc, uint64_t address,
+                 const std::array<uint32_t, 4>& words) {
+  for (size_t index = 0; index < words.size(); ++index) {
+    soc.write_physical_memory_32(address + index * sizeof(uint32_t),
+                                 words[index]);
+  }
+}
+
+std::array<uint32_t, 4> read_words(udb::IssSocModel& soc, uint64_t address) {
+  std::array<uint32_t, 4> words{};
+  for (size_t index = 0; index < words.size(); ++index) {
+    words[index] = soc.read_physical_memory_32(
+        address + index * sizeof(uint32_t));
+  }
+  return words;
+}
+
+void load_vector32(udb::HartBase<udb::IssSocModel>* hart,
+                   udb::IssSocModel& soc, uint8_t vd, uint64_t address,
+                   const std::array<uint32_t, 4>& words) {
+  write_words(soc, address, words);
+  hart->set_xreg(1, address);
+  REQUIRE(execute_at_current_mode(hart, soc,
+                                  vector_load_instruction(vd, 1, 0b110)) ==
+          StopReason::InstLimitReached);
+}
+
+void store_vector32(udb::HartBase<udb::IssSocModel>* hart,
+                    udb::IssSocModel& soc, uint8_t vs3, uint64_t address) {
+  hart->set_xreg(1, address);
+  REQUIRE(execute_at_current_mode(hart, soc,
+                                  vector_store_instruction(vs3, 1, 0b110)) ==
+          StopReason::InstLimitReached);
+}
+
+void write_doublewords(udb::IssSocModel& soc, uint64_t address,
+                       const std::array<uint64_t, 2>& values) {
+  for (size_t index = 0; index < values.size(); ++index) {
+    soc.write_physical_memory_32(address + index * sizeof(uint64_t),
+                                 values[index]);
+    soc.write_physical_memory_32(address + index * sizeof(uint64_t) + 4,
+                                 values[index] >> 32);
+  }
+}
+
+std::array<uint64_t, 2> read_doublewords(udb::IssSocModel& soc,
+                                         uint64_t address) {
+  std::array<uint64_t, 2> values{};
+  for (size_t index = 0; index < values.size(); ++index) {
+    const uint64_t low =
+        soc.read_physical_memory_32(address + index * sizeof(uint64_t));
+    const uint64_t high = soc.read_physical_memory_32(
+        address + index * sizeof(uint64_t) + 4);
+    values[index] = low | (high << 32);
+  }
+  return values;
+}
+
+void load_vector64(udb::HartBase<udb::IssSocModel>* hart,
+                   udb::IssSocModel& soc, uint8_t vd, uint64_t address,
+                   const std::array<uint64_t, 2>& values) {
+  write_doublewords(soc, address, values);
+  hart->set_xreg(1, address);
+  REQUIRE(execute_at_current_mode(hart, soc,
+                                  vector_load_instruction(vd, 1, 0b111)) ==
+          StopReason::InstLimitReached);
+}
+
+void store_vector64(udb::HartBase<udb::IssSocModel>* hart,
+                    udb::IssSocModel& soc, uint8_t vs3, uint64_t address) {
+  hart->set_xreg(1, address);
+  REQUIRE(execute_at_current_mode(hart, soc,
+                                  vector_store_instruction(vs3, 1, 0b111)) ==
+          StopReason::InstLimitReached);
 }
 
 }  // namespace
@@ -407,6 +564,114 @@ TEST_CASE("SM3 and SM4 instructions match known-answer vectors", "[crypto]") {
   REQUIRE(execute_at_current_mode(hart, soc, r_instruction(0x1a, 0, 5, 1, 2)) ==
           StopReason::InstLimitReached);
   REQUIRE(hart->xreg(5) == 0xffffffffc01a6bd6);
+
+  delete hart;
+}
+
+TEST_CASE("vector crypto instructions match known-answer vectors",
+          "[crypto][vector]") {
+  if (!vector_crypto_config_available()) {
+    SKIP("requires the rv64-vector-crypto generated hart");
+  }
+
+  udb::IssSocModel soc(1024 * 1024, 0);
+  auto* hart = create_vector_crypto_hart(soc);
+  hart->reset(0);
+  enable_vector_state(hart, soc);
+
+  constexpr uint64_t kStateAddress = 0x1000;
+  constexpr uint64_t kKeyAddress = 0x1020;
+  constexpr uint64_t kResultAddress = 0x1040;
+
+  configure_vector(hart, soc, 4, 0b010000);
+  REQUIRE(read_csr(hart, soc, 0xc20) == 4);
+  REQUIRE((read_csr(hart, soc, 0xc21) & 0xff) == 0b010000);
+  REQUIRE(read_csr(hart, soc, 0x008) == 0);
+
+  // FIPS-197 AES-128: the state after AddRoundKey and round key one produce
+  // the first middle-round state below.
+  load_vector32(hart, soc, 8, kStateAddress,
+                {0x30201000, 0x70605040, 0xb0a09080, 0xf0e0d0c0});
+  load_vector32(hart, soc, 12, kKeyAddress,
+                {0xfd74aad6, 0xfa72afd2, 0xf178a6da, 0xfe76abd6});
+  store_vector32(hart, soc, 8, kResultAddress);
+  REQUIRE(read_words(soc, kResultAddress) ==
+          std::array<uint32_t, 4>{0x30201000, 0x70605040, 0xb0a09080,
+                                  0xf0e0d0c0});
+  store_vector32(hart, soc, 12, kResultAddress);
+  REQUIRE(read_words(soc, kResultAddress) ==
+          std::array<uint32_t, 4>{0xfd74aad6, 0xfa72afd2, 0xf178a6da,
+                                  0xfe76abd6});
+
+  // The final round isolates SubBytes and ShiftRows before the middle round
+  // below adds MixColumns.
+  REQUIRE(execute_at_current_mode(hart, soc,
+                                  vector_crypto_instruction(0b101000, 8, 12, 3)) ==
+          StopReason::InstLimitReached);
+  store_vector32(hart, soc, 8, kResultAddress);
+  REQUIRE(read_words(soc, kResultAddress) ==
+          std::array<uint32_t, 4>{0x7194f9b5, 0xfe93cfdb, 0xa0cfd617,
+                                  0x19a6616c});
+
+  load_vector32(hart, soc, 8, kStateAddress,
+                {0x30201000, 0x70605040, 0xb0a09080, 0xf0e0d0c0});
+  REQUIRE(execute_at_current_mode(hart, soc,
+                                  vector_crypto_instruction(0b101000, 8, 12, 2)) ==
+          StopReason::InstLimitReached);
+  store_vector32(hart, soc, 8, kResultAddress);
+  REQUIRE(read_words(soc, kResultAddress) ==
+          std::array<uint32_t, 4>{0xe810d889, 0x68ce5a85, 0xd843182d,
+                                  0xe48f12cb});
+
+  // SHA-256("abc") message schedule words W[16] through W[19].
+  load_vector32(hart, soc, 8, kStateAddress,
+                {0x61626380, 0x00000000, 0x00000000, 0x00000000});
+  load_vector32(hart, soc, 12, kKeyAddress,
+                {0x00000000, 0x00000000, 0x00000000, 0x00000000});
+  load_vector32(hart, soc, 16, kResultAddress,
+                {0x00000000, 0x00000000, 0x00000000, 0x00000018});
+  REQUIRE(execute_at_current_mode(hart, soc,
+                                  vector_crypto_instruction(0b101101, 8, 12, 16)) ==
+          StopReason::InstLimitReached);
+  store_vector32(hart, soc, 8, kResultAddress);
+  REQUIRE(read_words(soc, kResultAddress) ==
+          std::array<uint32_t, 4>{0x61626380, 0x000f0000, 0x7da86405,
+                                  0x600003c6});
+
+  // GM/T 0002-2012 SM4: first four round keys from the standard test key.
+  load_vector32(hart, soc, 12, kStateAddress,
+                {0xa292ffa1, 0xdf01febf, 0x99a12b0f, 0xc42410cc});
+  REQUIRE(execute_at_current_mode(hart, soc,
+                                  vector_crypto_instruction(0b100001, 8, 12, 0)) ==
+          StopReason::InstLimitReached);
+  store_vector32(hart, soc, 8, kResultAddress);
+  REQUIRE(read_words(soc, kResultAddress) ==
+          std::array<uint32_t, 4>{0xf12186f9, 0x41662b61, 0x5a6ab19a,
+                                  0x7ba92077});
+
+  // The GHASH multiplier is byte-bit reversed by the instruction.  0x80
+  // represents the polynomial identity and must preserve the multiplicand.
+  load_vector32(hart, soc, 8, kStateAddress,
+                {0x00000080, 0x00000000, 0x00000000, 0x00000000});
+  load_vector32(hart, soc, 12, kKeyAddress,
+                {0x01234567, 0x89abcdef, 0xfedcba98, 0x76543210});
+  REQUIRE(execute_at_current_mode(hart, soc,
+                                  vector_crypto_instruction(0b101000, 8, 12, 17)) ==
+          StopReason::InstLimitReached);
+  store_vector32(hart, soc, 8, kResultAddress);
+  REQUIRE(read_words(soc, kResultAddress) ==
+          std::array<uint32_t, 4>{0x01234567, 0x89abcdef, 0xfedcba98,
+                                  0x76543210});
+
+  configure_vector(hart, soc, 2, 0b011000);
+  load_vector64(hart, soc, 12, kStateAddress, {0x5, 0x2});
+  load_vector64(hart, soc, 16, kKeyAddress, {0x3, 0x2});
+  REQUIRE(execute_at_current_mode(hart, soc,
+                                  vector_r_instruction(0b001100, 8, 12, 16)) ==
+          StopReason::InstLimitReached);
+  store_vector64(hart, soc, 8, kResultAddress);
+  REQUIRE(read_doublewords(soc, kResultAddress) ==
+          std::array<uint64_t, 2>{0xf, 0x4});
 
   delete hart;
 }
