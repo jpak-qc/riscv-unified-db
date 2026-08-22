@@ -27,3 +27,21 @@ access:
   vu: always
 data_independent_timing: true
 operation(): |
+  VectorState state = vector_state();
+  U32 destination_registers = vector_register_group_registers(state);
+  U32 key_registers = vector_element_group_registers(128);
+  U32 destination = vd;
+  U32 key = vs2;
+  if (state.sew != 32 || !vector_element_group_legal(state, 128, 4) ||
+      (destination < key + key_registers && key < destination + destination_registers)) {
+    raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
+  }
+
+  Bits<128> round_key = vector_read_eg128(vs2, 0);
+  for (U32 group = CSR[vstart].VALUE / 4; group < CSR[vl].VALUE / 4; group++) {
+    U32 element = group * 4;
+    Bits<128> result = crypto_aes_dec_middle128(vector_read_eg128(vd, element), round_key);
+    vector_write_eg128(vd, element, result);
+  }
+
+  CSR[vstart].VALUE = 0;

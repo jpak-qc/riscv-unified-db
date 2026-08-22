@@ -27,3 +27,16 @@ access:
   vu: always
 data_independent_timing: true
 operation(): |
+  VectorState state = vector_state();
+  if (state.sew != 32 || !vector_element_group_legal(state, 128, 4)) {
+    raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
+  }
+
+  for (U32 group = CSR[vstart].VALUE / 4; group < CSR[vl].VALUE / 4; group++) {
+    U32 element = group * 4;
+    Bits<128> result = crypto_aes_dec_final128(
+      vector_read_eg128(vd, element), vector_read_eg128(vs2, element));
+    vector_write_eg128(vd, element, result);
+  }
+
+  CSR[vstart].VALUE = 0;
