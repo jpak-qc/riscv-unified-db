@@ -38,15 +38,14 @@ operation(): |
       U32 start_bit = (i % elems_per_reg) * state.sew;
       U32 end_bit = start_bit + state.sew - 1;
       XReg input = V[vs2 + reg_off][end_bit:start_bit];
-      XReg output = 0;
 
       for (U32 byte = 0; byte < state.sew / 8; byte++) {
         U32 byte_bit = byte * 8;
         U32 source_byte_bit = state.sew - 8 - byte_bit;
-        output[byte_bit + 7:byte_bit] = input[source_byte_bit + 7:source_byte_bit];
+        for (U32 bit = 0; bit < 8; bit++) {
+          V[vd + reg_off][start_bit + byte_bit + bit] = input[source_byte_bit + bit];
+        }
       }
-
-      V[vd + reg_off][end_bit:start_bit] = output[state.sew-1:0];
     }
   }
 
