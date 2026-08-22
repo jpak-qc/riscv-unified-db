@@ -64,12 +64,40 @@ access_detail: |
   ! 1 ! 1 ! 1 ! executes ! executes ! executes ! executes
   !===
 
-# operation(): |
-#   XReg cache_block_address = X[xs1] & ~(CACHE_BLOCK_SIZE-1);
-#   Boolean has_fault?;
-#   ExceptionCode code;
+operation(): |
+  # Access checks for cbo.flush per envcfg CBCFE bits.
+  # M-mode always has access.
+  if (CSR[misa].S == 1) {
+    if (CSR[menvcfg].CBCFE == 0) {
+      if (mode() == PrivilegeMode::S || mode() == PrivilegeMode::U) {
+        raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
+      }
+      if (CSR[misa].H == 1) {
+        if (mode() == PrivilegeMode::VS || mode() == PrivilegeMode::VU) {
+          raise(ExceptionCode::VirtualInstruction, mode(), $encoding);
+        }
+      }
+    } else {
+      if (mode() == PrivilegeMode::U && CSR[senvcfg].CBCFE == 0) {
+        raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
+      }
+      if (CSR[misa].H == 1) {
+        if (CSR[henvcfg].CBCFE == 0) {
+          if (mode() == PrivilegeMode::VS || mode() == PrivilegeMode::VU) {
+            raise(ExceptionCode::VirtualInstruction, mode(), $encoding);
+          }
+        } else if (mode() == PrivilegeMode::VU && CSR[senvcfg].CBCFE == 0) {
+          raise(ExceptionCode::VirtualInstruction, mode(), $encoding);
+        }
+      }
+    }
+  }
 
-#   (has_fault?, code) = zero_cache_line(cache_block_address);
-#   if (has_fault?) {
-#     raise(code);
-#   }
+  XReg mask = CACHE_BLOCK_SIZE - 1;
+  XReg cache_block_vaddr = X[xs1] & ~mask;
+
+  TranslationResult result;
+  result = translate(cache_block_vaddr, MemoryOperation::Write, effective_ldst_mode(), $encoding);
+  access_check(result.paddr, CACHE_BLOCK_SIZE*8, cache_block_vaddr, MemoryOperation::Write, ExceptionCode::StoreAmoAccessFault);
+
+  # Cache state is not modeled by this ISS.
