@@ -41,48 +41,65 @@ access:
 data_independent_timing: false
 operation(): |
   check_f_ok($encoding);
-  # Always rounds toward zero (RTZ), modulo 2^32 semantics
   Bits<1>  sign = signF64UI(F[fs1]);
   Bits<16> exp  = expF64UI(F[fs1]);
   Bits<64> sig  = fracF64UI(F[fs1]);
 
   if (exp == 11'h7FF) {
-    # Infinity and NaN convert to zero; set NV
-    if (sig != 0) {
-      set_fp_flag(FpFlag::NV);
-    } else {
-      set_fp_flag(FpFlag::NV);
-    }
     X[xd] = 0;
   } else if (exp == 0) {
-    # Zero or subnormal - result is zero
-    if (sig != 0) {
-      set_fp_flag(FpFlag::NX);
-    }
     X[xd] = 0;
   } else {
     sig = sig | 64'h0010000000000000;
-    Bits<16> shiftDist = exp - 16'h0433;
-    Bits<64> result;
-    if ($signed(shiftDist) >= 0s) {
-      # |value| >= 2^52, shift left and take lower 32 bits
-      result = sig << shiftDist;
+    Bits<32> result32;
+    if (exp >= 16'h0433) {
+      Bits<16> leftShift = exp - 16'h0433;
+      if (leftShift >= 32) {
+        result32 = 0;
+      } else {
+        result32 = sig[31:0];
+        for (U32 i = 0; i < leftShift; i++) {
+          result32 = result32 `<< 1;
+        }
+      }
     } else {
-      # Round toward zero - truncate fractional bits
-      Bits<16> rightShift = -shiftDist;
+      Bits<16> rightShift = 16'h0433 - exp;
       Bits<64> roundedSig;
-      if ($signed(rightShift) >= 64s) {
-        set_fp_flag(FpFlag::NX);
+      if (rightShift >= 16'h0040) {
         roundedSig = 0;
       } else {
-        Bits<64> fracBits = sig & ((64'h1 << rightShift) - 1);
         roundedSig = sig >> rightShift;
-        if (fracBits != 0) { set_fp_flag(FpFlag::NX); }
       }
-      result = roundedSig;
+      result32 = roundedSig[31:0];
     }
-    # Take lower 32 bits and sign-extend
-    Bits<32> result32 = result[31:0];
     Bits<32> signed_result = (sign == 1) ? -result32 : result32;
     X[xd] = $signed(signed_result);
+  }
+
+  # Raise the flags required by FCVT.W.D with RTZ without constraining the
+  # unbounded conversion used for the FCVTMOD result.
+  if (exp == 11'h7FF) {
+    set_fp_flag(FpFlag::NV);
+  } else if (exp == 0) {
+    if (sig != 0) { set_fp_flag(FpFlag::NX); }
+  } else {
+    Bits<64> normalizedSig = sig | 64'h0010000000000000;
+    if (exp > 16'h041E) {
+      set_fp_flag(FpFlag::NV);
+    } else if (exp == 16'h041E) {
+      Bits<64> integerMagnitude = normalizedSig >> 21;
+      if ((sign == 0) || (integerMagnitude > 64'h0000000080000000)) {
+        set_fp_flag(FpFlag::NV);
+      } else if ((normalizedSig & 64'h00000000001FFFFF) != 0) {
+        set_fp_flag(FpFlag::NX);
+      }
+    } else {
+      Bits<16> rightShiftForFlags = 16'h0433 - exp;
+      if (rightShiftForFlags >= 64) {
+        set_fp_flag(FpFlag::NX);
+      } else {
+        Bits<64> discardedBits = normalizedSig & ((64'h1 << rightShiftForFlags) - 1);
+        if (discardedBits != 0) { set_fp_flag(FpFlag::NX); }
+      }
+    }
   }
