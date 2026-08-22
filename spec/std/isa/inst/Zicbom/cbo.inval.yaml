@@ -107,10 +107,43 @@ access_detail: |
   ! 01/11 ! 01/11 ! 01/11 ! executes ! executes ! executes ! executes
   !===
 
-# operation(): |
-#   let cache_block_address = X[xs1] & ~(CACHE_BLOCK_SIZE-1);
+operation(): |
+  # Access checks for cbo.inval per envcfg CBIE fields.
+  # M-mode always has access. When menvcfg.CBIE is zero, virtual modes
+  # receive an illegal-instruction exception rather than a virtual-instruction
+  # exception, as required by Zicbom.
+  if (CSR[misa].S == 1) {
+    if (CSR[menvcfg].CBIE == 0) {
+      if (mode() == PrivilegeMode::S || mode() == PrivilegeMode::U) {
+        raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
+      }
+      if (CSR[misa].H == 1) {
+        if (mode() == PrivilegeMode::VS || mode() == PrivilegeMode::VU) {
+          raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
+        }
+      }
+    } else {
+      if (mode() == PrivilegeMode::U && CSR[senvcfg].CBIE == 0) {
+        raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
+      }
+      if (CSR[misa].H == 1) {
+        if (CSR[henvcfg].CBIE == 0) {
+          if (mode() == PrivilegeMode::VS || mode() == PrivilegeMode::VU) {
+            raise(ExceptionCode::VirtualInstruction, mode(), $encoding);
+          }
+        } else if (mode() == PrivilegeMode::VU && CSR[senvcfg].CBIE == 0) {
+          raise(ExceptionCode::VirtualInstruction, mode(), $encoding);
+        }
+      }
+    }
+  }
 
-#   // zeroing operation can occur in any number of independent stores
-#   for (i=0; i<CACHE_BLOCK_SIZE; i++) {
-#     MEM[cache_block_address + i, 8] = 0;
-#   }
+  XReg mask = CACHE_BLOCK_SIZE - 1;
+  XReg cache_block_vaddr = X[xs1] & ~mask;
+
+  TranslationResult result;
+  result = translate(cache_block_vaddr, MemoryOperation::Write, effective_ldst_mode(), $encoding);
+  access_check(result.paddr, CACHE_BLOCK_SIZE*8, cache_block_vaddr, MemoryOperation::Write, ExceptionCode::StoreAmoAccessFault);
+
+  # Cache state is not modeled by this ISS. cbo.inval may either invalidate
+  # or flush according to CBIE, neither of which changes architectural state.
