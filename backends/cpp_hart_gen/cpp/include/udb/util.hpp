@@ -48,13 +48,9 @@ namespace udb {
   >
   void bit_insert(BitsClass<T, Signed> &target, const MsbType &msb, const LsbType &lsb,
                   const ValueType &value) {
-    // Derive the "1" and the value from `target` so that they carry the register's
-    // full (runtime) width. For runtime-width Bits (e.g. vector registers wider than 64
-    // bits) a non-widening left shift by an amount >= the operand's width yields 0; building
-    // the mask from a 1-bit literal (BitsClass<T+1>{1_b}, width 1) would therefore collapse
-    // the mask — and likewise `{value} << lsb` would collapse — to 0. The final assignment
-    // re-masks `target` to its own width, so intermediate widths are harmless.
-    BitsClass<T, Signed> zero = target ^ target;
+    // Preserve the register width while ensuring the mask is known even when the
+    // destination register has not been initialized yet.
+    BitsClass<T, Signed> zero{_Bits<T, false>{0}};
     BitsClass<T, Signed> one = zero | _Bits<1, false>{1_b};
     BitsClass<T, Signed> field = zero | value;
     BitsClass<T, Signed> mask = ((one << (msb - lsb + _Bits<1, false>{1_b})) - one) << lsb;
