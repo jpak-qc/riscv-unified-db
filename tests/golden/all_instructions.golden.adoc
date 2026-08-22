@@ -10716,6 +10716,65 @@ Included in::
 
 
 
+[#udb:doc:inst:beqi]
+== beqi
+
+Synopsis::
+Branch if equal immediate
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+beqi xs1, cimm, offset
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x63,"type":2},{"bits":5,"name": "offset[4:1|11]","type":4},{"bits":3,"name": 0x2,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "cimm","type":4},{"bits":7,"name": "offset[12|10:5]","type":4}]}
+....
+
+Description::
+Branch to PC + offset if the value in register xs1 is equal to the XLEN-bit
+comparison constant decoded from cimm.
+
+The cimm field is not sign-extended: cimm == 0 encodes the value -1, and
+cimm values 1 through 31 encode the corresponding positive integer values.
+
+Raise a `MisalignedAddress` exception if the branch is taken and PC + offset is
+misaligned.
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|offset |sext({$encoding[31], $encoding[7], $encoding[30:25], $encoding[11:8], 1'd0}, 13)
+|cimm |$encoding[24:20]
+|xs1 |$encoding[19:15]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zibi*
+| any
+|===
+
+
+
+
 [#udb:doc:inst:bext]
 == bext
 
@@ -11243,6 +11302,65 @@ Included in::
 | Extension | Version
 
 | *I*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:bnei]
+== bnei
+
+Synopsis::
+Branch if not equal immediate
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+bnei xs1, cimm, offset
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x63,"type":2},{"bits":5,"name": "offset[4:1|11]","type":4},{"bits":3,"name": 0x3,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "cimm","type":4},{"bits":7,"name": "offset[12|10:5]","type":4}]}
+....
+
+Description::
+Branch to PC + offset if the value in register xs1 is not equal to the XLEN-bit
+comparison constant decoded from cimm.
+
+The cimm field is not sign-extended: cimm == 0 encodes the value -1, and
+cimm values 1 through 31 encode the corresponding positive integer values.
+
+Raise a `MisalignedAddress` exception if the branch is taken and PC + offset is
+misaligned.
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|offset |sext({$encoding[31], $encoding[7], $encoding[30:25], $encoding[11:8], 1'd0}, 13)
+|cimm |$encoding[24:20]
+|xs1 |$encoding[19:15]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zibi*
 | any
 |===
 
@@ -14240,7 +14358,7 @@ RV64::
 ....
 
 Description::
-Stores a 64-bit value in register rs2 to memory.
+Stores a 64-bit value in register xs2 to memory.
 It computes an effective address by adding the zero-extended offset, scaled by 8,
 to the stack pointer, x2.
 It expands to xref:insts:sd.adoc#udb:doc:inst:sd[sd] `xs2, offset(x2)`.
@@ -15422,7 +15540,7 @@ The table below summarizes the options.
 xref:insts:cbo_inval.adoc#udb:doc:inst:cbo_inval[cbo.inval] is ordered by `FENCE` instructions but not `FENCE.I` or `SFENCE.VMA`.
 
 <%- if CACHE_BLOCK_SIZE.bit_length > [PMP_GRANULARITY, PMA_GRANULARITY].min -%>
-Both PMP and PMA access control must be the same for all bytes in the block; otherwise, xref:insts:cbo_zero.adoc#udb:doc:inst:cbo_zero[cbo.zero] has UNSPECIFIED behavior.
+Both PMP and PMA access control must be the same for all bytes in the block; otherwise, xref:insts:cbo_inval.adoc#udb:doc:inst:cbo_inval[cbo.inval] has UNSPECIFIED behavior.
 <%- end -%>
 
 Invalidate operations are treated as stores for page and access permissions. If permission checks fail,
@@ -17461,8 +17579,8 @@ Encoding::
 ....
 
 Description::
-xref:insts:fadd_q.adoc#udb:doc:inst:fadd_q[fadd.q] is analogous to xref:insts:fadd_d.adoc#udb:doc:inst:fadd_d[fadd.d] and performs double-precision floating-point addition between
-`qs1` and `qs2` and writes the final result to `qd`.
+xref:insts:fadd_q.adoc#udb:doc:inst:fadd_q[fadd.q] is analogous to xref:insts:fadd_d.adoc#udb:doc:inst:fadd_d[fadd.d] and performs quad-precision floating-point addition between
+`fs1` and `fs2` and writes the final result to `fd`.
 
 
 Decode Variables::
@@ -21406,7 +21524,6 @@ and writes 1 to integer register `xd` if the condition holds, and 0 otherwise.
 
 xref:insts:fleq_q.adoc#udb:doc:inst:fleq_q[fleq.q] is defined like xref:insts:fle_q.adoc#udb:doc:inst:fle_q[fle.q], except that quiet _NaN_ inputs do not cause the invalid
 operation exception flag to be set.
-This instruction is encoded like its `flt` counterpart, but with instruction bit 14 set to 1.
 
 
 Decode Variables::
@@ -21513,7 +21630,7 @@ Encoding::
 ....
 
 Description::
-The xref:insts:flh.adoc#udb:doc:inst:flh[flh] instruction loads a single-precision floating-point value from memory at address _xs1_ + _imm_ into floating-point register _xd_.
+The xref:insts:flh.adoc#udb:doc:inst:flh[flh] instruction loads a half-precision floating-point value from memory at address _xs1_ + _imm_ into floating-point register _xd_.
 
 xref:insts:flh.adoc#udb:doc:inst:flh[flh] does not modify the bits being transferred; in particular, the payloads of non-canonical NaNs are preserved.
 
@@ -22141,12 +22258,12 @@ Base::
 |===
 
 Assembly::
-fltq.q fd, fs1, fs2
+fltq.q xd, fs1, fs2
 
 Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x53,"type":2},{"bits":5,"name": "fd","type":4},{"bits":3,"name": 0x5,"type":2},{"bits":5,"name": "fs1","type":4},{"bits":5,"name": "fs2","type":4},{"bits":7,"name": 0x53,"type":2}]}
+{"reg":[{"bits":7,"name": 0x53,"type":2},{"bits":5,"name": "xd","type":4},{"bits":3,"name": 0x5,"type":2},{"bits":5,"name": "fs1","type":4},{"bits":5,"name": "fs2","type":4},{"bits":7,"name": 0x53,"type":2}]}
 ....
 
 Description::
@@ -22155,7 +22272,6 @@ and writes 1 to integer register `xd` if the condition holds, and 0 otherwise.
 
 xref:insts:fltq_q.adoc#udb:doc:inst:fltq_q[fltq.q] is defined like xref:insts:flt_q.adoc#udb:doc:inst:flt_q[flt.q], except that quiet _NaN_ inputs do not cause the invalid
 operation exception flag to be set.
-This instruction is encoded like its `fle` counterpart, but with instruction bit 14 set to 1.
 
 
 Decode Variables::
@@ -22164,7 +22280,7 @@ Decode Variables::
 |Variable Name |Location
 |fs2 |$encoding[24:20]
 |fs1 |$encoding[19:15]
-|fd |$encoding[11:7]
+|xd |$encoding[11:7]
 |===
 
 Included in::
@@ -22854,7 +22970,6 @@ The value `-0.0` is considered to be less than the value `+0.0`.
 If both inputs are _NaN_s, the result is the canonical _NaN_.
 If either input is _NaN_, the result is the canonical _NaN_.
 Signaling _NaN_ inputs set the invalid operation exception flag, even when the result is not _NaN_.
-This instruction is encoded like its xref:insts:fminm_q.adoc#udb:doc:inst:fminm_q[fminm.q] counterpart, but with instruction bit 14 set to 1.
 
 
 Decode Variables::
@@ -23289,7 +23404,6 @@ The value `-0.0` is considered to be less than the value `+0.0`.
 If both inputs are _NaN_s, the result is the canonical _NaN_.
 If either input is _NaN_, the result is the canonical _NaN_.
 Signaling _NaN_ inputs set the invalid operation exception flag, even when the result is not _NaN_.
-This instruction is encoded like its xref:insts:fminm_q.adoc#udb:doc:inst:fminm_q[fminm.q] counterpart, but with instruction bit 14 set to 1.
 
 
 Decode Variables::
@@ -24303,7 +24417,7 @@ Encoding::
 ....
 
 Description::
-The xref:insts:fmvp_q_x.adoc#udb:doc:inst:fmvp_q_x[fmvp.q.x] instruction moves a double-precision number from a pair of integer registers into
+The xref:insts:fmvp_q_x.adoc#udb:doc:inst:fmvp_q_x[fmvp.q.x] instruction moves a quad-precision number from a pair of integer registers into
 a floating-point register.
 Integer registers `xs1` and `xs2` supply bits 63:0 and 127:64, respectively; the result is written to
 floating-point register `fd`.
@@ -27759,8 +27873,8 @@ Included in::
 
 This instruction requires the following:
 
-xref:exts:I.adoc#udb:doc:ext:I[I]
-xref:exts:Zilsd.adoc#udb:doc:ext:Zilsd[Zilsd]
+++(++xlen+++()+++ == 64 && xref:exts:I.adoc#udb:doc:ext:I[I])
+++(++xlen+++()+++ == 32 && xref:exts:Zilsd.adoc#udb:doc:ext:Zilsd[Zilsd])
 
 
 [#udb:doc:inst:ld_aq]
@@ -32814,10 +32928,15 @@ Decode Variables::
 Included in::
 
 
-This instruction requires the following:
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
 
-xref:exts:M.adoc#udb:doc:ext:M[M]
-xref:exts:Zmmul.adoc#udb:doc:ext:Zmmul[Zmmul]
+| *Zmmul*
+| any
+|===
+
+
 
 
 [#udb:doc:inst:mulh]
@@ -32871,10 +32990,15 @@ Decode Variables::
 Included in::
 
 
-This instruction requires the following:
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
 
-xref:exts:M.adoc#udb:doc:ext:M[M]
-xref:exts:Zmmul.adoc#udb:doc:ext:Zmmul[Zmmul]
+| *Zmmul*
+| any
+|===
+
+
 
 
 [#udb:doc:inst:mulhsu]
@@ -32928,10 +33052,15 @@ Decode Variables::
 Included in::
 
 
-This instruction requires the following:
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
 
-xref:exts:M.adoc#udb:doc:ext:M[M]
-xref:exts:Zmmul.adoc#udb:doc:ext:Zmmul[Zmmul]
+| *Zmmul*
+| any
+|===
+
+
 
 
 [#udb:doc:inst:mulhu]
@@ -32985,10 +33114,15 @@ Decode Variables::
 Included in::
 
 
-This instruction requires the following:
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
 
-xref:exts:M.adoc#udb:doc:ext:M[M]
-xref:exts:Zmmul.adoc#udb:doc:ext:Zmmul[Zmmul]
+| *Zmmul*
+| any
+|===
+
+
 
 
 [#udb:doc:inst:mulw]
@@ -33041,10 +33175,18 @@ Decode Variables::
 Included in::
 
 
-This instruction requires the following:
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
 
-++(++xlen+++()+++ == 64 && xref:exts:M.adoc#udb:doc:ext:M[M])
-++(++xlen+++()+++ == 64 && xref:exts:Zmmul.adoc#udb:doc:ext:Zmmul[Zmmul])
+| *Zmmul*
+| any
+|===
+
+
+Additionally, this instruction requires the following:
+
+xlen+++()+++ == 64
 
 
 [#udb:doc:inst:ntl_all]
@@ -35979,8 +36121,8 @@ Included in::
 
 This instruction requires the following:
 
-xref:exts:I.adoc#udb:doc:ext:I[I]
-xref:exts:Zilsd.adoc#udb:doc:ext:Zilsd[Zilsd]
+++(++xlen+++()+++ == 64 && xref:exts:I.adoc#udb:doc:ext:I[I])
+++(++xlen+++()+++ == 32 && xref:exts:Zilsd.adoc#udb:doc:ext:Zilsd[Zilsd])
 
 
 [#udb:doc:inst:sd_aqrl]
@@ -39139,7 +39281,7 @@ Base::
 |===
 
 Assembly::
-ssamoswap.d xd, xs2, xs1
+ssamoswap.d xd, xs2, (xs1)
 
 Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
@@ -39193,7 +39335,7 @@ Base::
 |===
 
 Assembly::
-ssamoswap.w xd, xs2, xs1
+ssamoswap.w xd, xs2, (xs1)
 
 Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
@@ -39230,11 +39372,11 @@ Included in::
 
 
 
-[#udb:doc:inst:sspopchk_x1]
-== sspopchk.x1
+[#udb:doc:inst:sspopchk]
+== sspopchk
 
 Synopsis::
-No synopsis available
+Shadow Stack Pop and Check
 
 Base::
 
@@ -39247,20 +39389,27 @@ Base::
 |===
 
 Assembly::
-sspopchk.x1 sspopchk_x1
+sspopchk xs1
 
 Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":32,"name": 0xcdc0c073,"type":2}]}
+{"reg":[{"bits":15,"name": 0x4073,"type":2},{"bits":5,"name": "xs1 != {0,2,3,4,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31}","type":4},{"bits":12,"name": 0xcdc,"type":2}]}
 ....
 
 Description::
-No description available.
+SSPOPCHK pops a value from the shadow stack and checks it against link
+register `xs1`. The encoding restricts `xs1` to `x1` or `x5`.
+
+This instruction uses the xref:insts:mop_r_28.adoc#udb:doc:inst:mop_r_28[mop.r.28] codepoint provided by Zimop.
 
 
 Decode Variables::
-sspopchk.x1 has no decode variables.
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|xs1 |$encoding[19:15]
+|===
 
 Included in::
 
@@ -39276,11 +39425,11 @@ Included in::
 
 
 
-[#udb:doc:inst:sspopchk_x5]
-== sspopchk.x5
+[#udb:doc:inst:sspush]
+== sspush
 
 Synopsis::
-No synopsis available
+Shadow Stack Push
 
 Base::
 
@@ -39293,112 +39442,27 @@ Base::
 |===
 
 Assembly::
-sspopchk.x5 sspopchk_x5
+sspush xs2
 
 Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":32,"name": 0xcdc2c073,"type":2}]}
+{"reg":[{"bits":20,"name": 0x4073,"type":2},{"bits":5,"name": "xs2 != {0,2,3,4,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31}","type":4},{"bits":7,"name": 0x67,"type":2}]}
 ....
 
 Description::
-No description available.
+SSPUSH pushes the value of link register `xs2` to the shadow stack.
+The encoding restricts `xs2` to `x1` or `x5`.
+
+This instruction uses the xref:insts:mop_rr_7.adoc#udb:doc:inst:mop_rr_7[mop.rr.7] codepoint provided by Zimop.
 
 
 Decode Variables::
-sspopchk.x5 has no decode variables.
-
-Included in::
-
-
-[width="100%",cols="1,2",options="header"]
+[width="100%", cols="1,2", options="header"]
 |===
-| Extension | Version
-
-| *Zicfiss*
-| any
+|Variable Name |Location
+|xs2 |$encoding[24:20]
 |===
-
-
-
-
-[#udb:doc:inst:sspush_x1]
-== sspush.x1
-
-Synopsis::
-No synopsis available
-
-Base::
-
-[cols="1,1"]
-|===
-| RV32 | RV64
-
-| &#x2713;
-| &#x2713;
-|===
-
-Assembly::
-sspush.x1 sspush_x1
-
-Encoding::
-[wavedrom, ,svg,subs='attributes',width="100%"]
-....
-{"reg":[{"bits":32,"name": 0xce104073,"type":2}]}
-....
-
-Description::
-No description available.
-
-
-Decode Variables::
-sspush.x1 has no decode variables.
-
-Included in::
-
-
-[width="100%",cols="1,2",options="header"]
-|===
-| Extension | Version
-
-| *Zicfiss*
-| any
-|===
-
-
-
-
-[#udb:doc:inst:sspush_x5]
-== sspush.x5
-
-Synopsis::
-No synopsis available
-
-Base::
-
-[cols="1,1"]
-|===
-| RV32 | RV64
-
-| &#x2713;
-| &#x2713;
-|===
-
-Assembly::
-sspush.x5 sspush_x5
-
-Encoding::
-[wavedrom, ,svg,subs='attributes',width="100%"]
-....
-{"reg":[{"bits":32,"name": 0xce504073,"type":2}]}
-....
-
-Description::
-No description available.
-
-
-Decode Variables::
-sspush.x5 has no decode variables.
 
 Included in::
 
@@ -41259,7 +41323,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvbb*
+| *Zvkb*
 | any
 |===
 
@@ -41312,7 +41376,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvbb*
+| *Zvkb*
 | any
 |===
 
@@ -41628,7 +41692,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvbb*
+| *Zvkb*
 | any
 |===
 
@@ -62916,7 +62980,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvbb*
+| *Zvkb*
 | any
 |===
 
@@ -63181,7 +63245,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvbb*
+| *Zvkb*
 | any
 |===
 
@@ -63234,7 +63298,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvbb*
+| *Zvkb*
 | any
 |===
 
@@ -63287,7 +63351,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvbb*
+| *Zvkb*
 | any
 |===
 
@@ -63340,7 +63404,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvbb*
+| *Zvkb*
 | any
 |===
 
@@ -63393,7 +63457,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvbb*
+| *Zvkb*
 | any
 |===
 
