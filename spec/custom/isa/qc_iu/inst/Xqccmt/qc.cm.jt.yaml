@@ -46,7 +46,7 @@ operation(): |
   }
 
   # may raise an exception
-  access_check(result.paddr, xlen(), $pc, MemoryOperation::Fetch, ExceptionCode::InstructionAccessFault, mode());
+  access_check(result.paddr, xlen(), $pc, MemoryOperation::Fetch, ExceptionCode::InstructionAccessFault);
 
   if (xlen() == 32) {
     addr = read_physical_memory(32, result.paddr);
