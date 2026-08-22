@@ -654,6 +654,8 @@ function raise_guest_page_fault {
       CSR[htval].VALUE = write_gpa_in_tval ? (gpa >> 2) : 0;
       CSR[htinst].VALUE = tinst_value;
       CSR[sepc].PC = $pc;
+      CSR[mstatus].SPIE = CSR[mstatus].SIE;
+      CSR[mstatus].SIE = 0;
       if (!stval_readonly?()) {
         CSR[stval].VALUE = stval_for(code, gva);
       }
@@ -668,6 +670,8 @@ function raise_guest_page_fault {
       assert(handling_mode == PrivilegeMode::M, "unexpected privilege mode");
       CSR[mtval2].VALUE = write_gpa_in_tval ? (gpa >> 2) : 0;
       CSR[mtinst].VALUE = tinst_value;
+      CSR[mstatus].MPIE = CSR[mstatus].MIE;
+      CSR[mstatus].MIE = 0;
       CSR[mstatus].MPP = $bits(from_mode)[1:0];
       if (MXLEN == 64) {
         CSR[mstatus].MPV = 1;
@@ -725,6 +729,8 @@ function raise_precise {
 
     if (handling_mode == PrivilegeMode::M) {
       CSR[mepc].PC = $pc;
+      CSR[mstatus].MPIE = CSR[mstatus].MIE;
+      CSR[mstatus].MIE = 0;
       if (!mtval_readonly?()) {
         CSR[mtval].VALUE = mtval_for(exception_code, tval);
       }
@@ -753,6 +759,8 @@ function raise_precise {
       CSR[mstatus].MPP = $bits(from_mode);
     } else if (CSR[misa].S == 1 && (handling_mode == PrivilegeMode::S)) {
       CSR[sepc].PC = $pc;
+      CSR[mstatus].SPIE = CSR[mstatus].SIE;
+      CSR[mstatus].SIE = 0;
       if (!stval_readonly?()) {
         CSR[stval].VALUE = stval_for(exception_code, tval);
       }
@@ -791,6 +799,8 @@ function raise_precise {
       }
     } else if (CSR[misa].H == 1 && (handling_mode == PrivilegeMode::VS)) {
       CSR[vsepc].PC = $pc;
+      CSR[vsstatus].SPIE = CSR[vsstatus].SIE;
+      CSR[vsstatus].SIE = 0;
       if (!vstval_readonly?()) {
         CSR[vstval].VALUE = vstval_for(exception_code, tval);
       }
@@ -1239,14 +1249,21 @@ function pmp_check {
     Given a physical address and operation type, return whether or not the access is allowed by PMP.
   }
   body {
-    PrivilegeMode mode = effective_ldst_mode();
+    # MPRV changes the effective privilege of loads and stores, but never
+    # instruction fetches.
+    PrivilegeMode access_mode;
+    if (type == MemoryOperation::Fetch) {
+      access_mode = mode();
+    } else {
+      access_mode = effective_ldst_mode();
+    }
     PmpMatchResult match_result;
     PmpCfg cfg;
 
     (match_result, cfg) = pmp_match(paddr, access_size);
 
     if (match_result == PmpMatchResult::FullMatch) {
-      if (mode == PrivilegeMode::M && (cfg.L == 0)) {
+      if (access_mode == PrivilegeMode::M && (cfg.L == 0)) {
         # when the region is not locked, all M-mode access pass
         return true;
       }
@@ -1262,7 +1279,7 @@ function pmp_check {
       }
     } else if (match_result == PmpMatchResult::NoMatch) {
       # with no matched, M-mode passes and everything else fails
-      if (mode == PrivilegeMode::M) {
+      if (access_mode == PrivilegeMode::M) {
         return true;
       } else {
         return false;
@@ -1285,15 +1302,16 @@ function access_check {
     U32 access_size,
     XReg vaddr,
     MemoryOperation type,
-    ExceptionCode fault_type,
-    PrivilegeMode from_mode
+    ExceptionCode fault_type
   description {
     Checks if the physical address paddr is able to access memory, and raises
     the appropriate exception if not.
   }
   body {
     if (!access_allowed?(paddr, access_size, type)) {
-      raise(fault_type, from_mode, vaddr);
+      # MPRV modifies the effective mode used for the memory access, but a
+      # resulting exception still originates in the hart's actual mode.
+      raise(fault_type, mode(), vaddr);
     }
   }
 }
@@ -1378,9 +1396,9 @@ function current_translation_mode {
       return SatpMode::Bare;
     }
 
-    if (CSR[misa].H == 1'b1) {
-      if (effective_mode == PrivilegeMode::VS || effective_mode == PrivilegeMode::VU) {
-        Bits<4> mode_val = CSR[vsatp].MODE;
+    if (CSR[misa].H == 1'b1 &&
+        (effective_mode == PrivilegeMode::VS || effective_mode == PrivilegeMode::VU)) {
+      Bits<4> mode_val = CSR[vsatp].MODE;
         if (mode_val == $bits(SatpMode::Bare)) {
           return SatpMode::Bare;
         } else if (mode_val == $bits(SatpMode::Sv32)) {
@@ -1456,9 +1474,6 @@ function current_translation_mode {
         } else {
           return SatpMode::Reserved;
         }
-      } else {
-        return SatpMode::Reserved;
-      }
     } else if (CSR[misa].S == 1'b1) {
 
       # if we reach here, then the effective mode is S or U
@@ -1906,7 +1921,7 @@ function gstage_page_walk {
       if (!pma_applies?(PmaAttribute::HardwarePageTableRead, pte_paddr, PTESIZE)) {
         raise (access_fault_code, PrivilegeMode::U, vaddr);
       }
-      access_check(pte_paddr, PTESIZE, vaddr, MemoryOperation::Read, access_fault_code, effective_mode);
+      access_check(pte_paddr, PTESIZE, vaddr, MemoryOperation::Read, access_fault_code);
 
       XReg pte = read_physical_memory(PTESIZE, pte_paddr);
       PteFlags pte_flags = pte[9:0];
@@ -1995,7 +2010,7 @@ function gstage_page_walk {
               raise (access_fault_code, PrivilegeMode::U, vaddr);
             }
 
-            access_check(pte_paddr, PTESIZE, vaddr, MemoryOperation::Write, access_fault_code, effective_mode);
+            access_check(pte_paddr, PTESIZE, vaddr, MemoryOperation::Write, access_fault_code);
 
             Boolean success;
             Bits<PTESIZE> updated_pte;
@@ -2198,7 +2213,7 @@ function stage1_page_walk {
       }
 
       # perform access check on the physical address of pte before it's used
-      access_check(pte_phys.paddr, PTESIZE, vaddr, MemoryOperation::Read, access_fault_code, effective_mode);
+      access_check(pte_phys.paddr, PTESIZE, vaddr, MemoryOperation::Read, access_fault_code);
 
       XReg pte = read_physical_memory(PTESIZE, pte_phys.paddr);
       PteFlags pte_flags = pte[9:0];
@@ -2315,13 +2330,13 @@ function stage1_page_walk {
             # Svadu requires page tables to be located in memory with hardware page-table write access
             # and RsrvEventual PMA
             if (!pma_applies?(PmaAttribute::RsrvEventual, pte_phys.paddr, PTESIZE)) {
-              raise (access_fault_code, effective_mode, vaddr);
+              raise (access_fault_code, mode(), vaddr);
             }
             if (!pma_applies?(PmaAttribute::HardwarePageTableWrite, pte_phys.paddr, PTESIZE)) {
-              raise (access_fault_code, effective_mode, vaddr);
+              raise (access_fault_code, mode(), vaddr);
             }
 
-            access_check(pte_phys.paddr, PTESIZE, vaddr, MemoryOperation::Write, access_fault_code, effective_mode);
+            access_check(pte_phys.paddr, PTESIZE, vaddr, MemoryOperation::Write, access_fault_code);
 
             Boolean success;
             Bits<PTESIZE> updated_pte;
@@ -2629,7 +2644,7 @@ function read_memory_aligned {
     }
 
     # may raise an exception
-    access_check(result.paddr, LEN, virtual_address, MemoryOperation::Read, ExceptionCode::LoadAccessFault, effective_ldst_mode());
+    access_check(result.paddr, LEN, virtual_address, MemoryOperation::Read, ExceptionCode::LoadAccessFault);
 
     if (rl == 1'b1) {
       memory_model_release();
@@ -2676,7 +2691,7 @@ function read_memory {
         : virtual_address;
 
       if (misaligned_is_atomic?(LEN, physical_address)) {
-        access_check(physical_address, LEN, virtual_address, MemoryOperation::Read, ExceptionCode::LoadAccessFault, effective_ldst_mode());
+        access_check(physical_address, LEN, virtual_address, MemoryOperation::Read, ExceptionCode::LoadAccessFault);
         return read_physical_memory(LEN, physical_address);
       }
     }
@@ -2690,7 +2705,7 @@ function read_memory {
         physical_address = (CSR[misa].S == 1)
           ? translate(virtual_address, MemoryOperation::Read, effective_ldst_mode(), encoding).paddr
           : virtual_address;
-        access_check(physical_address, LEN, virtual_address, MemoryOperation::Read, ExceptionCode::LoadAccessFault, effective_ldst_mode());
+        access_check(physical_address, LEN, virtual_address, MemoryOperation::Read, ExceptionCode::LoadAccessFault);
       }
       raise (ExceptionCode::LoadAddressMisaligned, mode(), virtual_address);
     } else {
@@ -2763,7 +2778,7 @@ function read_memory_xlen_aligned {
     }
 
     # may raise an exception
-    access_check(result.paddr, xlen(), virtual_address, MemoryOperation::Read, ExceptionCode::LoadAccessFault, effective_ldst_mode());
+    access_check(result.paddr, xlen(), virtual_address, MemoryOperation::Read, ExceptionCode::LoadAccessFault);
 
     if (xlen() == 32) {
       return read_physical_memory(32, result.paddr);
@@ -2905,7 +2920,7 @@ function store_conditional {
     }
 
     # failed SC still looks like a store to memory protection
-    access_check(physical_address, N, virtual_address, MemoryOperation::Write, ExceptionCode::StoreAmoAccessFault, effective_ldst_mode());
+    access_check(physical_address, N, virtual_address, MemoryOperation::Write, ExceptionCode::StoreAmoAccessFault);
 
     # acquire/release occur regardless of whether or not the SC succeeds
     if (aq == 1) {
@@ -3037,7 +3052,7 @@ function write_memory_aligned {
       : virtual_address;
 
     # may raise an exception
-    access_check(physical_address, LEN, virtual_address, MemoryOperation::Write, ExceptionCode::StoreAmoAccessFault, effective_ldst_mode());
+    access_check(physical_address, LEN, virtual_address, MemoryOperation::Write, ExceptionCode::StoreAmoAccessFault);
 
     if (rl == 1'b1) {
       memory_model_release();
@@ -3082,7 +3097,7 @@ function write_memory {
         : virtual_address;
 
       if (misaligned_is_atomic?(LEN, physical_address)) {
-        access_check(physical_address, LEN, virtual_address, MemoryOperation::Write, ExceptionCode::StoreAmoAccessFault, effective_ldst_mode());
+        access_check(physical_address, LEN, virtual_address, MemoryOperation::Write, ExceptionCode::StoreAmoAccessFault);
         write_physical_memory(LEN, physical_address, value);
         return;
       }
@@ -3097,7 +3112,7 @@ function write_memory {
         physical_address = (CSR[misa].S == 1)
           ? translate(virtual_address, MemoryOperation::Write, effective_ldst_mode(), encoding).paddr
           : virtual_address;
-        access_check(physical_address, LEN, virtual_address, MemoryOperation::Write, ExceptionCode::StoreAmoAccessFault, effective_ldst_mode());
+        access_check(physical_address, LEN, virtual_address, MemoryOperation::Write, ExceptionCode::StoreAmoAccessFault);
       }
       raise (ExceptionCode::StoreAmoAddressMisaligned, mode(), virtual_address);
     } else {
@@ -3129,7 +3144,7 @@ function write_memory_xlen_aligned {
       : virtual_address;
 
     # may raise an exception
-    access_check(physical_address, xlen(), virtual_address, MemoryOperation::Write, ExceptionCode::StoreAmoAccessFault, effective_ldst_mode());
+    access_check(physical_address, xlen(), virtual_address, MemoryOperation::Write, ExceptionCode::StoreAmoAccessFault);
 
     if (xlen() == 32) {
       write_physical_memory(32, physical_address, value);
