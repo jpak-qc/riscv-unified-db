@@ -102,6 +102,6 @@ operation(): |
 
   TranslationResult result;
   result = translate(cache_block_vaddr, MemoryOperation::Write, effective_ldst_mode(), $encoding);
-  access_check(result.paddr, CACHE_BLOCK_SIZE*8, cache_block_vaddr, MemoryOperation::Write, ExceptionCode::StoreAmoAccessFault, effective_ldst_mode());
+  access_check(result.paddr, CACHE_BLOCK_SIZE*8, cache_block_vaddr, MemoryOperation::Write, ExceptionCode::StoreAmoAccessFault);
 
   cache_block_zero(result.paddr);

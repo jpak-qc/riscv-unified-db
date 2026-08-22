@@ -82,7 +82,7 @@ operation(): |
   } else {
     result.paddr = entry_addr;
   }
-  access_check(result.paddr, is_double ? 8 : 4, $pc, MemoryOperation::Fetch, ExceptionCode::InstructionAccessFault, mode());
+  access_check(result.paddr, is_double ? 8 : 4, $pc, MemoryOperation::Fetch, ExceptionCode::InstructionAccessFault);
 
   XReg entry_lo = read_physical_memory(32, result.paddr);
   XReg entry_hi = is_double ? read_physical_memory(32, result.paddr + 4) : 32'b0;
