@@ -56,11 +56,21 @@
 #define MPP_U    li t3, MSTATUS_MPP;  csrrc zero, mstatus, t3
 
 # mtvec_handler: catches the access fault from test 4 (elem 0 faults).
-# Records the trap in x20, clears MPRV (fault already taken), skips the
-# faulting instruction via mepc+4, then mret (back to M-mode since MPP=M).
+# It verifies that the normal load-access-fault trap was taken at the vector
+# instruction, then clears MPRV, skips that instruction, and returns to M-mode.
 .global mtvec_handler
 mtvec_handler:
+  csrr  t4, mcause
+  li    t5, CAUSE_LOAD_ACCESS
+  bne   t4, t5, 1f
+  csrr  t4, mepc
+  la    t5, test4_faulting_vle
+  bne   t4, t5, 1f
   li    x20, 1
+  j     2f
+1:
+  li    x20, 2
+2:
   li    t3, MSTATUS_MPRV
   csrrc zero, mstatus, t3
   csrr  t3, mepc
@@ -109,7 +119,7 @@ RVTEST_CODE_BEGIN
     MPP_U; \
     li  x6, 4; vsetvli x7, x6, e8, m1; \
     la  x5, ff_data; li t1, 4096; add x5, x5, t1; \
-    MPRV_ON; vle8ff.v v5, (x5); MPRV_OFF; )
+    MPRV_ON; test4_faulting_vle: vle8ff.v v5, (x5); MPRV_OFF; )
 
   TEST_PASSFAIL
 

@@ -583,15 +583,47 @@ builtin function physical_memory_accessible? {
   }
 }
 
-builtin function read_memory_accessible? {
+builtin function fault_only_first_read? {
   returns Boolean
   arguments
     U32 LEN,
     XReg virtual_address,
     Bits<INSTR_ENC_SIZE> encoding
   description {
-    Checks if a read from the execution environment's physical memory map can
-    complete for the entire region [virtual_address, virtual_address + LEN).
+    Performs one translation-aware virtual-memory read for a later
+    fault-only-first vector-load element. Returns false when the read would
+    raise a synchronous access or page fault; the loaded value is available
+    through +fault_only_first_read_value+ when it returns true.
+  }
+}
+
+builtin function begin_fault_only_first_reads {
+  description {
+    Clears the buffered values used by a fault-only-first vector-load element.
+  }
+}
+
+builtin function fault_only_first_read_value {
+  returns Bits<64>
+  arguments U32 index
+  description {
+    Returns a value previously read by +fault_only_first_read?+ for the
+    current vector-load element.
+  }
+}
+
+builtin function fault_only_first_trap_suppressed? {
+  returns Boolean
+  description {
+    Returns true while a later fault-only-first vector-load read is in
+    progress. This is internal ISS control state.
+  }
+}
+
+builtin function abort_fault_only_first_read {
+  description {
+    Stops a later fault-only-first vector-load read without entering an
+    architectural trap handler. This is internal ISS control flow.
   }
 }
 

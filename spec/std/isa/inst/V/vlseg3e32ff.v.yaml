@@ -50,10 +50,11 @@ operation(): |
   for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
     if (!faulted && (vm == 1'b1 || V[0][i] == 1'b1)) {
       if (i != 0) {
+        begin_fault_only_first_reads();
         for (U32 f = 0; f < 3; f++) {
           if (!faulted) {
             XReg field_address = virtual_address + (i * 3 + f) * 4;
-            if (!read_memory_accessible?(32, field_address, $encoding)) {
+            if (!fault_only_first_read?(32, field_address, $encoding)) {
               CSR[vl].VALUE = i;
               faulted = true;
             }
@@ -66,7 +67,11 @@ operation(): |
         U32 end_bit = start_bit + 31;
         for (U32 f = 0; f < 3; f++) {
           XReg field_address = virtual_address + (i * 3 + f) * 4;
-          V[vd + f * dat_emul + reg_off][end_bit:start_bit] = read_memory(32, field_address, $encoding)[31:0];
+          if (i == 0) {
+            V[vd + f * dat_emul + reg_off][end_bit:start_bit] = read_memory(32, field_address, $encoding)[31:0];
+          } else {
+            V[vd + f * dat_emul + reg_off][end_bit:start_bit] = fault_only_first_read_value(f)[31:0];
+          }
         }
       }
     }
