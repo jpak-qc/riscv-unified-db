@@ -250,7 +250,10 @@ module Udb
 
             config_path_or_name.realpath
           when String
-            if (@cfgs_path / "#{config_path_or_name}.yaml").file?
+            supplied_path = Pathname.new(config_path_or_name)
+            if supplied_path.file?
+              supplied_path.realpath
+            elsif (@cfgs_path / "#{config_path_or_name}.yaml").file?
               (@cfgs_path / "#{config_path_or_name}.yaml").realpath
             else
               raise ConfigNotFoundError, "Could not find config: #{config_path_or_name}"

@@ -13,10 +13,24 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 ACT4_DIR="$REPO_ROOT/ext/riscv-arch-test"
 TEST_CONFIG="$REPO_ROOT/cfgs/act4/rv64-vector/test_config.yaml"
 OUTPUT="/tmp/act_out.txt"
+ISS="$REPO_ROOT/gen/cpp_hart_gen/rv64-vector_Debug/build/iss"
+ELF_DIR="$ACT4_DIR/work/rv64-vector/elfs"
+JOBS="${JOBS:-8}"
+TIMEOUT="${TIMEOUT:-60}"
+
+# ACT invokes `bundle` internally. Put mise's generated shims ahead of the
+# repository's bin/ wrappers, which otherwise recurse through bin/bash.
+export PATH="${XDG_DATA_HOME:-$HOME/.local/share}/mise/shims:$PATH"
 
 if [ ! -d "$ACT4_DIR/.git" ]; then
     echo "ERROR: ext/riscv-arch-test not found."
     echo "Run: /bin/bash cfgs/act4/setup_act4.sh /path/to/riscv64-unknown-elf-gcc"
+    exit 1
+fi
+
+if [ ! -x "$ISS" ]; then
+    echo "ERROR: rv64-vector ISS not found: $ISS"
+    echo "Run: ./do build:iss CONFIG=rv64-vector BUILD_TYPE=DEBUG"
     exit 1
 fi
 
@@ -43,7 +57,19 @@ if [ ! -f "$Z3_500" ] && [ -f "$Z3_4160" ]; then
     cp "$Z3_4160" "$Z3_500"
 fi
 
-.venv/bin/act "$TEST_CONFIG" > "$OUTPUT" 2>&1
+# Objdumps are useful for failure triage but add substantial time to a full
+# campaign; the ACT4 signatures and final self-checking ELFs are unaffected.
+.venv/bin/act --fast -j "$JOBS" "$TEST_CONFIG" > "$OUTPUT" 2>&1
 
-echo "Done. Results:"
+echo "ACT4 ELF generation results:"
 grep -E "✓|✗|FAIL|Build|succeeded|failed" "$OUTPUT"
+
+if ! find "$ELF_DIR" -type f -name '*.elf' -print -quit | grep -q .; then
+    echo "ERROR: ACT4 generated no ELF files. See: $OUTPUT"
+    exit 1
+fi
+
+echo "Running generated ELFs on the rv64-vector ISS..."
+./run_tests.py -j "$JOBS" --timeout "$TIMEOUT" \
+    "$ISS -m rv64-vector -c $REPO_ROOT/cfgs/rv64-vector.yaml --uart-base 0x10000000 --clint-base 0x02000000" \
+    "$ELF_DIR"

@@ -35,6 +35,18 @@
         "base_alignment": 2
       }
     },
+    "medeleg": {
+      "delegatable_bits": {
+        "len": 64,
+        "value": "0x0000_0000_000c_b3FE"
+      }
+    },
+    "mideleg": {
+      "delegatable_bits": {
+        "len": "xlen",
+        "value": "0x0000_0000_0000_2222"
+      }
+    },
     "xtval_nonzero": {
       "illegal_instruction": true,
       "software_breakpoint": true,
@@ -62,9 +74,11 @@
     "mstatus": {
       "fs_legal_states": "ExtContext_TwoState",
       "vs_legal_states": "ExtContext_TwoState"
-    }
+    },
+    "privileged_isa_version": "Privileged_ISA_1_13"
   },
   "memory": {
+    "physaddr_bits": 57,
     "pmp": {
       "grain": 0,
       "count": 16,
@@ -82,9 +96,11 @@
           "None": null
         },
         "lrsc": "AccessFault",
-        "amo": "AccessFault"
+        "amo": {
+          "None": null
+        }
       },
-      "allowed_within_exp": 0,
+      "default_allowed_within_exp": 12,
       "byte_by_byte": false,
       "order_decreasing": false
     },
@@ -121,6 +137,8 @@
             "amo": "AccessFault"
           },
           "atomic_support": "AMONone",
+          "misaligned_atomicity_granule_size_exp": 0,
+          "vector_misaligned_atomicity_granule_size_exp": 0,
           "reservability": "RsrvNone",
           "supports_cbo_zero": false,
           "supports_pte_read": false,
@@ -156,6 +174,8 @@
             "amo": "AccessFault"
           },
           "atomic_support": "AMONone",
+          "misaligned_atomicity_granule_size_exp": 0,
+          "vector_misaligned_atomicity_granule_size_exp": 0,
           "reservability": "RsrvNone",
           "supports_cbo_zero": false,
           "supports_pte_read": false,
@@ -191,6 +211,8 @@
             "amo": "AccessFault"
           },
           "atomic_support": "AMOCASQ",
+          "misaligned_atomicity_granule_size_exp": 4,
+          "vector_misaligned_atomicity_granule_size_exp": 4,
           "reservability": "RsrvEventual",
           "supports_cbo_zero": true,
           "supports_pte_read": true,
@@ -234,7 +256,8 @@
       "supported": true
     },
     "F": {
-      "supported": true
+      "supported": true,
+      "fflags_dirty_policy": "Fflags_Dirty_Precise"
     },
     "D": {
       "supported": true
@@ -326,6 +349,9 @@
       "supported": true
     },
     "Zmmul": {
+      "supported": false
+    },
+    "Zama16b": {
       "supported": false
     },
     "Zaamo": {

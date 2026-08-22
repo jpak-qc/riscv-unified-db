@@ -19,6 +19,9 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 ACT4_DIR="$REPO_ROOT/ext/riscv-arch-test"
 ACT4_COMMIT="288a965"
 TEST_CONFIG="$REPO_ROOT/cfgs/act4/rv64-vector/test_config.yaml"
+# ACT invokes `bundle` internally. Put mise's generated shims ahead of the
+# repository's bin/ wrappers, which otherwise recurse through bin/bash.
+export PATH="${XDG_DATA_HOME:-$HOME/.local/share}/mise/shims:$PATH"
 
 # Determine GCC 16 path
 GCC_PATH="${1:-}"
@@ -95,10 +98,17 @@ PYEOF
 
 echo "Patches applied."
 
-# Step 3: Update test_config.yaml with correct GCC path
+# Step 3: Update test_config.yaml with the configured toolchain paths.
 if [ -n "$GCC_PATH" ]; then
     echo "Setting compiler_exe to: $GCC_PATH"
     sed -i "s|^compiler_exe:.*|compiler_exe: $GCC_PATH|" "$TEST_CONFIG"
+    OBJDUMP_PATH="${GCC_PATH%gcc}objdump"
+    if [ -x "$OBJDUMP_PATH" ]; then
+        echo "Setting objdump_exe to: $OBJDUMP_PATH"
+        sed -i "s|^objdump_exe:.*|objdump_exe: $OBJDUMP_PATH|" "$TEST_CONFIG"
+    else
+        echo "WARNING: matching objdump not found at: $OBJDUMP_PATH"
+    fi
 else
     echo "WARNING: GCC 16+ not found. Update compiler_exe in $TEST_CONFIG manually."
     echo "  Pass path as argument: bash cfgs/act4/setup_act4.sh /path/to/riscv64-unknown-elf-gcc"
@@ -108,7 +118,11 @@ cd "$ACT4_DIR"
 if [ ! -d ".venv" ]; then
     python3 -m venv .venv
 fi
-.venv/bin/pip install -e framework/ -q
+if ! .venv/bin/python -m pip --version >/dev/null 2>&1; then
+    # uv-created environments intentionally omit pip.
+    .venv/bin/python -m ensurepip --upgrade >/dev/null
+fi
+.venv/bin/python -m pip install -e framework/ -q
 echo "Python environment ready."
 
 # Step 4: Install Ruby gems (requires UDB_LOCAL_PATH for local gem resolution)

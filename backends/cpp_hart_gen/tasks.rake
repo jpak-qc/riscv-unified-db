@@ -226,16 +226,18 @@ rule %r{#{CPP_HART_GEN_DST}/[^/]+/CMakeLists\.txt} => [
 end
 
 rule %r{#{CPP_HART_GEN_DST}/[^/]+/build/Makefile} => [
-  "#{CPP_HART_GEN_SRC}/CMakeLists.txt"
+  "#{CPP_HART_GEN_SRC}/CMakeLists.txt",
+  __FILE__
 ] do |t|
   build_name = t.name.split("/")[-3]
+  configs, = configs_build_name
   cmd = [
     "cmake",
     "-S#{CPP_HART_GEN_DST}/#{build_name}",
     "-B#{CPP_HART_GEN_DST}/#{build_name}/build",
     "-DCMAKE_CXX_COMPILER=#{$root}/bin/g++",
     "-DCOVERAGE_COMMAND=#{$root}/bin/gcov",
-    "-DCONFIG_LIST=\"#{ENV['CONFIG'].gsub(',', ';')}\"",
+    "-DCONFIG_LIST=\"#{configs.join(';')}\"",
     "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
     "-DCMAKE_BUILD_TYPE=#{cmake_build_type}",
     "-DUDB_ROOT=#{$root}"
@@ -574,7 +576,7 @@ namespace :test do
     # These extensions to the riscv-tests suite have binaries under a different diretcory
     # uvTests are common for rv32/64
     uvTests = ["vsetivli", "vsetvl", "vsetvli_rs1_eq_zero", "vsetvli_vl_lt_vlmax",
-                "vle8", "vmv_v_i", "vadd.vv"]
+                "vle8", "vmv_v_i", "vadd.vv", "vff_load", "vff_vm"]
     base = YAML.load_file("#{$root}/cfgs/#{configs_name[0]}.yaml")["params"]["MXLEN"]
     uvTests.each do |t|
       sh "#{CPP_HART_GEN_DST}/#{build_name}/build/iss -m #{configs_name[0]} -c #{$root}/cfgs/#{configs_name[0]}.yaml tests/isa/rv#{base}uv-p-#{t}"

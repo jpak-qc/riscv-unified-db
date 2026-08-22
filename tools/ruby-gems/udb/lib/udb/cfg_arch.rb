@@ -1452,8 +1452,7 @@ module Udb
             end
           instructions.select do |inst|
             bar.advance if show_progress
-            inst.defined_by_condition.satisfiable_by_cfg_arch?(self)
-            # inst.defined_by_condition.satisfied_by_cfg_arch?(self) == SatisfiedResult::Yes
+            inst.defined_by_condition.satisfied_by_cfg_arch?(self) == SatisfiedResult::Yes
           end
         end
     end
