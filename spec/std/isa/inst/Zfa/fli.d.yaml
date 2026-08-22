@@ -58,12 +58,12 @@ operation(): |
   else if (xs1 == 22) { result = 64'h4008000000000000; }
   else if (xs1 == 23) { result = 64'h4010000000000000; }
   else if (xs1 == 24) { result = 64'h4020000000000000; }
-  else if (xs1 == 25) { result = 64'h4040000000000000; }
+  else if (xs1 == 25) { result = 64'h4030000000000000; }
   else if (xs1 == 26) { result = 64'h4060000000000000; }
-  else if (xs1 == 27) { result = 64'h40C0000000000000; }
-  else if (xs1 == 28) { result = 64'h4120000000000000; }
-  else if (xs1 == 29) { result = 64'h41E0000000000000; }
-  else if (xs1 == 30) { result = 64'h41F0000000000000; }
-  else { result = 64'h7FF0000000000000; }
+  else if (xs1 == 27) { result = 64'h4070000000000000; }
+  else if (xs1 == 28) { result = 64'h40E0000000000000; }
+  else if (xs1 == 29) { result = 64'h40F0000000000000; }
+  else if (xs1 == 30) { result = 64'h7FF0000000000000; }
+  else { result = DP_CANONICAL_NAN; }
   F[fd] = result;
   mark_f_state_dirty();
