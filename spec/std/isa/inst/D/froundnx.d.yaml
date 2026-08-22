@@ -34,9 +34,9 @@ data_independent_timing: false
 operation(): |
   check_f_ok($encoding);
   RoundingMode rounding_mode = rm_to_mode(rm, $encoding);
-  U64 result = round_f64_to_integral(F[fs1], rounding_mode);
-  # Set inexact flag if result differs from input and input was not NaN
-  if (!is_dp_nan?(F[fs1]) && (result != F[fs1])) {
+  U64 input = F[fs1];
+  U64 result = round_f64_to_integral(input, rounding_mode);
+  if (!is_dp_nan?(input) && (result != input)) {
     set_fp_flag(FpFlag::NX);
   }
   F[fd] = result;

@@ -27,3 +27,39 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
+  check_f_ok($encoding);
+  Bits<32> result;
+  if (xs1 == 0) { result = 32'hBF80_0000; }
+  else if (xs1 == 1) { result = 32'h0080_0000; }
+  else if (xs1 == 2) { result = 32'h3780_0000; }
+  else if (xs1 == 3) { result = 32'h3800_0000; }
+  else if (xs1 == 4) { result = 32'h3B80_0000; }
+  else if (xs1 == 5) { result = 32'h3C00_0000; }
+  else if (xs1 == 6) { result = 32'h3D80_0000; }
+  else if (xs1 == 7) { result = 32'h3E00_0000; }
+  else if (xs1 == 8) { result = 32'h3E80_0000; }
+  else if (xs1 == 9) { result = 32'h3EA0_0000; }
+  else if (xs1 == 10) { result = 32'h3EC0_0000; }
+  else if (xs1 == 11) { result = 32'h3EE0_0000; }
+  else if (xs1 == 12) { result = 32'h3F00_0000; }
+  else if (xs1 == 13) { result = 32'h3F20_0000; }
+  else if (xs1 == 14) { result = 32'h3F40_0000; }
+  else if (xs1 == 15) { result = 32'h3F60_0000; }
+  else if (xs1 == 16) { result = 32'h3F80_0000; }
+  else if (xs1 == 17) { result = 32'h3FA0_0000; }
+  else if (xs1 == 18) { result = 32'h3FC0_0000; }
+  else if (xs1 == 19) { result = 32'h3FE0_0000; }
+  else if (xs1 == 20) { result = 32'h4000_0000; }
+  else if (xs1 == 21) { result = 32'h4020_0000; }
+  else if (xs1 == 22) { result = 32'h4040_0000; }
+  else if (xs1 == 23) { result = 32'h4080_0000; }
+  else if (xs1 == 24) { result = 32'h4100_0000; }
+  else if (xs1 == 25) { result = 32'h4180_0000; }
+  else if (xs1 == 26) { result = 32'h4300_0000; }
+  else if (xs1 == 27) { result = 32'h4380_0000; }
+  else if (xs1 == 28) { result = 32'h4700_0000; }
+  else if (xs1 == 29) { result = 32'h4780_0000; }
+  else if (xs1 == 30) { result = SP_POS_INF; }
+  else { result = SP_CANONICAL_NAN; }
+  F[fd] = f32_result(result);
+  mark_f_state_dirty();

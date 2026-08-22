@@ -34,8 +34,8 @@ data_independent_timing: false
 operation(): |
   check_f_ok($encoding);
 
-  Bits<32> sp_value_a = F[fs1][31:0];
-  Bits<32> sp_value_b = F[fs2][31:0];
+  Bits<32> sp_value_a = f32_operand(F[fs1]);
+  Bits<32> sp_value_b = f32_operand(F[fs2]);
 
   if (is_sp_nan?(sp_value_a) || is_sp_nan?(sp_value_b)) {
     if (is_sp_signaling_nan?(sp_value_a) || is_sp_signaling_nan?(sp_value_b)) {

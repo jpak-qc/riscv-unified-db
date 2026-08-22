@@ -34,19 +34,9 @@ data_independent_timing: false
 operation(): |
   check_f_ok($encoding);
   RoundingMode mode = rm_to_mode(rm, $encoding);
-  Bits<32> a = F[fs1];
-  Bits<32> b = F[fs2];
+  Bits<32> a = f32_operand(F[fs1]);
+  Bits<32> b = f32_operand(F[fs2]);
 
-  if (implemented?(ExtensionName::D)) {
-    # check for incorrectly NaN-boxed inputs
-    if (F[fs1][63:32] != 32'hffffffff) {
-      a = SP_CANONICAL_NAN;
-    }
-    if (F[fs2][63:32] != 32'hffffffff) {
-      b = SP_CANONICAL_NAN;
-    }
-  }
-
-  F[fd] = f32_add(a, b, mode);
+  F[fd] = f32_result(f32_add(a, b, mode));
 
   mark_f_state_dirty();
