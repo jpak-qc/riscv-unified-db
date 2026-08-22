@@ -52,7 +52,7 @@ operation(): |
       XReg vs1_elem = $signed(V[vs1 + reg_off][end_bit:start_bit]);
       if (vs1_elem == 0) {
         V[vd + reg_off][end_bit:start_bit] = vs2_elem[state.sew-1:0];
-      } else if ($signed(vs2_elem) == $signed(vs1_elem) && vs1_elem == -1) {
+      } else if ($signed(vs2_elem) == $signed(vs1_elem) && vs1_elem == {state.sew{1'b1}}) {
         V[vd + reg_off][end_bit:start_bit] = 0;
       } else {
         V[vd + reg_off][end_bit:start_bit] = ($signed(vs2_elem) % $signed(vs1_elem))[state.sew-1:0];

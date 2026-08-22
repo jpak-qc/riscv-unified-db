@@ -29,3 +29,34 @@ access:
   vu: always
 data_independent_timing: true
 operation(): |
+  VectorState state = vector_state();
+  U32 group_bits = state.sew * 4;
+  U32 group_registers = vector_register_group_registers(state);
+  U32 destination = vd;
+  U32 source1 = vs1;
+  U32 source2 = vs2;
+  Boolean destination_overlaps_source1 =
+    destination < source1 + group_registers && source1 < destination + group_registers;
+  Boolean destination_overlaps_source2 =
+    destination < source2 + group_registers && source2 < destination + group_registers;
+
+  if ((state.sew != 32 && (state.sew != 64 || !implemented?(ExtensionName::Zvknhb))) ||
+      !vector_element_group_legal(state, group_bits, 4) ||
+      destination_overlaps_source1 || destination_overlaps_source2) {
+    raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
+  }
+
+  for (U32 group = CSR[vstart].VALUE / 4; group < CSR[vl].VALUE / 4; group++) {
+    U32 element = group * 4;
+    if (state.sew == 32) {
+      vector_write_eg128(vd, element, crypto_sha256_compress(
+        vector_read_eg128(vs2, element), vector_read_eg128(vd, element),
+        vector_read_eg128(vs1, element), false));
+    } else {
+      vector_write_eg256_sew64(vd, element, crypto_sha512_compress(
+        vector_read_eg256_sew64(vs2, element), vector_read_eg256_sew64(vd, element),
+        vector_read_eg256_sew64(vs1, element), false));
+    }
+  }
+
+  CSR[vstart].VALUE = 0;
