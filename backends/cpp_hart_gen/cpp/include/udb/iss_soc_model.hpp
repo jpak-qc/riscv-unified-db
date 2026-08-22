@@ -177,12 +177,13 @@ namespace udb {
           m_uart_base(uart_base),
           m_clint_base(clint_base) {}
     IssSocModel() = delete;
-    ~IssSocModel() = default;
+    virtual ~IssSocModel() = default;
 
     uint64_t read_hpm_counter(uint64_t n) { return 0; }
     uint64_t read_mcycle() { return 0; }
     uint64_t read_mtime() { return 0; }
     uint64_t sw_write_mcycle(uint64_t value) { return value; }
+    virtual UdbEntropySourceSample poll_entropy_source() { return {0b01, 0, 0}; }
     void cache_block_zero(uint64_t cache_block_physical_address) {}
     void eei_ecall_from_m() {}
     void eei_ecall_from_s() {}
