@@ -91,7 +91,7 @@ function vector_register_group_registers {
   }
   body {
     return state.lmul_type == VectorLmulType::Multiply ?
-      1 << state.log2_lmul : 1;
+      32'd1 << state.log2_lmul : 32'd1;
   }
 }
 
