@@ -676,6 +676,251 @@ TEST_CASE("vector crypto instructions match known-answer vectors",
   delete hart;
 }
 
+TEST_CASE("vector AES round and key-schedule instructions match FIPS-197",
+          "[crypto][vector]") {
+  if (!vector_crypto_config_available()) {
+    SKIP("requires the rv64-vector-crypto generated hart");
+  }
+
+  udb::IssSocModel soc(1024 * 1024, 0);
+  auto* hart = create_vector_crypto_hart(soc);
+  hart->reset(0);
+  enable_vector_state(hart, soc);
+
+  constexpr uint64_t kStateAddress = 0x1000;
+  constexpr uint64_t kKeyAddress = 0x1020;
+  constexpr uint64_t kResultAddress = 0x1040;
+  constexpr std::array<std::array<uint32_t, 4>, 11> kAes128RoundKeys = {{
+      {0x03020100, 0x07060504, 0x0b0a0908, 0x0f0e0d0c},
+      {0xfd74aad6, 0xfa72afd2, 0xf178a6da, 0xfe76abd6},
+      {0x0bcf92b6, 0xf1bd3d64, 0x00c59bbe, 0xfeb33068},
+      {0x4e74ffb6, 0xbfc9c2d2, 0xbf0c596c, 0x41bf6904},
+      {0xbcf7f747, 0x033e3595, 0xbc326cf9, 0xfd8d05fd},
+      {0xe8a3aa3c, 0xeb9d9fa9, 0x57aff350, 0xaa22f6ad},
+      {0x7d0f395e, 0x9692a6f7, 0xc13d55a7, 0x6b1fa30a},
+      {0x1a70f914, 0x8ce25fe3, 0x4ddf0a44, 0x26c0a94e},
+      {0x35874347, 0xb9651ca4, 0xf4ba16e0, 0xd27abfae},
+      {0xd1329954, 0x685785f0, 0x9ced9310, 0x4e972cbe},
+      {0x7f1d1113, 0x174a94e3, 0x8ba707f3, 0xc5302b4d},
+  }};
+  constexpr std::array<uint32_t, 4> kPlaintext = {
+      0x33221100, 0x77665544, 0xbbaa9988, 0xffeeddcc};
+  constexpr std::array<uint32_t, 4> kCiphertext = {
+      0xd8e0c469, 0x30047b6a, 0x80b7cdd8, 0x5ac5b470};
+
+  configure_vector(hart, soc, 4, 0b010000);
+
+  // AES-128 key schedule: vaeskf1 produces round key one from key zero.
+  load_vector32(hart, soc, 12, kKeyAddress, kAes128RoundKeys[0]);
+  REQUIRE(execute_at_current_mode(
+              hart, soc, vector_crypto_instruction(0b100010, 8, 12, 1)) ==
+          StopReason::InstLimitReached);
+  store_vector32(hart, soc, 8, kResultAddress);
+  REQUIRE(read_words(soc, kResultAddress) == kAes128RoundKeys[1]);
+
+  // AES-256 key schedule: the first two 128-bit input keys yield key two.
+  load_vector32(hart, soc, 8, kStateAddress,
+                {0x03020100, 0x07060504, 0x0b0a0908, 0x0f0e0d0c});
+  load_vector32(hart, soc, 12, kKeyAddress,
+                {0x13121110, 0x17161514, 0x1b1a1918, 0x1f1e1d1c});
+  REQUIRE(execute_at_current_mode(
+              hart, soc, vector_crypto_instruction(0b101010, 8, 12, 2)) ==
+          StopReason::InstLimitReached);
+  store_vector32(hart, soc, 8, kResultAddress);
+  REQUIRE(read_words(soc, kResultAddress) ==
+          std::array<uint32_t, 4>{0x9fc273a5, 0x98c476a1, 0x93ce7fa9,
+                                  0x9cc072a5});
+
+  const auto load_round_key = [&](size_t round) {
+    load_vector32(hart, soc, 12, kKeyAddress, kAes128RoundKeys[round]);
+  };
+  const auto execute_aes = [&](uint8_t funct6, uint8_t selector) {
+    REQUIRE(execute_at_current_mode(
+                hart, soc, vector_crypto_instruction(funct6, 8, 12, selector)) ==
+            StopReason::InstLimitReached);
+  };
+
+  // FIPS-197 AES-128 encrypts the standard plaintext with all .vs rounds.
+  load_vector32(hart, soc, 8, kStateAddress, kPlaintext);
+  load_round_key(0);
+  execute_aes(0b101001, 7);  // vaesz.vs
+  for (size_t round = 1; round < 10; ++round) {
+    load_round_key(round);
+    execute_aes(0b101001, 2);  // vaesem.vs
+  }
+  load_round_key(10);
+  execute_aes(0b101001, 3);  // vaesef.vs
+  store_vector32(hart, soc, 8, kResultAddress);
+  REQUIRE(read_words(soc, kResultAddress) == kCiphertext);
+
+  // The same FIPS-197 vector exercises the .vv encryption round forms.
+  load_vector32(hart, soc, 8, kStateAddress, kPlaintext);
+  load_round_key(0);
+  execute_aes(0b101001, 7);  // vaesz.vs
+  for (size_t round = 1; round < 10; ++round) {
+    load_round_key(round);
+    execute_aes(0b101000, 2);  // vaesem.vv
+  }
+  load_round_key(10);
+  execute_aes(0b101000, 3);  // vaesef.vv
+  store_vector32(hart, soc, 8, kResultAddress);
+  REQUIRE(read_words(soc, kResultAddress) == kCiphertext);
+
+  // Decrypt through the complete AES-128 round schedule using .vs forms.
+  load_vector32(hart, soc, 8, kStateAddress, kCiphertext);
+  load_round_key(10);
+  execute_aes(0b101001, 7);  // vaesz.vs
+  for (size_t round = 9; round > 0; --round) {
+    load_round_key(round);
+    execute_aes(0b101001, 0);  // vaesdm.vs
+  }
+  load_round_key(0);
+  execute_aes(0b101001, 1);  // vaesdf.vs
+  store_vector32(hart, soc, 8, kResultAddress);
+  REQUIRE(read_words(soc, kResultAddress) == kPlaintext);
+
+  // Repeat decryption with the .vv forms, whose fixed encoding differs.
+  load_vector32(hart, soc, 8, kStateAddress, kCiphertext);
+  load_round_key(10);
+  execute_aes(0b101001, 7);  // vaesz.vs
+  for (size_t round = 9; round > 0; --round) {
+    load_round_key(round);
+    execute_aes(0b101000, 0);  // vaesdm.vv
+  }
+  load_round_key(0);
+  execute_aes(0b101000, 1);  // vaesdf.vv
+  store_vector32(hart, soc, 8, kResultAddress);
+  REQUIRE(read_words(soc, kResultAddress) == kPlaintext);
+
+  delete hart;
+}
+
+TEST_CASE("vector SM4 and GHASH instructions match published vectors",
+          "[crypto][vector]") {
+  if (!vector_crypto_config_available()) {
+    SKIP("requires the rv64-vector-crypto generated hart");
+  }
+
+  udb::IssSocModel soc(1024 * 1024, 0);
+  auto* hart = create_vector_crypto_hart(soc);
+  hart->reset(0);
+  enable_vector_state(hart, soc);
+
+  constexpr uint64_t kStateAddress = 0x1000;
+  constexpr uint64_t kKeyAddress = 0x1020;
+  constexpr uint64_t kInputAddress = 0x1040;
+  constexpr uint64_t kResultAddress = 0x1060;
+  configure_vector(hart, soc, 4, 0b010000);
+
+  // GM/T 0002-2012: the first four SM4 encryption rounds of its test vector.
+  load_vector32(hart, soc, 8, kStateAddress,
+                {0x01234567, 0x89abcdef, 0xfedcba98, 0x76543210});
+  load_vector32(hart, soc, 12, kKeyAddress,
+                {0xf12186f9, 0x41662b61, 0x5a6ab19a, 0x7ba92077});
+  REQUIRE(execute_at_current_mode(hart, soc,
+                                  vector_crypto_instruction(0b101000, 8, 12, 16)) ==
+          StopReason::InstLimitReached);
+  store_vector32(hart, soc, 8, kResultAddress);
+  REQUIRE(read_words(soc, kResultAddress) ==
+          std::array<uint32_t, 4>{0x27fad345, 0xa18b4cb2, 0x11c1e22a,
+                                  0xcc13e2ee});
+
+  // vsm4r.vs selects the first key element group and has a distinct encoding.
+  load_vector32(hart, soc, 8, kStateAddress,
+                {0x01234567, 0x89abcdef, 0xfedcba98, 0x76543210});
+  REQUIRE(execute_at_current_mode(hart, soc,
+                                  vector_crypto_instruction(0b101001, 8, 12, 16)) ==
+          StopReason::InstLimitReached);
+  store_vector32(hart, soc, 8, kResultAddress);
+  REQUIRE(read_words(soc, kResultAddress) ==
+          std::array<uint32_t, 4>{0x27fad345, 0xa18b4cb2, 0x11c1e22a,
+                                  0xcc13e2ee});
+
+  // NIST SP 800-38D Test Case 2: GHASH(0, X, H) for one ciphertext block.
+  load_vector32(hart, soc, 8, kStateAddress, {0, 0, 0, 0});
+  load_vector32(hart, soc, 12, kKeyAddress,
+                {0xd44be966, 0x3b2c8aef, 0x59fa4c88, 0x2e2b34ca});
+  load_vector32(hart, soc, 16, kInputAddress,
+                {0xceda8803, 0x92a3b660, 0xb9c228f3, 0x78feb271});
+  REQUIRE(execute_at_current_mode(hart, soc,
+                                  vector_crypto_instruction(0b101100, 8, 12, 16)) ==
+          StopReason::InstLimitReached);
+  store_vector32(hart, soc, 8, kResultAddress);
+  REQUIRE(read_words(soc, kResultAddress) ==
+          std::array<uint32_t, 4>{0x46c72e5e, 0x88627091, 0x68b0852c,
+                                  0xb7de5353});
+
+  delete hart;
+}
+
+TEST_CASE("vector crypto bit manipulation instructions match simple vectors",
+          "[crypto][vector]") {
+  if (!vector_crypto_config_available()) {
+    SKIP("requires the rv64-vector-crypto generated hart");
+  }
+
+  udb::IssSocModel soc(1024 * 1024, 0);
+  auto* hart = create_vector_crypto_hart(soc);
+  hart->reset(0);
+  enable_vector_state(hart, soc);
+
+  constexpr uint64_t kStateAddress = 0x1000;
+  constexpr uint64_t kKeyAddress = 0x1020;
+  constexpr uint64_t kResultAddress = 0x1040;
+  configure_vector(hart, soc, 2, 0b011000);
+
+  load_vector64(hart, soc, 12, kStateAddress,
+                {0x0123456789abcdef, 0xfedcba9876543210});
+  REQUIRE(execute_at_current_mode(hart, soc,
+                                  vector_r_instruction(0b010010, 8, 12, 8)) ==
+          StopReason::InstLimitReached);
+  store_vector64(hart, soc, 8, kResultAddress);
+  REQUIRE(read_doublewords(soc, kResultAddress) ==
+          std::array<uint64_t, 2>{0x80c4a2e691d5b3f7, 0x7f3b5d196e2a4c08});
+
+  REQUIRE(execute_at_current_mode(hart, soc,
+                                  vector_r_instruction(0b010010, 8, 12, 9)) ==
+          StopReason::InstLimitReached);
+  store_vector64(hart, soc, 8, kResultAddress);
+  REQUIRE(read_doublewords(soc, kResultAddress) ==
+          std::array<uint64_t, 2>{0xefcdab8967452301, 0x1032547698badcfe});
+
+  load_vector64(hart, soc, 16, kKeyAddress, {4, 4});
+  REQUIRE(execute_at_current_mode(
+              hart, soc, vector_r_instruction(0b010101, 8, 12, 16, 0b000)) ==
+          StopReason::InstLimitReached);
+  store_vector64(hart, soc, 8, kResultAddress);
+  REQUIRE(read_doublewords(soc, kResultAddress) ==
+          std::array<uint64_t, 2>{0x123456789abcdef0, 0xedcba9876543210f});
+
+  REQUIRE(execute_at_current_mode(
+              hart, soc, vector_r_instruction(0b010100, 8, 12, 4, 0b011)) ==
+          StopReason::InstLimitReached);
+  store_vector64(hart, soc, 8, kResultAddress);
+  REQUIRE(read_doublewords(soc, kResultAddress) ==
+          std::array<uint64_t, 2>{0xf0123456789abcde, 0x0fedcba987654321});
+
+  load_vector64(hart, soc, 12, kStateAddress,
+                {0x8000000000000000, 0x8000000000000000});
+  load_vector64(hart, soc, 16, kKeyAddress, {2, 3});
+  REQUIRE(execute_at_current_mode(
+              hart, soc, vector_r_instruction(0b001101, 8, 12, 16)) ==
+          StopReason::InstLimitReached);
+  store_vector64(hart, soc, 8, kResultAddress);
+  REQUIRE(read_doublewords(soc, kResultAddress) ==
+          std::array<uint64_t, 2>{1, 1});
+
+  hart->set_xreg(16, 2);
+  REQUIRE(execute_at_current_mode(
+              hart, soc, vector_r_instruction(0b001101, 8, 12, 16, 0b110)) ==
+          StopReason::InstLimitReached);
+  store_vector64(hart, soc, 8, kResultAddress);
+  REQUIRE(read_doublewords(soc, kResultAddress) ==
+          std::array<uint64_t, 2>{1, 1});
+
+  delete hart;
+}
+
 // ---------------------------------------------------------------------------
 // X register file tests (Layer 4a–4c)
 // ---------------------------------------------------------------------------
