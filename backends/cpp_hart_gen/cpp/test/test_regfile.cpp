@@ -1165,6 +1165,67 @@ TEST_CASE("vector SM3 instructions match the standard abc block", "[crypto][vect
   delete hart;
 }
 
+TEST_CASE("vector crypto instructions enforce element-group legality",
+          "[crypto][vector]") {
+  if (!vector_crypto_config_available()) {
+    SKIP("requires the rv64-vector-crypto generated hart");
+  }
+
+  udb::IssSocModel soc(1024 * 1024, 0);
+  auto* hart = create_vector_crypto_hart(soc);
+  const auto prepare = [&](uint8_t vl, uint16_t vtypei) {
+    hart->reset(0);
+    enable_vector_state(hart, soc);
+    configure_vector(hart, soc, vl, vtypei);
+  };
+
+  // vsm4r requires SEW=32 and a VL divisible by its four-element group.
+  prepare(4, 0b011000);
+  REQUIRE(execute_at_current_mode(hart, soc,
+                                  vector_crypto_instruction(0b101000, 8, 12, 16)) ==
+          StopReason::Exception);
+
+  prepare(3, 0b010000);
+  REQUIRE(execute_at_current_mode(hart, soc,
+                                  vector_crypto_instruction(0b101000, 8, 12, 16)) ==
+          StopReason::Exception);
+
+  // vstart must also be aligned to the instruction's element-group size.
+  prepare(4, 0b010000);
+  hart->set_xreg(1, 1);
+  REQUIRE(execute_at_current_mode(hart, soc, csr_instruction(0x008, 0b001, 0,
+                                                               1)) ==
+          StopReason::InstLimitReached);
+  REQUIRE(execute_at_current_mode(hart, soc,
+                                  vector_crypto_instruction(0b101000, 8, 12, 16)) ==
+          StopReason::Exception);
+
+  // The .vs AES form cannot overwrite its scalar element-group key source.
+  prepare(4, 0b010000);
+  REQUIRE(execute_at_current_mode(hart, soc,
+                                  vector_crypto_instruction(0b101001, 8, 8, 2)) ==
+          StopReason::Exception);
+
+  // SHA-2 compression forbids the destination from overlapping either source.
+  prepare(4, 0b010000);
+  REQUIRE(execute_at_current_mode(hart, soc,
+                                  vector_crypto_instruction(0b101110, 8, 8, 12)) ==
+          StopReason::Exception);
+
+  // The SM3 256-bit element group needs LMUL=2 on a VLEN=128 hart.
+  prepare(8, 0b010000);
+  REQUIRE(execute_at_current_mode(hart, soc,
+                                  vector_crypto_instruction(0b100000, 8, 16, 12)) ==
+          StopReason::Exception);
+
+  prepare(8, 0b010001);
+  REQUIRE(execute_at_current_mode(hart, soc,
+                                  vector_crypto_instruction(0b100000, 8, 8, 12)) ==
+          StopReason::Exception);
+
+  delete hart;
+}
+
 // ---------------------------------------------------------------------------
 // X register file tests (Layer 4a–4c)
 // ---------------------------------------------------------------------------
