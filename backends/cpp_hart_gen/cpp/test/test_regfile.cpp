@@ -951,6 +951,23 @@ TEST_CASE("vector crypto bit manipulation instructions match simple vectors",
   REQUIRE(read_doublewords(soc, kResultAddress) ==
           std::array<uint64_t, 2>{0xefcdab8967452301, 0x1032547698badcfe});
 
+  load_vector64(hart, soc, 16, kKeyAddress,
+                {0x00ff00ff00ff00ff, 0xf0f0f0f0f0f0f0f0});
+  REQUIRE(execute_at_current_mode(
+              hart, soc, vector_r_instruction(0b000001, 8, 12, 16, 0b000)) ==
+          StopReason::InstLimitReached);
+  store_vector64(hart, soc, 8, kResultAddress);
+  REQUIRE(read_doublewords(soc, kResultAddress) ==
+          std::array<uint64_t, 2>{0x010045008900cd00, 0x0e0c0a0806040200});
+
+  hart->set_xreg(16, 0x0f0f0f0f0f0f0f0f);
+  REQUIRE(execute_at_current_mode(
+              hart, soc, vector_r_instruction(0b000001, 8, 12, 16, 0b100)) ==
+          StopReason::InstLimitReached);
+  store_vector64(hart, soc, 8, kResultAddress);
+  REQUIRE(read_doublewords(soc, kResultAddress) ==
+          std::array<uint64_t, 2>{0x0020406080a0c0e0, 0xf0d0b09070503010});
+
   load_vector64(hart, soc, 16, kKeyAddress, {4, 4});
   REQUIRE(execute_at_current_mode(
               hart, soc, vector_r_instruction(0b010101, 8, 12, 16, 0b000)) ==
@@ -961,6 +978,29 @@ TEST_CASE("vector crypto bit manipulation instructions match simple vectors",
 
   REQUIRE(execute_at_current_mode(
               hart, soc, vector_r_instruction(0b010100, 8, 12, 4, 0b011)) ==
+          StopReason::InstLimitReached);
+  store_vector64(hart, soc, 8, kResultAddress);
+  REQUIRE(read_doublewords(soc, kResultAddress) ==
+          std::array<uint64_t, 2>{0xf0123456789abcde, 0x0fedcba987654321});
+
+  hart->set_xreg(16, 68);  // Rotation counts are reduced modulo SEW.
+  REQUIRE(execute_at_current_mode(
+              hart, soc, vector_r_instruction(0b010101, 8, 12, 16, 0b100)) ==
+          StopReason::InstLimitReached);
+  store_vector64(hart, soc, 8, kResultAddress);
+  REQUIRE(read_doublewords(soc, kResultAddress) ==
+          std::array<uint64_t, 2>{0x123456789abcdef0, 0xedcba9876543210f});
+
+  load_vector64(hart, soc, 16, kKeyAddress, {4, 68});
+  REQUIRE(execute_at_current_mode(
+              hart, soc, vector_r_instruction(0b010100, 8, 12, 16, 0b000)) ==
+          StopReason::InstLimitReached);
+  store_vector64(hart, soc, 8, kResultAddress);
+  REQUIRE(read_doublewords(soc, kResultAddress) ==
+          std::array<uint64_t, 2>{0xf0123456789abcde, 0x0fedcba987654321});
+
+  REQUIRE(execute_at_current_mode(
+              hart, soc, vector_r_instruction(0b010100, 8, 12, 16, 0b100)) ==
           StopReason::InstLimitReached);
   store_vector64(hart, soc, 8, kResultAddress);
   REQUIRE(read_doublewords(soc, kResultAddress) ==
@@ -983,6 +1023,15 @@ TEST_CASE("vector crypto bit manipulation instructions match simple vectors",
   store_vector64(hart, soc, 8, kResultAddress);
   REQUIRE(read_doublewords(soc, kResultAddress) ==
           std::array<uint64_t, 2>{1, 1});
+
+  load_vector64(hart, soc, 12, kStateAddress, {5, 2});
+  hart->set_xreg(16, 3);
+  REQUIRE(execute_at_current_mode(
+              hart, soc, vector_r_instruction(0b001100, 8, 12, 16, 0b110)) ==
+          StopReason::InstLimitReached);
+  store_vector64(hart, soc, 8, kResultAddress);
+  REQUIRE(read_doublewords(soc, kResultAddress) ==
+          std::array<uint64_t, 2>{0xf, 0x6});
 
   delete hart;
 }
