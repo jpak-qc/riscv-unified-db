@@ -48,23 +48,19 @@ fields:
       return 0;
     sw_write(csr_value): |
       if (SATP_MODE_BARE && (csr_value.MODE == 0)) {
-        # In Bare, ASID and PPN must be zero, else the entire write is ignored
-        if (csr_value.ASID == 0 && csr_value.PPN == 0) {
-          if (CSR[satp].MODE != 0) {
-            # changes *to* Bare mode take effect immediately without needing sfence.vma
-            # thus, an implicit sfence.vma occurs now
-            VmaOrderType order_type;
-            order_type.global = true;
-            order_pgtbl_writes_before_vmafence(order_type);
+        # In Bare, ASID and PPN are ignored by translation but remain WARL fields.
+        if (CSR[satp].MODE != 0) {
+          # changes *to* Bare mode take effect immediately without needing sfence.vma
+          # thus, an implicit sfence.vma occurs now
+          VmaOrderType order_type;
+          order_type.global = true;
+          order_pgtbl_writes_before_vmafence(order_type);
 
-            invalidate_translations(order_type);
+          invalidate_translations(order_type);
 
-            order_pgtbl_reads_after_vmafence(order_type);
-          }
-          return csr_value.MODE;
-        } else {
-          return UNDEFINED_LEGAL_DETERMINISTIC;
+          order_pgtbl_reads_after_vmafence(order_type);
         }
+        return csr_value.MODE;
       }
       else if (implemented?(ExtensionName::Sv32) && csr_value.MODE == 1) {
         if (CSR[satp].MODE == 0) {
@@ -134,12 +130,8 @@ fields:
     type: RW-R
     sw_write(csr_value): |
       if (csr_value.MODE == 0) {
-        # when MODE == Bare, PPN and ASID must be zero
-        if (csr_value.ASID == 0 && csr_value.PPN == 0) {
-          return csr_value.ASID;
-        } else {
-          return UNDEFINED_LEGAL_DETERMINISTIC;
-        }
+        # In Bare mode, ASID is ignored by translation but remains writable.
+        return csr_value.ASID;
       } else {
         XReg shamt = (xlen() == 32 || (CSR[mstatus].SXL == $bits(XRegWidth::XLEN32))) ? 9 : 16;
         XReg all_ones = ((MXLEN'1 << shamt) - 1);
@@ -172,12 +164,8 @@ fields:
     reset_value: UNDEFINED_LEGAL
     sw_write(csr_value): |
       if (csr_value.MODE == 0) {
-        # when MODE == Bare, PPN and ASID must be zero
-        if (csr_value.ASID == 0 && csr_value.PPN == 0) {
-          return csr_value.PPN;
-        } else {
-          return UNDEFINED_LEGAL_DETERMINISTIC;
-        }
+        # In Bare mode, PPN is ignored by translation but remains writable.
+        return csr_value.PPN;
       } else {
         # unrestricted
         return csr_value.PPN;

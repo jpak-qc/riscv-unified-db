@@ -132,6 +132,10 @@ operation(): |
     CSR[mstatus].SIE = CSR[mstatus].SPIE;
     CSR[mstatus].SPIE = 1;
     CSR[mstatus].SPP = 2'b00;
+    # set_mode() may not refresh when returning from S-mode to S-mode, and it
+    # runs before SIE is restored. Recompute pending interrupts after all
+    # return-state updates so an already-pending interrupt can be taken.
+    refresh_pending_interrupts();
     $pc = $bits(CSR[sepc]);
   } else if (implemented?(ExtensionName::H)) {
     if (CSR[mstatus].TSR == 1'b1) {

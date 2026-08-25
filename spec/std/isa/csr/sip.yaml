@@ -20,7 +20,9 @@ definedBy:
   extension:
     name: S
 sw_read(): |
-  return $bits(CSR[mip]) & $bits(CSR[mideleg]);
+  # Use mip's software-visible value so sip.SEIP includes the platform
+  # interrupt-controller signal as required by the privileged architecture.
+  return CSR[mip].sw_read() & $bits(CSR[mideleg]);
 fields:
   SSIP:
     location: 1

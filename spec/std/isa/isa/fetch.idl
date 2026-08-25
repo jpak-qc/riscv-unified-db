@@ -55,6 +55,9 @@ fetch {
   if (pending_and_enabled_interrupts != 0) {
     # this will adjust CSRs and set the PC to the interrupt handler
     take_interrupt();
+    # Do not decode or execute the interrupted instruction. The C++ ISS
+    # advances to the trap PC through its normal abort path.
+    abort_current_instruction();
   }
 
   if (ialign() == 16) {

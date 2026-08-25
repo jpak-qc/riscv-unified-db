@@ -47,6 +47,10 @@ CsrFieldType <%= name_of(:csr_field, cfg_arch, csr.name, field.name) %><SocType>
 template <SocModel SocType>
 void <%= name_of(:csr_field, cfg_arch, csr.name, field.name) %><SocType>::reset() {
 
+  <%- if field.alias -%>
+  // Aliases share their target field's storage and are reset with that target.
+  return;
+  <%- else -%>
   <%- ast = field.pruned_reset_value_ast -%>
   <%- if ast.nil? -%>
   <%- v = field.reset_value -%>
@@ -70,6 +74,7 @@ void <%= name_of(:csr_field, cfg_arch, csr.name, field.name) %><SocType>::reset(
   _hw_write(val, m_hart->xlen().to_defined());
   <%- else -%>
   _hw_write(val);
+  <%- end -%>
   <%- end -%>
   <%- end -%>
 }

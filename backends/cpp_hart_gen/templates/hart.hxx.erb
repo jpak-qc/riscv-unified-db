@@ -495,6 +495,14 @@ namespace udb {
       return cachedTranslationresult;
     }
 
+    // Basic blocks are keyed by virtual PC. A translation fence must prevent
+    // reuse of instructions decoded through a mapping that has just changed.
+    template <typename VmaOrderType>
+    void invalidate_translations(const VmaOrderType&) {
+      m_bb_cache.invalidate();
+      this->m_exit_requested = true;
+    }
+
     <%= name_of(:csr_container, cfg_arch) %><SocType>& _csrContainer() { return m_csrs; }
 
     int run_one() override { return _run_one(); }
@@ -505,6 +513,33 @@ namespace udb {
 
     int run_n(uint64_t n) override { return _run_n(n); }
     int _run_n(uint64_t n);
+
+    void set_platform_software_interrupt(const PrivilegeMode& target_mode,
+                                         bool pending) override {
+      if (pending) {
+        set_software_interrupt(target_mode);
+      } else {
+        clear_software_interrupt(target_mode);
+      }
+    }
+
+    void set_platform_timer_interrupt(const PrivilegeMode& target_mode,
+                                      bool pending) override {
+      if (pending) {
+        set_timer_interrupt(target_mode);
+      } else {
+        clear_timer_interrupt(target_mode);
+      }
+    }
+
+    void set_platform_external_interrupt(const PrivilegeMode& target_mode,
+                                         bool pending) override {
+      if (pending) {
+        set_external_interrupt(target_mode);
+      } else {
+        clear_external_interrupt(target_mode);
+      }
+    }
 
     // external interrupt interface
     void set_mmode_ext_int() {

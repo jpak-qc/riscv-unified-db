@@ -312,6 +312,19 @@ function compatible_mode? {
   }
 }
 
+function tvm_traps_satp_access? {
+  returns Boolean
+  arguments Csr csr
+  description {
+    Returns whether an access to `satp` must trap due to `mstatus.TVM`.
+  }
+  body {
+    return (CSR[mstatus].TVM == 1 &&
+            mode() == PrivilegeMode::S &&
+            csr.address == 0x180);
+  }
+}
+
 function exception_handling_mode {
   returns PrivilegeMode
   arguments ExceptionCode exception_code
@@ -2216,7 +2229,19 @@ function stage1_page_walk {
       # perform access check on the physical address of pte before it's used
       access_check(pte_phys.paddr, PTESIZE, vaddr, MemoryOperation::Read, access_fault_code);
 
-      XReg pte = read_physical_memory(PTESIZE, pte_phys.paddr);
+      XReg raw_pte = read_physical_memory(PTESIZE, pte_phys.paddr);
+      XReg pte = raw_pte;
+
+      # A valid Svnapot PTE represents a 64 KiB range. Implicit reads use a
+      # copy whose low PPN bits come from the corresponding VPN bits.
+      if ((xlen() == 64) && implemented?(ExtensionName::Svnapot) && (pte[63] == 1)) {
+        if ((I != 0) || (pte[13:10] != 4'b1000)) {
+          # Only the standard 64 KiB, level-zero NAPOT encoding is defined.
+          raise (page_fault_code, mode(), vaddr);
+        }
+        pte = (pte & ~(MXLEN'15 << 10)) | ((MXLEN'15 & vpn) << 10);
+      }
+
       PteFlags pte_flags = pte[9:0];
 
       # shadow stack page?
@@ -2273,25 +2298,26 @@ function stage1_page_walk {
         Bits<PA_SIZE> paddr_base = pte[PA_SIZE-3:I*VPN_SIZE + 10] `<< (I*VPN_SIZE + 12);
         Bits<PA_SIZE> offset = vaddr[I*VPN_SIZE + 11:0];
 
-        # see if there is permission to perform the access
+        # U-mode cannot access supervisor pages.  S-mode may access user pages
+        # only for loads/stores when SUM is set; SUM never permits instruction
+        # fetches from user pages.
+        if (effective_mode == PrivilegeMode::U && pte_flags.U == 0) {
+          raise (page_fault_code, mode(), vaddr);
+        } else if (CSR[misa].H == 1 && effective_mode == PrivilegeMode::VU && pte_flags.U == 0) {
+          raise (page_fault_code, mode(), vaddr);
+        } else if (effective_mode == PrivilegeMode::S && pte_flags.U == 1
+                   && ((op == MemoryOperation::Fetch) || !sum)) {
+          raise (page_fault_code, mode(), vaddr);
+        } else if (effective_mode == PrivilegeMode::VS && pte_flags.U == 1
+                   && ((op == MemoryOperation::Fetch) || !sum)) {
+          raise (page_fault_code, mode(), vaddr);
+        }
+
+        # Check the operation-specific PTE permissions.
         if (op == MemoryOperation::Read || op == MemoryOperation::ReadModifyWrite) {
           if (((!mxr) && (pte_flags.R == 0))
               || ((mxr) && (pte_flags.X == 0 && pte_flags.R == 0))) {
             # no read permission
-            raise (page_fault_code, mode(), vaddr);
-          }
-
-          if (effective_mode == PrivilegeMode::U && pte_flags.U == 0) {
-            # U-mode can never access supervisor page
-            raise (page_fault_code, mode(), vaddr);
-          } else if (CSR[misa].H == 1 && effective_mode == PrivilegeMode::VU && pte_flags.U == 0) {
-            # VU-mode can never access supervisor page
-            raise (page_fault_code, mode(), vaddr);
-          } else if (effective_mode == PrivilegeMode::S && pte_flags.U == 1 && !sum) {
-            # S-mode cannot access User page unless mstatus.SUM == 1
-            raise (page_fault_code, mode(), vaddr);
-          } else if (effective_mode == PrivilegeMode::VS && pte_flags.U == 1 && !sum) {
-            # VS-mode cannot access User page unless vsstatus.SUM == 1
             raise (page_fault_code, mode(), vaddr);
           }
         }
@@ -2343,16 +2369,16 @@ function stage1_page_walk {
             Bits<PTESIZE> updated_pte;
             if (pte_flags.D == 0 && (op == MemoryOperation::Write || op == MemoryOperation::ReadModifyWrite)) {
               # try to set both A and D bits
-              updated_pte = pte | 0b11000000;
+              updated_pte = raw_pte | 0b11000000;
             } else {
               # try to set the A bit
-              updated_pte = pte | 0b01000000;
+              updated_pte = raw_pte | 0b01000000;
             }
 
             if (PTESIZE == 32) {
-              success = atomic_check_then_write_32(pte_phys.paddr, pte, updated_pte);
+              success = atomic_check_then_write_32(pte_phys.paddr, raw_pte, updated_pte);
             } else if (PTESIZE == 64) {
-              success = atomic_check_then_write_64(pte_phys.paddr, pte, updated_pte);
+              success = atomic_check_then_write_64(pte_phys.paddr, raw_pte, updated_pte);
             } else {
               assert(false, "Unexpected PTESIZE");
               unreachable();
@@ -2881,6 +2907,8 @@ function load_reserved {
     }
 
     register_reservation_set(physical_address, N);
+    reservation_physical_address = physical_address;
+    reservation_size = N;
 
     if (CSR[misa].S ==1 && LRSC_FAIL_ON_VA_SYNONYM) {
       # also need to remember the virtual address
@@ -2964,6 +2992,68 @@ function store_conditional {
   }
 }
 
+function amocas_physical_address {
+  returns XReg
+  arguments
+    U32 N,
+    XReg virtual_address,
+    Bits<INSTR_ENC_SIZE> encoding
+  description {
+    Validates and translates an AMOCAS memory access.
+  }
+  body {
+    Boolean aligned = is_naturally_aligned(N, virtual_address);
+
+    if (!aligned && MISALIGNED_LDST_EXCEPTION_PRIORITY == "high") {
+      raise(ExceptionCode::StoreAmoAddressMisaligned, mode(), virtual_address);
+    }
+
+    Bits<PHYS_ADDR_WIDTH> physical_address =
+      (CSR[misa].S == 1)
+        ? translate(virtual_address, MemoryOperation::ReadModifyWrite, effective_ldst_mode(), encoding).paddr
+        : virtual_address;
+
+    if (pma_applies?(PmaAttribute::AmoNone, physical_address, N) ||
+        !pma_applies?(PmaAttribute::AmoSwap, physical_address, N)) {
+      raise(ExceptionCode::StoreAmoAccessFault, mode(), virtual_address);
+    }
+
+    if (!aligned && !misaligned_is_atomic?(N, physical_address)) {
+      if (!MISALIGNED_AMO) {
+        raise(ExceptionCode::StoreAmoAccessFault, mode(), virtual_address);
+      } else {
+        raise(ExceptionCode::StoreAmoAddressMisaligned, mode(), virtual_address);
+      }
+    }
+
+    return physical_address;
+  }
+}
+
+function amocas {
+  returns XReg
+  arguments
+    U32 N,
+    XReg virtual_address,
+    XReg expected_value,
+    XReg replacement_value,
+    Bits<INSTR_ENC_SIZE> encoding
+  description {
+    Atomically compare the N-bit value at virtual_address with expected_value.
+    If they match, replace it with replacement_value, then return the old value.
+  }
+  body {
+    XReg physical_address = amocas_physical_address(N, virtual_address, encoding);
+    XReg loaded_value = read_physical_memory(N, physical_address);
+
+    if (loaded_value[N-1:0] == expected_value[N-1:0]) {
+      write_physical_memory(N, physical_address, replacement_value);
+    }
+
+    return sext(loaded_value, N);
+  }
+}
+
 function amo {
   returns XReg
   arguments
@@ -3006,21 +3096,27 @@ function amo {
         raise(ExceptionCode::StoreAmoAccessFault, mode(), virtual_address);
       }
     } else {
-      assert(
-        pma_applies?(PmaAttribute::AmoSwap, physical_address, N) &&
-        op == AmoOperation::Swap,
-        "Bad AMO operation"
-      );
+      assert(op == AmoOperation::Swap, "Bad AMO operation");
+      if (!pma_applies?(PmaAttribute::AmoSwap, physical_address, N)) {
+        raise(ExceptionCode::StoreAmoAccessFault, mode(), virtual_address);
+      }
     }
 
     # pma alignment checks
-    if (!aligned &&
-         !misaligned_is_atomic?(N, physical_address)) {
-      raise (ExceptionCode::StoreAmoAddressMisaligned, mode(), virtual_address);
+    if (!aligned && !misaligned_is_atomic?(N, physical_address)) {
+      if (!MISALIGNED_AMO) {
+        raise(ExceptionCode::StoreAmoAccessFault, mode(), virtual_address);
+      } else {
+        raise(ExceptionCode::StoreAmoAddressMisaligned, mode(), virtual_address);
+      }
     }
 
-    if (N == 32) {
-      return atomic_read_modify_write_32(physical_address, value, op);
+    if (N == 8) {
+      return sext(atomic_read_modify_write_8(physical_address, value, op), 8);
+    } else if (N == 16) {
+      return sext(atomic_read_modify_write_16(physical_address, value, op), 16);
+    } else if (N == 32) {
+      return sext(atomic_read_modify_write_32(physical_address, value, op), 32);
     } else {
       return atomic_read_modify_write_64(physical_address, value, op);
     }
