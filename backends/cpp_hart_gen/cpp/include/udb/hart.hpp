@@ -130,9 +130,16 @@ namespace udb {
       throw AbortInstruction();
     }
 
-    void wfi() {
-      throw WfiException();
-    }
+    // The ISS advances past WFI and waits for a platform wake event.
+    // The instruction model has already handled the architectural cases that
+    // must trap.
+    void wfi() { throw WfiException(); }
+
+    // Platform devices drive interrupt pending state through these hooks. The
+    // default is intentionally inert for backends without an interrupt source.
+    virtual void set_platform_software_interrupt(const PrivilegeMode&, bool) {}
+    virtual void set_platform_timer_interrupt(const PrivilegeMode&, bool) {}
+    virtual void set_platform_external_interrupt(const PrivilegeMode&, bool) {}
 
     void wrs_nto() {
       // no-op: a valid implementation per the Zawrs spec
@@ -243,6 +250,16 @@ namespace udb {
     bool atomically_set_pte_a_d(const PossiblyUnknownBits<64>& pte_paddr, const PossiblyUnknownBits<64>& pte_value,
                                 const PossiblyUnknownBits<32>& pte_len) {
       return atomically_set_pte_a_d(pte_paddr.get(), pte_value.get(), pte_len.get());
+    }
+    Bits<8> atomic_read_modify_write_8(const PossiblyUnknownBits<64>& paddr,
+                                        const PossiblyUnknownBits<8>& value,
+                                        AmoOperation op) {
+      return Bits<8>{m_soc.atomic_read_modify_write_8(paddr.get(), value.get(), op)};
+    }
+    Bits<16> atomic_read_modify_write_16(const PossiblyUnknownBits<64>& paddr,
+                                          const PossiblyUnknownBits<16>& value,
+                                          AmoOperation op) {
+      return Bits<16>{m_soc.atomic_read_modify_write_16(paddr.get(), value.get(), op)};
     }
     Bits<32> atomic_read_modify_write_32(const PossiblyUnknownBits<64>& paddr, const PossiblyUnknownBits<32>& value,
                                          AmoOperation op) {
