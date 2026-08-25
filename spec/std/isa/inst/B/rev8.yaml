@@ -52,11 +52,9 @@ operation(): |
   XReg input = X[xs1];
   XReg output = 0;
 
-  XReg j = xlen() - 1;
-
   for (U32 i=0; i < xlen(); i = i+8) {
-    output[(i+7):i] = input[j:(j-7)];
-    j = j - 8;
+    Bits<8> byte = (input >> (xlen() - 8 - i))[7:0];
+    output[(i+7):i] = byte;
   }
 
   X[xd] = output;

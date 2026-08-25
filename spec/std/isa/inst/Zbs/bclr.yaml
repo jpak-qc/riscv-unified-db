@@ -34,4 +34,5 @@ operation(): |
   }
 
   XReg index = X[xs2] & (xlen() - 1);
-  X[xd] = X[xs1] & ~(1 << index);
+  XReg mask = 1;
+  X[xd] = X[xs1] & ~(mask << index);
