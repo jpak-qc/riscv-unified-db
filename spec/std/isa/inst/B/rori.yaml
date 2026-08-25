@@ -46,6 +46,6 @@ operation(): |
     raise (ExceptionCode::IllegalInstruction, mode(), $encoding);
   }
 
-  XReg shamt = (xlen() == 32) ? shamt[4:0] : shamt[5:0];
+  XReg amount = (xlen() == 32) ? shamt[4:0] : shamt[5:0];
 
-  X[xd] = (X[xs1] >> shamt) | (X[xs1] << (xlen() - shamt));
+  X[xd] = (X[xs1] >> amount) | (X[xs1] << (xlen() - amount));

@@ -34,4 +34,4 @@ operation(): |
   returnaddr = $pc + 2;
 
   X[1] = returnaddr;
-  jump(addr);
+  jump(addr & ~MXLEN'1);

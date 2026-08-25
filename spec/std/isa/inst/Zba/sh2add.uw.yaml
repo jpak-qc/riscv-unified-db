@@ -36,4 +36,4 @@ operation(): |
     raise (ExceptionCode::IllegalInstruction, mode(), $encoding);
   }
 
-  X[xd] = X[xs2] + (X[xs1][31:0] << 2);
+  X[xd] = X[xs2] + (X[xs1][31:0] `<< 2);

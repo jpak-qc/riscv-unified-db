@@ -35,7 +35,12 @@ operation(): |
   if (implemented?(ExtensionName::C) && (CSR[misa].C == 1'b0)) {
     raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
   }
+  if (implemented?(ExtensionName::D) && (CSR[misa].D == 1'b0)) {
+    raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
+  }
+  check_f_ok($encoding);
 
   XReg virtual_address = X[creg2reg(xs1)] + imm;
 
-  F[fd] = sext(read_memory(64, virtual_address, $encoding), 64);
+  F[creg2reg(fd)] = sext(read_memory(64, virtual_address, $encoding), 64);
+  mark_f_state_dirty();

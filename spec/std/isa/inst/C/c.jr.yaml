@@ -30,4 +30,4 @@ operation(): |
     raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
   }
 
-  jump(X[xs1]);
+  jump(X[xs1] & ~MXLEN'1);

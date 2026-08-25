@@ -36,4 +36,5 @@ operation(): |
     raise (ExceptionCode::IllegalInstruction, mode(), $encoding);
   }
 
-  X[xd] = lowest_set_bit(X[xs1][31:0]);
+  XReg word = X[xs1][31:0];
+  X[xd] = (word == 0) ? 32 : lowest_set_bit(word);
