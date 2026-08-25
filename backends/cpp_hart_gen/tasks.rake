@@ -276,14 +276,23 @@ def configs_build_name
     configs = Dir.glob("#{$root}/cfgs/*").map { |path| File.basename(path, ".yaml") }
   end
 
-  configs.each do |config|
-    unless File.file?("#{$root}/cfgs/#{config}.yaml") || File.file?(config)
+  config_paths = configs.map do |config|
+    native_config_path = "#{$root}/cfgs/#{config}.yaml"
+    act_config_path = "#{$root}/ext/riscv-arch-test/config/udb/#{config}/#{config}.yaml"
+
+    if File.file?(native_config_path)
+      config
+    elsif File.file?(config)
+      config
+    elsif File.file?(act_config_path)
+      act_config_path
+    else
       raise ArgumentError, "No config named '#{config}'"
     end
   end
 
-  config_names = configs.map do |config|
-    $resolver.cfg_arch_for(config).name
+  config_names = config_paths.map do |config_path|
+    $resolver.cfg_arch_for(config_path).name
   end
 
   build_name =
