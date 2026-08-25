@@ -15,9 +15,9 @@ description: |
   Atomically with acquire and release ordering:
 
     * Load the quadword at address _xs1_
-    * Write the loaded value into _xd_
-    * Compare the loaded value with the value of register _xs2_
-    * If equal, write the value of register _xs2+1_ to the address in _xs1_
+    * Write the loaded value into the register pair _xd_, _xd+1_
+    * Compare the loaded value with the register pair _xd_, _xd+1_
+    * If equal, write the register pair _xs2_, _xs2+1_ to the address in _xs1_
 definedBy:
   allOf:
     - extension:
@@ -46,7 +46,26 @@ operation(): |
   memory_model_acquire();
 
   XReg virtual_address = X[xs1];
-  # TODO
-  # X[xd] = amocas128(virtual_address, X[xs2], X[xd], 1'b1, 1'b1, $encoding);
+  if ((xd[0] == 1'b1) || (xs2[0] == 1'b1)) {
+    raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
+  }
+
+  XReg expected_low = X[xd];
+  XReg expected_high = X[xd + 1];
+  XReg replacement_low = X[xs2];
+  XReg replacement_high = (xs2 == 0) ? 0 : X[xs2 + 1];
+  XReg physical_address = amocas_physical_address(128, virtual_address, $encoding);
+  XReg loaded_low = read_physical_memory(64, physical_address);
+  XReg loaded_high = read_physical_memory(64, physical_address + 8);
+
+  if ((loaded_low == expected_low) && (loaded_high == expected_high)) {
+    write_physical_memory(64, physical_address, replacement_low);
+    write_physical_memory(64, physical_address + 8, replacement_high);
+  }
+
+  if (xd != 0) {
+    X[xd] = loaded_low;
+    X[xd + 1] = loaded_high;
+  }
 
   memory_model_release();

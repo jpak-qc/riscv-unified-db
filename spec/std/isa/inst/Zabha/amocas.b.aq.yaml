@@ -16,8 +16,8 @@ description: |
 
     * Load the byte at address _xs1_
     * Write the sign-extended value into _xd_
-    * Compare the loaded value with the least-significant byte of register _xs2_
-    * If equal, write the least-significant byte of register _xs2+1_ to the address in _xs1_
+    * Compare the loaded value with the least-significant byte of _xd_
+    * If equal, write the least-significant byte of _xs2_ to the address in _xs1_
 definedBy:
   extension:
     name: Zabha
@@ -44,5 +44,6 @@ operation(): |
   memory_model_acquire();
 
   XReg virtual_address = X[xs1];
-  # TODO
-  # X[xd] = amocas8(virtual_address, X[xs2][7:0], X[xd][7:0], 1'b1, 1'b0, $encoding);
+  XReg expected_value = X[xd];
+  XReg replacement_value = X[xs2];
+  X[xd] = amocas(8, virtual_address, expected_value, replacement_value, $encoding);

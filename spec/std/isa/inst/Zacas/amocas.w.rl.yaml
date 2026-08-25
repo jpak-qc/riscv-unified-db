@@ -16,8 +16,8 @@ description: |
 
     * Load the word at address _xs1_
     * Write the sign-extended value into _xd_
-    * Compare the loaded value with the least-significant word of register _xs2_
-    * If equal, write the least-significant word of register _xs2+1_ to the address in _xs1_
+    * Compare the loaded value with the least-significant word of _xd_
+    * If equal, write the least-significant word of _xs2_ to the address in _xs1_
 definedBy:
   extension:
     name: Zacas
@@ -42,7 +42,8 @@ operation(): |
   }
 
   XReg virtual_address = X[xs1];
-  # TODO
-  # X[xd] = amocas32(virtual_address, X[xs2][31:0], X[xd][31:0], 1'b0, 1'b1, $encoding);
+  XReg expected_value = X[xd];
+  XReg replacement_value = X[xs2];
+  X[xd] = amocas(32, virtual_address, expected_value, replacement_value, $encoding);
 
   memory_model_release();
