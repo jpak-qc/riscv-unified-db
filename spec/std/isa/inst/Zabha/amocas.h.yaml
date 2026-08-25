@@ -16,8 +16,8 @@ description: |
 
     * Load the halfword at address _xs1_
     * Write the sign-extended value into _xd_
-    * Compare the loaded value with the least-significant halfword of register _xs2_
-    * If equal, write the least-significant halfword of register _xs2+1_ to the address in _xs1_
+    * Compare the loaded value with the least-significant halfword of _xd_
+    * If equal, write the least-significant halfword of _xs2_ to the address in _xs1_
 definedBy:
   extension:
     name: Zabha
@@ -42,5 +42,6 @@ operation(): |
   }
 
   XReg virtual_address = X[xs1];
-  # TODO
-  # X[xd] = amocas16(virtual_address, X[xs2][15:0], X[xd][15:0], 1'b0, 1'b0, $encoding);
+  XReg expected_value = X[xd];
+  XReg replacement_value = X[xs2];
+  X[xd] = amocas(16, virtual_address, expected_value, replacement_value, $encoding);

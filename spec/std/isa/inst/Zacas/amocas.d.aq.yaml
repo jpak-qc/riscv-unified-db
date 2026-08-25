@@ -16,8 +16,8 @@ description: |
 
     * Load the doubleword at address _xs1_
     * Write the loaded value into _xd_
-    * Compare the loaded value with the value of register _xs2_
-    * If equal, write the value of register _xs2+1_ to the address in _xs1_
+    * Compare the loaded value with the value in _xd_
+    * If equal, write the value in _xs2_ to the address in _xs1_
 definedBy:
   extension:
     name: Zacas
@@ -44,5 +44,6 @@ operation(): |
   memory_model_acquire();
 
   XReg virtual_address = X[xs1];
-  # TODO
-  # X[xd] = amocas64(virtual_address, X[xs2], X[xd], 1'b1, 1'b0, $encoding);
+  XReg expected_value = X[xd];
+  XReg replacement_value = X[xs2];
+  X[xd] = amocas(64, virtual_address, expected_value, replacement_value, $encoding);

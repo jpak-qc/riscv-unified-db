@@ -41,9 +41,15 @@ description: |
   Atomically<%= aq && rl ? " with acquire and release ordering" : (aq ? " with acquire ordering" : (rl ? " with release ordering" : "")) %>:
 
     * Load the <%= current_size[:name] %> at address _xs1_
+<% if size == "q" -%>
+    * Write the loaded value into the register pair _xd_, _xd+1_
+    * Compare the loaded value with the register pair _xd_, _xd+1_
+    * If equal, write the register pair _xs2_, _xs2+1_ to the address in _xs1_
+<% else -%>
     * Write the <%= %w[b h w].include?(size) ? "sign-extended value" : "loaded value" %> into _xd_
-    * Compare the loaded value with the <%= %w[b h w].include?(size) ? "least-significant #{current_size[:name]} of register" : "value of register" %> _xs2_
-    * If equal, write the <%= %w[b h w].include?(size) ? "least-significant #{current_size[:name]} of register" : "value of register" %> _xs2+1_ to the address in _xs1_
+    * Compare the loaded value with the <%= %w[b h w].include?(size) ? "least-significant #{current_size[:name]} of" : "value in" %> _xd_
+    * If equal, write the <%= %w[b h w].include?(size) ? "least-significant #{current_size[:name]} of" : "value in" %> _xs2_ to the address in _xs1_
+<% end -%>
 definedBy:
 <%- if size == "q" -%>
   allOf:
@@ -79,8 +85,33 @@ operation(): |
 
 <% end -%>
   XReg virtual_address = X[xs1];
-  # TODO
-  # X[xd] = amocas<%= current_size[:operation_bits] %>(virtual_address, X[xs2]<%= %w[b h w].include?(size) ? "[#{current_size[:bits]-1}:0]" : "" %>, X[xd]<%= %w[b h w].include?(size) ? "[#{current_size[:bits]-1}:0]" : "" %>, <%= aq ? "1'b1" : "1'b0" %>, <%= rl ? "1'b1" : "1'b0" %>, $encoding);
+<% if size == "q" -%>
+  if ((xd[0] == 1'b1) || (xs2[0] == 1'b1)) {
+    raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
+  }
+
+  XReg expected_low = X[xd];
+  XReg expected_high = X[xd + 1];
+  XReg replacement_low = X[xs2];
+  XReg replacement_high = (xs2 == 0) ? 0 : X[xs2 + 1];
+  XReg physical_address = amocas_physical_address(128, virtual_address, $encoding);
+  XReg loaded_low = read_physical_memory(64, physical_address);
+  XReg loaded_high = read_physical_memory(64, physical_address + 8);
+
+  if ((loaded_low == expected_low) && (loaded_high == expected_high)) {
+    write_physical_memory(64, physical_address, replacement_low);
+    write_physical_memory(64, physical_address + 8, replacement_high);
+  }
+
+  if (xd != 0) {
+    X[xd] = loaded_low;
+    X[xd + 1] = loaded_high;
+  }
+<% else -%>
+  XReg expected_value = X[xd];
+  XReg replacement_value = X[xs2];
+  X[xd] = amocas(<%= current_size[:operation_bits] %>, virtual_address, expected_value, replacement_value, $encoding);
+<% end -%>
 <% if rl -%>
 
   memory_model_release();
