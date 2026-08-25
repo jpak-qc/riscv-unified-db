@@ -81,6 +81,7 @@ function highest_set_bit {
 
     # fall-through; value must be zero
     return -'sd1;
+    return result;
   }
 }
 
@@ -220,7 +221,7 @@ function in_naturally_aligned_region? {
   body {
     XReg Mask = (N/8) - 1;
 
-    return (address & ~Mask) == ((address + length - 1) & ~Mask);
+    return (address & ~Mask) == ((address + (length / 8) - 1) & ~Mask);
   }
 }
 

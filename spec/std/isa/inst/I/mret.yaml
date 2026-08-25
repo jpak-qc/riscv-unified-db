@@ -41,4 +41,7 @@ operation(): |
     set_mode(PrivilegeMode::M);
   }
   CSR[mstatus].MPP = implemented?(ExtensionName::U) ? 2'b00 : 2'b11;
+  # A return to M-mode does not change mode, so set_mode() does not refresh
+  # the newly restored MIE state. Refresh after all return-state updates.
+  refresh_pending_interrupts();
   $pc = $bits(CSR[mepc]);

@@ -58,9 +58,13 @@ operation(): |
     unimplemented_csr($encoding);
   } else if (!compatible_mode?(csr_handle.mode, mode())) {
     raise (ExceptionCode::IllegalInstruction, mode(), $encoding);
+  } else if (tvm_traps_satp_access?(csr_handle)) {
+    raise (ExceptionCode::IllegalInstruction, mode(), $encoding);
   } else if (csr_handle.writable == false) {
     raise (ExceptionCode::IllegalInstruction, mode(), $encoding);
   }
+
+  check_fcsr_ok(csr, $encoding);
 
   if (xd != 0) {
     X[xd] = csr_sw_read(csr_handle);
@@ -69,3 +73,5 @@ operation(): |
   # writes the value in X[xs1] to the CSR,
   # performing any WARL transformations first
   csr_sw_write(csr_handle, initial_value);
+  mark_fcsr_state_dirty(csr);
+  refresh_pending_interrupts();
