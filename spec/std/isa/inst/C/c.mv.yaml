@@ -19,7 +19,6 @@ encoding:
   variables:
     - name: xd
       location: 11-7
-      not: 0
     - name: xs2
       location: 6-2
       not: 0
