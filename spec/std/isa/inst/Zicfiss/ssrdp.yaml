@@ -18,7 +18,6 @@ encoding:
   variables:
     - name: xd
       location: 11-7
-      not: 0
 access:
   s: always
   u: always
@@ -26,3 +25,10 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
+  if ((mode() == PrivilegeMode::S && CSR[menvcfg].SSE == 1) ||
+      (mode() == PrivilegeMode::VS && CSR[henvcfg].SSE == 1) ||
+      ((mode() == PrivilegeMode::U || mode() == PrivilegeMode::VU) && CSR[senvcfg].SSE == 1)) {
+    X[xd] = CSR[ssp];
+  } else {
+    X[xd] = 0;
+  }

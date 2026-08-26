@@ -22,8 +22,8 @@ description: |
   Both PMP and PMA access control must be the same for all bytes in the block; otherwise, `cbo.clean` has UNSPECIFIED behavior.
   <%- end -%>
 
-  Clean operations are treated as stores for page and access permissions. If permission checks fail,
-  one of the following exceptions will occur:
+  Clean operations require read permission and do not check or update the D bit. If permission
+  checks fail, one of the following exceptions will occur:
 
     <%- if ext?(:H) -%>
     * `Store/AMO Guest-Page Fault` if virtual memory translation fails during G-stage translation.
@@ -104,7 +104,9 @@ operation(): |
   XReg cache_block_vaddr = X[xs1] & ~mask;
 
   TranslationResult result;
-  result = translate(cache_block_vaddr, MemoryOperation::Write, effective_ldst_mode(), $encoding);
-  access_check(result.paddr, CACHE_BLOCK_SIZE*8, cache_block_vaddr, MemoryOperation::Write, ExceptionCode::StoreAmoAccessFault);
+  # Cache-block management requires read permission, does not check or set D,
+  # and reports Store/AMO faults.
+  result = translate(cache_block_vaddr, MemoryOperation::CacheBlock, effective_ldst_mode(), $encoding);
+  access_check(result.paddr, CACHE_BLOCK_SIZE*8, cache_block_vaddr, MemoryOperation::CacheBlock, ExceptionCode::StoreAmoAccessFault);
 
   # Cache state is not modeled by this ISS.

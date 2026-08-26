@@ -55,14 +55,8 @@ definedBy:
         name: Zalrsc
 assembly: xd, (xs1)
 encoding:
-  match: 00010--00000-----011-----0101111
+  match: 000101000000-----011-----0101111
   variables:
-    - name: aq
-      location: 26
-      not: 0
-    - name: rl
-      location: 25
-      not: 1
     - name: xs1
       location: 19-15
     - name: xd
@@ -99,5 +93,5 @@ operation(): |
     }
   }
 
-  XReg load_value = load_reserved(64, virtual_address, aq, rl, $encoding);
+  XReg load_value = load_reserved(64, virtual_address, 1'b1, 1'b0, $encoding);
   X[xd] = load_value;

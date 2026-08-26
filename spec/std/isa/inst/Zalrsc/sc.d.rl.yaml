@@ -112,14 +112,8 @@ definedBy:
         name: Zalrsc
 assembly: xd, xs2, (xs1)
 encoding:
-  match: 00011------------011-----0101111
+  match: 0001101----------011-----0101111
   variables:
-    - name: aq
-      location: 26
-      not: 1
-    - name: rl
-      location: 25
-      not: 0
     - name: xs2
       location: 24-20
     - name: xs1
@@ -159,5 +153,5 @@ operation(): |
     }
   }
 
-  Boolean success = store_conditional(64, virtual_address, value, aq, rl, $encoding);
+  Boolean success = store_conditional(64, virtual_address, value, 1'b0, 1'b1, $encoding);
   X[xd] = success ? 0 : 1;

@@ -12,17 +12,13 @@
       long_name_suffix: "Word",
       funct3: "010",
       align_bits: "32",
-      load_reserved_bits: "32",
-      aq_not: aq ? "0" : "1",
-      rl_not: rl ? "0" : "1"
+      load_reserved_bits: "32"
     },
     "d" => {
       long_name_suffix: "Doubleword",
       funct3: "011",
       align_bits: "64",
-      load_reserved_bits: "64",
-      aq_not: aq ? "0" : "1",
-      rl_not: rl ? "0" : "1"
+      load_reserved_bits: "64"
     }
   }
 
@@ -101,14 +97,8 @@ definedBy:
 <%- end -%>
 assembly: xd, (xs1)
 encoding:
-  match: 00010--00000-----<%= current_size[:funct3] %>-----0101111
+  match: 00010<%= aq ? "1" : "0" %><%= rl ? "1" : "0" %>00000-----<%= current_size[:funct3] %>-----0101111
   variables:
-    - name: aq
-      location: 26
-      not: <%= current_size[:aq_not] %>
-    - name: rl
-      location: 25
-      not: <%= current_size[:rl_not] %>
     - name: xs1
       location: 19-15
     - name: xd
@@ -145,7 +135,7 @@ operation(): |
     }
   }
 
-  XReg load_value = load_reserved(<%= current_size[:load_reserved_bits] %>, virtual_address, aq, rl, $encoding);
+  XReg load_value = load_reserved(<%= current_size[:load_reserved_bits] %>, virtual_address, <%= aq ? "1'b1" : "1'b0" %>, <%= rl ? "1'b1" : "1'b0" %>, $encoding);
 <%- if size == "w" -%>
   if (xlen() == 64) {
     X[xd] = sext(load_value[31:0], 32);

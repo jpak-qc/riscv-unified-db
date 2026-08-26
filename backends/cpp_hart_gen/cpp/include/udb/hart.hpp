@@ -149,9 +149,9 @@ namespace udb {
       // no-op: a valid implementation per the Zawrs spec
     }
 
-    void pause() {
-      throw PauseException();
-    }
+    // PAUSE may have zero duration; model that permitted behavior in the
+    // functional ISS without stopping the simulation.
+    void pause() {}
 
 
 

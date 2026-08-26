@@ -56,6 +56,7 @@ enum MemoryOperation {
   Write
   ReadModifyWrite
   Fetch
+  CacheBlock
 }
 
 # Types of Atomic Read-modify-write operations
@@ -653,7 +654,7 @@ function raise_guest_page_fault {
     if (op == MemoryOperation::Read) {
       code = ExceptionCode::LoadGuestPageFault;
       write_gpa_in_tval = REPORT_GPA_IN_TVAL_ON_LOAD_GUEST_PAGE_FAULT;
-    } else if (op == MemoryOperation::Write || op == MemoryOperation::ReadModifyWrite) {
+    } else if (op == MemoryOperation::Write || op == MemoryOperation::ReadModifyWrite || op == MemoryOperation::CacheBlock) {
       code = ExceptionCode::StoreAmoGuestPageFault;
       write_gpa_in_tval = REPORT_GPA_IN_TVAL_ON_STORE_AMO_GUEST_PAGE_FAULT;
     } else {
@@ -1284,7 +1285,9 @@ function pmp_check {
 
       # this is either an HS, VS, VU, or U mode access, or an M mode access with cfg.L set
       # the RWX settings in cfg apply
-      if (type == MemoryOperation::Write && (cfg.W == 0)) {
+      if (type == MemoryOperation::CacheBlock && cfg.R == 0 && cfg.W == 0) {
+        return false;
+      } else if (type == MemoryOperation::Write && (cfg.W == 0)) {
         return false;
       } else if (type == MemoryOperation::Read && (cfg.R == 0)) {
         return false;
@@ -1624,7 +1627,7 @@ function translate_gstage {
       # Invalid mode
       if (op == MemoryOperation::Read) {
         raise_guest_page_fault(op, gpaddr, vaddr, tinst_value_for_guest_page_fault(op, encoding, true), effective_mode);
-      } else if (op == MemoryOperation::Write || op == MemoryOperation::ReadModifyWrite) {
+      } else if (op == MemoryOperation::Write || op == MemoryOperation::ReadModifyWrite || op == MemoryOperation::CacheBlock) {
         raise_guest_page_fault(op, gpaddr, vaddr, tinst_value_for_guest_page_fault(op, encoding, true), effective_mode);
       } else {
         assert(op == MemoryOperation::Fetch, "unexpected memory op");
@@ -1669,7 +1672,7 @@ function tinst_value_for_guest_page_fault {
           unpredictable("Custom value written into htinst/mtinst");
           return 0;
         }
-      } else if (op == MemoryOperation::Write || op == MemoryOperation::ReadModifyWrite) {
+      } else if (op == MemoryOperation::Write || op == MemoryOperation::ReadModifyWrite || op == MemoryOperation::CacheBlock) {
         if (TINST_VALUE_ON_FINAL_STORE_AMO_GUEST_PAGE_FAULT == "always zero") {
           return 0;
         } else if (TINST_VALUE_ON_FINAL_STORE_AMO_GUEST_PAGE_FAULT == "always pseudoinstruction") {
@@ -1994,7 +1997,7 @@ function gstage_page_walk {
                     && (pte_flags.X == 0)) {
           # no execute permission
           raise_guest_page_fault(op, gpaddr, vaddr, tinst, effective_mode);
-        } else if ((op == MemoryOperation::Read) || (op == MemoryOperation::ReadModifyWrite)) {
+        } else if ((op == MemoryOperation::Read) || (op == MemoryOperation::ReadModifyWrite) || (op == MemoryOperation::CacheBlock)) {
           if (((!mxr) && (pte_flags.R == 0))
               || ((mxr) && (pte_flags.X == 0 && pte_flags.R == 0))) {
             # no read permission
@@ -2314,7 +2317,7 @@ function stage1_page_walk {
         }
 
         # Check the operation-specific PTE permissions.
-        if (op == MemoryOperation::Read || op == MemoryOperation::ReadModifyWrite) {
+        if (op == MemoryOperation::Read || op == MemoryOperation::ReadModifyWrite || op == MemoryOperation::CacheBlock) {
           if (((!mxr) && (pte_flags.R == 0))
               || ((mxr) && (pte_flags.X == 0 && pte_flags.R == 0))) {
             # no read permission
@@ -2511,7 +2514,7 @@ function translate {
     if (translation_mode == SatpMode::Reserved) {
       if (op == MemoryOperation::Read) {
         raise (ExceptionCode::LoadPageFault, mode(), vaddr);
-      } else if (op == MemoryOperation::Write || op == MemoryOperation::ReadModifyWrite) {
+      } else if (op == MemoryOperation::Write || op == MemoryOperation::ReadModifyWrite || op == MemoryOperation::CacheBlock) {
         raise (ExceptionCode::StoreAmoPageFault, mode(), vaddr);
       } else {
         assert(op == MemoryOperation::Fetch, "Unexpected memory operation");
@@ -2987,6 +2990,9 @@ function store_conditional {
 
     # success. perform the store
     write_physical_memory(N, physical_address, value);
+
+    # Every SC, including a successful one, invalidates this hart's reservation.
+    invalidate_reservation_set();
 
     return true;
   }
