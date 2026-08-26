@@ -23,7 +23,6 @@ encoding:
       sign_extend: true
     - name: xd
       location: 11-7
-      not: 0
 access:
   s: always
   u: always
