@@ -88,6 +88,10 @@ namespace udb {
         try {
           raise(ExceptionCode{ExceptionCode::IllegalInstruction}, mode(), m_params.REPORT_ENCODING_IN_MTVAL_ON_ILLEGAL_INSTRUCTION.value() ? enc : decltype(enc){0});
         } catch (const AbortInstruction& e) {
+          // raise() has installed the trap target in m_next_pc.  Commit it
+          // before returning so the next run begins at the trap vector rather
+          // than re-fetching the faulting PC in the handler's privilege mode.
+          advance_pc();
           return StopReason::Exception;
         }
       }
