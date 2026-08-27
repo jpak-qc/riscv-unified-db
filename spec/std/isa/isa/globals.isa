@@ -2902,6 +2902,8 @@ function load_reserved {
       raise(ExceptionCode::LoadAccessFault, mode(), virtual_address);
     }
 
+    access_check(physical_address, N, virtual_address, MemoryOperation::Read, ExceptionCode::LoadAccessFault);
+
     if (aq == 1) {
       memory_model_acquire();
     }
@@ -2918,7 +2920,7 @@ function load_reserved {
       reservation_virtual_address = virtual_address;
     }
 
-    return read_memory_aligned(N, physical_address, encoding, 1'b0, 1'b0);
+    return read_physical_memory(N, physical_address);
   }
 }
 

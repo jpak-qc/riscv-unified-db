@@ -184,9 +184,9 @@ operation(): |
     #   for the misalignment, if the misaligned access should not be emulated.
 
     if (LRSC_MISALIGNED_BEHAVIOR == "always raise misaligned exception") {
-      raise(ExceptionCode::StoreAmoAddressMisaligned, effective_ldst_mode(), virtual_address);
+      raise(ExceptionCode::StoreAmoAddressMisaligned, mode(), virtual_address);
     } else if (LRSC_MISALIGNED_BEHAVIOR == "always raise access fault") {
-      raise(ExceptionCode::StoreAmoAccessFault, effective_ldst_mode(), virtual_address);
+      raise(ExceptionCode::StoreAmoAccessFault, mode(), virtual_address);
     } else {
       unpredictable("Implementations may raise either a StoreAmoAddressMisaligned or a StoreAmoAccessFault when an SC address is misaligned");
     }
