@@ -124,7 +124,10 @@ fields:
     description: |
       The P1P13 bit in `mstateen0` controls access to the `hedelegh` introduced by Privileged Specification
       Version 1.13.
-    type: RW
+    # hedelegh exists only on RV32, so this access-control bit is read-only zero
+    # on RV64.
+    type(): |
+      return (MXLEN == 32) ? CsrFieldType::RW : CsrFieldType::RO;
     reset_value: 0
   SRMCFG:
     long_name: srmcfg access control
