@@ -185,14 +185,11 @@ module Idl
            var_type.sub_type.is_a?(Idl::RegFileElementType) &&
            var_type.qualifiers.include?(:global)
           rf_name = var_type.sub_type.name.downcase
-          value_result = value_try do
-            msb_val = msb.value(symtab)
-            lsb_val = lsb.value(symtab)
-            return "#{' ' * indent}__UDB_HART->_set_#{rf_name}reg( #{variable.index.gen_cpp(symtab, 0, indent_spaces:)}, ([&]() { auto __udb_reg_tmp = #{variable.gen_cpp(symtab)}; bit_insert<#{msb_val}, #{lsb_val}, #{variable.type(symtab).width}>(__udb_reg_tmp, #{write_value.gen_cpp(symtab)}); return __udb_reg_tmp; }()))"
-          end
-          value_else(value_result) do
-            return "#{' ' * indent}__UDB_HART->_set_#{rf_name}reg( #{variable.index.gen_cpp(symtab, 0, indent_spaces:)}, ([&]() { auto __udb_reg_tmp = #{variable.gen_cpp(symtab)}; bit_insert(__udb_reg_tmp, #{msb.gen_cpp(symtab)}, #{lsb.gen_cpp(symtab)}, #{write_value.gen_cpp(symtab)}); return __udb_reg_tmp; }()))"
-          end
+          # Always use the mutating overload, including when the bounds are
+          # compile-time constants. The constexpr overload only accepts native
+          # width Bits, whereas a register file can contain runtime-width
+          # vector registers (e.g. 65536 bits in the generic rv64 config).
+          return "#{' ' * indent}__UDB_HART->_set_#{rf_name}reg( #{variable.index.gen_cpp(symtab, 0, indent_spaces:)}, ([&]() { auto __udb_reg_tmp = #{variable.gen_cpp(symtab)}; bit_insert(__udb_reg_tmp, #{msb.gen_cpp(symtab)}, #{lsb.gen_cpp(symtab)}, #{write_value.gen_cpp(symtab)}); return __udb_reg_tmp; }()))"
         end
       end
 
@@ -937,7 +934,30 @@ module Idl
         rf_name = lhs_type.sub_type.name.downcase
         "#{' ' * indent}__UDB_HART->_set_#{rf_name}reg( #{idx.gen_cpp(symtab, 0, indent_spaces:)}, #{rhs.gen_cpp(symtab, 0, indent_spaces:)})"
       elsif lhs.type(symtab).kind == :bits
-        "#{' ' * indent}#{lhs.gen_cpp(symtab, 0, indent_spaces:)}.setBit(#{idx.gen_cpp(symtab, 0, indent_spaces:)}, #{rhs.gen_cpp(symtab, 0, indent_spaces:)})"
+        lhs_cpp = lhs.gen_cpp(symtab, 0, indent_spaces:)
+        idx_cpp = idx.gen_cpp(symtab, 0, indent_spaces:)
+        rhs_cpp = rhs.gen_cpp(symtab, 0, indent_spaces:)
+        if lhs_cpp.include?("_vreg(")
+          # Vector register bit-indexed assignment: must use read-modify-write to avoid
+          # modifying a temporary copy returned by _vreg() by value.
+          # Extract the register index expression from the LHS. Use a balanced-paren
+          # match: find the outermost _vreg(...) argument accounting for nested parens.
+          vreg_idx = begin
+            inner = lhs_cpp.sub(/.*__UDB_HART->_vreg\(/, "")
+            depth = 0
+            result = ""
+            inner.each_char do |c|
+              break if depth == 0 && c == ")"
+              depth += 1 if c == "("
+              depth -= 1 if c == ")"
+              result += c
+            end
+            result.empty? ? "vd()" : result
+          end
+          "#{' ' * indent}{ auto __vreg_tmp = #{lhs_cpp}; __vreg_tmp.setBit(#{idx_cpp}, #{rhs_cpp}); __UDB_HART->_set_vreg(#{vreg_idx}, __vreg_tmp); }"
+        else
+          "#{' ' * indent}#{lhs_cpp}.setBit(#{idx_cpp}, #{rhs_cpp})"
+        end
       else
         # actually an array
         "#{' ' * indent}#{lhs.gen_cpp(symtab, 0, indent_spaces:)}.at(#{idx.gen_cpp(symtab, 0, indent_spaces:)}.get()) = #{rhs.gen_cpp(symtab, 0, indent_spaces:)}"
