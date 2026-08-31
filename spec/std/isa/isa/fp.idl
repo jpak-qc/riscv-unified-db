@@ -1517,6 +1517,89 @@ function f16_muladd {
   }
 }
 
+function f32_to_i8 {
+  returns Bits<8>
+  arguments Bits<32> a, RoundingMode mode
+  description { Converts a binary32 value to a signed 8-bit integer. }
+  body {
+    Bits<1> sign = signF32UI(a);
+    Bits<16> exp = expF32UI(a);
+    Bits<32> frac = fracF32UI(a);
+
+    if (exp == 8'hFF) {
+      set_fp_flag(FpFlag::NV);
+      return (frac != 0 || sign == 0) ? 8'h7F : 8'h80;
+    }
+
+    Boolean invalid = false;
+    if (sign == 0) {
+      if ((mode == RoundingMode::RNE) || (mode == RoundingMode::RMM)) {
+        invalid = a >= 32'h42FF0000; # +127.5
+      } else if ((mode == RoundingMode::RTZ) || (mode == RoundingMode::RDN)) {
+        invalid = a >= 32'h43000000; # +128
+      } else {
+        invalid = a > 32'h42FE0000; # +127
+      }
+    } else {
+      if (mode == RoundingMode::RNE) {
+        invalid = a > 32'hC3008000; # -128.5 rounds to -128 (even)
+      } else if (mode == RoundingMode::RMM) {
+        invalid = a >= 32'hC3008000;
+      } else {
+        invalid = a > 32'hC3000000; # -128
+      }
+    }
+    if (invalid) {
+      set_fp_flag(FpFlag::NV);
+      return (sign == 1) ? 8'h80 : 8'h7F;
+    }
+
+    Bits<32> z = f32_to_i32(a, mode);
+    return z[7:0];
+  }
+}
+
+function f32_to_ui8 {
+  returns Bits<8>
+  arguments Bits<32> a, RoundingMode mode
+  description { Converts a binary32 value to an unsigned 8-bit integer. }
+  body {
+    Bits<1> sign = signF32UI(a);
+    Bits<16> exp = expF32UI(a);
+
+    if (exp == 8'hFF) {
+      set_fp_flag(FpFlag::NV);
+      return (fracF32UI(a) != 0 || sign == 0) ? 8'hFF : 0;
+    }
+
+    Boolean invalid = false;
+    if (sign == 0) {
+      if ((mode == RoundingMode::RNE) || (mode == RoundingMode::RMM)) {
+        invalid = a >= 32'h437F8000; # +255.5
+      } else if ((mode == RoundingMode::RTZ) || (mode == RoundingMode::RDN)) {
+        invalid = a >= 32'h43800000; # +256
+      } else {
+        invalid = a > 32'h437F0000; # +255
+      }
+    } else if (mode == RoundingMode::RNE) {
+      invalid = a > 32'hBF000000; # -0.5 rounds to zero (even)
+    } else if (mode == RoundingMode::RMM) {
+      invalid = a >= 32'hBF000000;
+    } else if ((mode == RoundingMode::RTZ) || (mode == RoundingMode::RUP)) {
+      invalid = a >= 32'hBF800000; # -1
+    } else {
+      invalid = a != 32'h80000000; # negative zero is the sole valid RDN case
+    }
+    if (invalid) {
+      set_fp_flag(FpFlag::NV);
+      return (sign == 0) ? 8'hFF : 0;
+    }
+
+    Bits<32> z = f32_to_ui32(a, mode);
+    return z[7:0];
+  }
+}
+
 function f32_to_i16 {
   returns Bits<16>
   arguments Bits<32> a, RoundingMode mode
