@@ -64,7 +64,8 @@ namespace udb {
   <%- vector_state_instruction = inst.name.downcase.start_with?("v") -%>
   <%- vector_instruction = vector_state_instruction && !%w[vsetvl vsetvli vsetivli].include?(inst.name.downcase) -%>
   <%- whole_register_vector_instruction = inst.name.downcase.match?(/\Av(?:l[1248]re(?:8|16|32|64)|s[1248]r)\.v\z/) -%>
-  <%- decode_variable_names = inst.decode_variables(cfg_arch.possible_xlens.first).map { |dv| dv.name.to_s } -%>
+  <%- decode_xlen = needs_rv32 ? 32 : 64 -%>
+  <%- decode_variable_names = inst.decode_variables(decode_xlen).map { |dv| dv.name.to_s } -%>
   <%- vector_register_operands = %w[vd vs1 vs2 vs3].select { |name| decode_variable_names.include?(name) } -%>
   <%- implicit_v0_mask = inst.assembly.split(/\s*,\s*/).include?("v0") -%>
   <%- mask_result_instruction = inst.name.downcase.match?(/\Av(?:m(?:adc|sbc|seq|sne|sltu?|sleu?|sgtu?)|mf(?:eq|ne|lt|le|gt|ge))\./) -%>
