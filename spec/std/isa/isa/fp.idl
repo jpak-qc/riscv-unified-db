@@ -173,6 +173,7 @@ function set_fp_flag {
     } else if (flag == FpFlag::NV) {
       CSR[fcsr].NV = 1;
     }
+    mark_f_state_dirty();
   }
 }
 
@@ -312,6 +313,34 @@ function check_f_ok {
 
     if (CSR[mstatus].FS == 0) {
       raise(ExceptionCode::IllegalInstruction, mode(), encoding);
+    }
+  }
+}
+
+function check_fcsr_ok {
+  arguments
+    Bits<12> csr_addr,
+    Bits<INSTR_ENC_SIZE> encoding
+  description {
+    Checks whether an access to an F-extension control and status register is
+    permitted by the floating-point state.
+  }
+  body {
+    if ((csr_addr == 12'h001) || (csr_addr == 12'h002) || (csr_addr == 12'h003)) {
+      check_f_ok(encoding);
+    }
+  }
+}
+
+function mark_fcsr_state_dirty {
+  arguments Bits<12> csr_addr
+  description {
+    Marks floating-point state dirty after a successful software write to an
+    F-extension control and status register.
+  }
+  body {
+    if ((csr_addr == 12'h001) || (csr_addr == 12'h002) || (csr_addr == 12'h003)) {
+      mark_f_state_dirty();
     }
   }
 }

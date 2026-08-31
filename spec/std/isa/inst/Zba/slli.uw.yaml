@@ -34,4 +34,8 @@ access:
   vs: always
   vu: always
 operation(): |
-  X[xd] = X[xs1][31:0] << shamt;
+  if (implemented?(ExtensionName::B) && (CSR[misa].B == 1'b0)) {
+    raise (ExceptionCode::IllegalInstruction, mode(), $encoding);
+  }
+
+  X[xd] = X[xs1][31:0] `<< shamt;

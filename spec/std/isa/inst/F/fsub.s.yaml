@@ -34,3 +34,4 @@ operation(): |
   check_f_ok($encoding);
   RoundingMode mode = rm_to_mode(rm, $encoding);
   F[fd] = f32_result(f32_sub(f32_operand(F[fs1]), f32_operand(F[fs2]), mode));
+  mark_f_state_dirty();

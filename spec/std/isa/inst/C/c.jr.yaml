@@ -30,4 +30,4 @@ operation(): |
     reserved_instruction($encoding);
   }
 
-  jump(X[xs1]);
+  jump(X[xs1] & ~MXLEN'1);
