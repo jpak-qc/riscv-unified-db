@@ -182,9 +182,21 @@ udb::HartBase<udb::IssSocModel>* create_seed_hart(
                                   static_cast<udb::IssSocModel&>(soc));
 }
 
+void reset_seed_hart(udb::HartBase<udb::IssSocModel>* hart) {
+  hart->reset(0);
+
+  // TVM has a legal-but-undefined reset value when S-mode virtual memory is
+  // implemented. Every CSR instruction checks it, so give these focused seed
+  // tests a deterministic reset state without changing the other mstatus
+  // fields (notably SXL and UXL).
+  auto* rv64_hart = dynamic_cast<udb::Rv64_Hart<udb::IssSocModel>*>(hart);
+  REQUIRE(rv64_hart != nullptr);
+  rv64_hart->_csrContainer().mstatus.TVM()._hw_write(udb::Bits<1>{0});
+}
+
 void execute_one(udb::HartBase<udb::IssSocModel>* hart,
                  ScriptedEntropySocModel& soc, uint32_t instruction) {
-  hart->reset(0);
+  reset_seed_hart(hart);
   soc.write_physical_memory_32(0, instruction);
   REQUIRE(hart->run_one() == StopReason::InstLimitReached);
 }
@@ -232,7 +244,7 @@ TEST_CASE("seed rejects read-only CSR forms", "[seed]") {
   ScriptedEntropySocModel soc(1024 * 1024, 0);
   auto* hart = create_seed_hart(soc);
 
-  hart->reset(0);
+  reset_seed_hart(hart);
   soc.write_physical_memory_32(0, csr_instruction(0x015, 0b010, 5, 0));
   REQUIRE(hart->run_one() == StopReason::Exception);
   REQUIRE(soc.poll_count == 0);
@@ -246,7 +258,7 @@ TEST_CASE("seed enforces lower-privilege access controls", "[seed]") {
   soc.samples.push_back({0b10, 0, 0x5678});
   auto* hart = create_seed_hart(soc);
 
-  hart->reset(0);
+  reset_seed_hart(hart);
   // This configuration implements PMP. With no active entry, U-mode cannot
   // fetch the test instruction at address zero, which would mask the seed CSR
   // access being tested. Permit the full physical address space first.
