@@ -174,6 +174,7 @@ Config make_test_config() {
 
   nlohmann::json param_values = nlohmann::json::object();
   param_values["MXLEN"] = 64;
+  param_values["HW_MSTATUS_FS_DIRTY_UPDATE"] = "precise";
   return Config(implemented_exts, param_values);
 }
 

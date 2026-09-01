@@ -247,13 +247,25 @@ TEST_CASE("seed enforces lower-privilege access controls", "[seed]") {
   auto* hart = create_seed_hart(soc);
 
   hart->reset(0);
+  // This configuration implements PMP. With no active entry, U-mode cannot
+  // fetch the test instruction at address zero, which would mask the seed CSR
+  // access being tested. Permit the full physical address space first.
+  hart->set_xreg(1, 0x3ffffffffffffff);
+  REQUIRE(execute_at_current_mode(hart, soc, csr_instruction(0x3b0, 0b001, 0,
+                                                               1)) ==
+          StopReason::InstLimitReached);
+  hart->set_xreg(1, 0x0f);
+  REQUIRE(execute_at_current_mode(hart, soc, csr_instruction(0x3a0, 0b001, 0,
+                                                               1)) ==
+          StopReason::InstLimitReached);
+
   hart->_set_mode(udb::PrivilegeMode::U);
   REQUIRE(execute_at_current_mode(hart, soc, csr_instruction(0x015, 0b001, 5,
                                                                0)) ==
           StopReason::Exception);
   REQUIRE(soc.poll_count == 0);
 
-  hart->reset(0);
+  hart->_set_mode(udb::PrivilegeMode::M);
   hart->set_xreg(1, 0x300);
   REQUIRE(execute_at_current_mode(hart, soc, csr_instruction(0x747, 0b001, 0,
                                                                1)) ==
