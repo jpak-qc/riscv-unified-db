@@ -322,7 +322,7 @@ module Udb
           elsif range_end.nil?
             (range_start.to_i..range_start.to_i)
           else
-            (range_start.to_i..range_end[1..].to_i)
+            (range_start.to_i..range_end.to_i)
           end
         @alias = Alias.new(csr_field, range)
       end
