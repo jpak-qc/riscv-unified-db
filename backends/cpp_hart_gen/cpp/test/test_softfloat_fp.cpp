@@ -166,7 +166,8 @@ uint_fast8_t get_softfloat_muladd_op(std::string_view op) {
 
 Config make_test_config() {
   nlohmann::json implemented_exts = nlohmann::json::array(
-      {nlohmann::json::array({"I", "2.1.0"}),
+      {nlohmann::json::array({"Sm", "1.11.0"}),
+       nlohmann::json::array({"I", "2.1.0"}),
        nlohmann::json::array({"M", "2.0.0"}),
        nlohmann::json::array({"Zicsr", "2.0.0"}),
        nlohmann::json::array({"Zifencei", "2.0.0"}),
@@ -174,6 +175,7 @@ Config make_test_config() {
 
   nlohmann::json param_values = nlohmann::json::object();
   param_values["MXLEN"] = 64;
+  param_values["HW_MSTATUS_FS_DIRTY_UPDATE"] = "precise";
   return Config(implemented_exts, param_values);
 }
 
