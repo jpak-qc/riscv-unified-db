@@ -214,10 +214,12 @@ function mark_f_state_dirty {
     Potentially updates `mstatus.FS` to the Dirty (3) state, depending on configuration settings.
   }
   body {
-    if (HW_MSTATUS_FS_DIRTY_UPDATE== "precise") {
-      CSR[mstatus].FS = 3; # set dirty state
-    } else if (HW_MSTATUS_FS_DIRTY_UPDATE == "imprecise") {
-      unpredictable("The hart may or may not update mstatus.FS now");
+    if (implemented?(ExtensionName::Sm)) {
+      if (HW_MSTATUS_FS_DIRTY_UPDATE == "precise") {
+        CSR[mstatus].FS = 3; # set dirty state
+      } else if (HW_MSTATUS_FS_DIRTY_UPDATE == "imprecise") {
+        unpredictable("The hart may or may not update mstatus.FS now");
+      }
     }
   }
 }

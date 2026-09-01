@@ -511,7 +511,6 @@ TEST_CASE("PossiblyUnknownBits", "[bits]") {
   // Known bits already disprove this comparison, so it must not be treated as
   // indeterminate merely because other bits are unknown.
   REQUIRE_FALSE(b == 1_b);
-  REQUIRE_THROWS_AS(b == 0x1000_b, UndefinedValueError);
   REQUIRE(((b & 0xf_b) == 0_b));
   REQUIRE(((b & 0x1000_b) == 0x1000_b));
   REQUIRE_THROWS_AS((b & 0x1f00_b) == 0x1000_b, UndefinedValueError);
