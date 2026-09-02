@@ -619,6 +619,24 @@ jobs:
       - name: Run vector riscv-tests
         run: ./do test:riscv_vector_tests CONFIG=rv64-vector IGNOREUNDEFINED=YES JOBS=4 BUILD_TYPE=debug
 
+  regress-riscv-arch-test-vector-udb-64-max:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Clone Github Repo Action
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+        with:
+          toolchain: true
+      - name: Run udb-64-max vector arch-tests
+        run: >
+          EXTENSIONS=Vx8,Vx16,Vx32,Vx64,Vls8,Vls16,Vls32,Vls64,Vf16,Vf32,Vf64
+          JOBS=4
+          BUILD_TYPE=debug
+          IGNOREUNDEFINED=YES
+          ./tools/test/run_udb_64_max_vector_arch_test.sh
+
   regress-profile-extensions:
     runs-on: ubuntu-latest
     steps:
@@ -991,6 +1009,7 @@ jobs:
       - regress-riscv-tests-32
       - regress-riscv-tests-64
       - regress-riscv-tests-vector
+      - regress-riscv-arch-test-vector-udb-64-max
       - regress-profile-extensions
       - regress-build-udb-gem
       - regress-regress
