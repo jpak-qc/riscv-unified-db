@@ -26,7 +26,7 @@ definedBy:
 fields:
   COUNT:
     location: 31-0
-    alias: mhpmcounter14h.COUNT[63:32]
+    alias: mhpmcounter14h.COUNT
     description: Alias of `mhpmcounter14h.COUNT`.
     type: RO-H
     reset_value: UNDEFINED_LEGAL

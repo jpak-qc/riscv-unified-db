@@ -1,0 +1,1261 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+%version: 1.0
+
+function validate_seed_access {
+  arguments Bits<32> encoding
+  description {
+    Validate a `seed` CSR access and raise the architecturally required
+    exception when it is not permitted.
+  }
+  body {
+    Bits<3> funct3 = encoding[14:12];
+    Bits<5> source = encoding[19:15];
+    Boolean read_only_access =
+      (funct3 == 3'b010 || funct3 == 3'b011 ||
+       funct3 == 3'b110 || funct3 == 3'b111) && source == 0;
+
+    if (read_only_access) {
+      raise(ExceptionCode::IllegalInstruction, mode(), encoding);
+    }
+
+    if (mode() == PrivilegeMode::U && CSR[mseccfg].USEED == 0) {
+      raise(ExceptionCode::IllegalInstruction, mode(), encoding);
+    }
+
+    if (mode() == PrivilegeMode::S && CSR[mseccfg].SSEED == 0) {
+      raise(ExceptionCode::IllegalInstruction, mode(), encoding);
+    }
+
+    if (mode() == PrivilegeMode::VS || mode() == PrivilegeMode::VU) {
+      if (CSR[mseccfg].SSEED == 0) {
+        raise(ExceptionCode::IllegalInstruction, mode(), encoding);
+      }
+      raise(ExceptionCode::VirtualInstruction, mode(), encoding);
+    }
+  }
+}
+
+function crypto_ror32 {
+  returns Bits<32>
+  arguments
+    Bits<32> value,
+    U32 amount
+  description {
+    Rotate a 32-bit value right by +amount+ bits.
+  }
+  body {
+    if (amount == 0) {
+      return value;
+    }
+    return (value >> amount) | (value << (32 - amount));
+  }
+}
+
+function crypto_rol32 {
+  returns Bits<32>
+  arguments
+    Bits<32> value,
+    U32 amount
+  description {
+    Rotate a 32-bit value left by +amount+ bits.
+  }
+  body {
+    if (amount == 0) {
+      return value;
+    }
+    return (value << amount) | (value >> (32 - amount));
+  }
+}
+
+function crypto_ror64 {
+  returns Bits<64>
+  arguments
+    Bits<64> value,
+    U32 amount
+  description {
+    Rotate a 64-bit value right by +amount+ bits.
+  }
+  body {
+    if (amount == 0) {
+      return value;
+    }
+    return (value >> amount) | (value << (64 - amount));
+  }
+}
+
+function crypto_rol8 {
+  returns Bits<8>
+  arguments
+    Bits<8> value,
+    U32 amount
+  description {
+    Rotate an 8-bit value left by +amount+ bits.
+  }
+  body {
+    if (amount == 0) {
+      return value;
+    }
+    return (value << amount) | (value >> (8 - amount));
+  }
+}
+
+function crypto_byte_select32 {
+  returns Bits<8>
+  arguments
+    Bits<32> value,
+    Bits<2> byte_select
+  description {
+    Return byte +byte_select+ from a 32-bit little-endian value.
+  }
+  body {
+    if (byte_select == 0) {
+      return value[7:0];
+    } else if (byte_select == 1) {
+      return value[15:8];
+    } else if (byte_select == 2) {
+      return value[23:16];
+    }
+    return value[31:24];
+  }
+}
+
+function crypto_rol32_by_byte {
+  returns Bits<32>
+  arguments
+    Bits<32> value,
+    Bits<2> byte_select
+  description {
+    Rotate a 32-bit value left by a byte-selected multiple of eight bits.
+  }
+  body {
+    if (byte_select == 0) {
+      return value;
+    } else if (byte_select == 1) {
+      return (value << 8) | (value >> 24);
+    } else if (byte_select == 2) {
+      return (value << 16) | (value >> 16);
+    }
+    return (value << 24) | (value >> 8);
+  }
+}
+
+function crypto_aes_xtime {
+  returns Bits<8>
+  arguments Bits<8> value
+  description {
+    Multiply an AES field element by x.
+  }
+  body {
+    Bits<8> shifted = value << 1;
+    return value[7] == 1 ? shifted ^ 0x1b : shifted;
+  }
+}
+
+function crypto_aes_gf_mul {
+  returns Bits<8>
+  arguments
+    Bits<8> multiplicand,
+    Bits<8> multiplier
+  description {
+    Multiply two elements in the AES GF(2^8) field.
+  }
+  body {
+    Bits<8> result = 0;
+    Bits<8> a = multiplicand;
+    Bits<8> b = multiplier;
+
+    for (U32 i = 0; i < 8; i++) {
+      if (b[0] == 1) {
+        result = result ^ a;
+      }
+      a = crypto_aes_xtime(a);
+      b = b >> 1;
+    }
+
+    return result;
+  }
+}
+
+Bits<8> crypto_aes_sbox_fwd_table[256] = [
+  0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76,
+  0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59, 0x47, 0xf0, 0xad, 0xd4, 0xa2, 0xaf, 0x9c, 0xa4, 0x72, 0xc0,
+  0xb7, 0xfd, 0x93, 0x26, 0x36, 0x3f, 0xf7, 0xcc, 0x34, 0xa5, 0xe5, 0xf1, 0x71, 0xd8, 0x31, 0x15,
+  0x04, 0xc7, 0x23, 0xc3, 0x18, 0x96, 0x05, 0x9a, 0x07, 0x12, 0x80, 0xe2, 0xeb, 0x27, 0xb2, 0x75,
+  0x09, 0x83, 0x2c, 0x1a, 0x1b, 0x6e, 0x5a, 0xa0, 0x52, 0x3b, 0xd6, 0xb3, 0x29, 0xe3, 0x2f, 0x84,
+  0x53, 0xd1, 0x00, 0xed, 0x20, 0xfc, 0xb1, 0x5b, 0x6a, 0xcb, 0xbe, 0x39, 0x4a, 0x4c, 0x58, 0xcf,
+  0xd0, 0xef, 0xaa, 0xfb, 0x43, 0x4d, 0x33, 0x85, 0x45, 0xf9, 0x02, 0x7f, 0x50, 0x3c, 0x9f, 0xa8,
+  0x51, 0xa3, 0x40, 0x8f, 0x92, 0x9d, 0x38, 0xf5, 0xbc, 0xb6, 0xda, 0x21, 0x10, 0xff, 0xf3, 0xd2,
+  0xcd, 0x0c, 0x13, 0xec, 0x5f, 0x97, 0x44, 0x17, 0xc4, 0xa7, 0x7e, 0x3d, 0x64, 0x5d, 0x19, 0x73,
+  0x60, 0x81, 0x4f, 0xdc, 0x22, 0x2a, 0x90, 0x88, 0x46, 0xee, 0xb8, 0x14, 0xde, 0x5e, 0x0b, 0xdb,
+  0xe0, 0x32, 0x3a, 0x0a, 0x49, 0x06, 0x24, 0x5c, 0xc2, 0xd3, 0xac, 0x62, 0x91, 0x95, 0xe4, 0x79,
+  0xe7, 0xc8, 0x37, 0x6d, 0x8d, 0xd5, 0x4e, 0xa9, 0x6c, 0x56, 0xf4, 0xea, 0x65, 0x7a, 0xae, 0x08,
+  0xba, 0x78, 0x25, 0x2e, 0x1c, 0xa6, 0xb4, 0xc6, 0xe8, 0xdd, 0x74, 0x1f, 0x4b, 0xbd, 0x8b, 0x8a,
+  0x70, 0x3e, 0xb5, 0x66, 0x48, 0x03, 0xf6, 0x0e, 0x61, 0x35, 0x57, 0xb9, 0x86, 0xc1, 0x1d, 0x9e,
+  0xe1, 0xf8, 0x98, 0x11, 0x69, 0xd9, 0x8e, 0x94, 0x9b, 0x1e, 0x87, 0xe9, 0xce, 0x55, 0x28, 0xdf,
+  0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68, 0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16
+];
+
+Bits<8> crypto_aes_sbox_inv_table[256] = [
+  0x52, 0x09, 0x6a, 0xd5, 0x30, 0x36, 0xa5, 0x38, 0xbf, 0x40, 0xa3, 0x9e, 0x81, 0xf3, 0xd7, 0xfb,
+  0x7c, 0xe3, 0x39, 0x82, 0x9b, 0x2f, 0xff, 0x87, 0x34, 0x8e, 0x43, 0x44, 0xc4, 0xde, 0xe9, 0xcb,
+  0x54, 0x7b, 0x94, 0x32, 0xa6, 0xc2, 0x23, 0x3d, 0xee, 0x4c, 0x95, 0x0b, 0x42, 0xfa, 0xc3, 0x4e,
+  0x08, 0x2e, 0xa1, 0x66, 0x28, 0xd9, 0x24, 0xb2, 0x76, 0x5b, 0xa2, 0x49, 0x6d, 0x8b, 0xd1, 0x25,
+  0x72, 0xf8, 0xf6, 0x64, 0x86, 0x68, 0x98, 0x16, 0xd4, 0xa4, 0x5c, 0xcc, 0x5d, 0x65, 0xb6, 0x92,
+  0x6c, 0x70, 0x48, 0x50, 0xfd, 0xed, 0xb9, 0xda, 0x5e, 0x15, 0x46, 0x57, 0xa7, 0x8d, 0x9d, 0x84,
+  0x90, 0xd8, 0xab, 0x00, 0x8c, 0xbc, 0xd3, 0x0a, 0xf7, 0xe4, 0x58, 0x05, 0xb8, 0xb3, 0x45, 0x06,
+  0xd0, 0x2c, 0x1e, 0x8f, 0xca, 0x3f, 0x0f, 0x02, 0xc1, 0xaf, 0xbd, 0x03, 0x01, 0x13, 0x8a, 0x6b,
+  0x3a, 0x91, 0x11, 0x41, 0x4f, 0x67, 0xdc, 0xea, 0x97, 0xf2, 0xcf, 0xce, 0xf0, 0xb4, 0xe6, 0x73,
+  0x96, 0xac, 0x74, 0x22, 0xe7, 0xad, 0x35, 0x85, 0xe2, 0xf9, 0x37, 0xe8, 0x1c, 0x75, 0xdf, 0x6e,
+  0x47, 0xf1, 0x1a, 0x71, 0x1d, 0x29, 0xc5, 0x89, 0x6f, 0xb7, 0x62, 0x0e, 0xaa, 0x18, 0xbe, 0x1b,
+  0xfc, 0x56, 0x3e, 0x4b, 0xc6, 0xd2, 0x79, 0x20, 0x9a, 0xdb, 0xc0, 0xfe, 0x78, 0xcd, 0x5a, 0xf4,
+  0x1f, 0xdd, 0xa8, 0x33, 0x88, 0x07, 0xc7, 0x31, 0xb1, 0x12, 0x10, 0x59, 0x27, 0x80, 0xec, 0x5f,
+  0x60, 0x51, 0x7f, 0xa9, 0x19, 0xb5, 0x4a, 0x0d, 0x2d, 0xe5, 0x7a, 0x9f, 0x93, 0xc9, 0x9c, 0xef,
+  0xa0, 0xe0, 0x3b, 0x4d, 0xae, 0x2a, 0xf5, 0xb0, 0xc8, 0xeb, 0xbb, 0x3c, 0x83, 0x53, 0x99, 0x61,
+  0x17, 0x2b, 0x04, 0x7e, 0xba, 0x77, 0xd6, 0x26, 0xe1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0c, 0x7d
+];
+
+function crypto_aes_sbox_fwd {
+  returns Bits<8>
+  arguments Bits<8> value
+  description {
+    Apply the forward AES S-box.
+  }
+  body {
+    return crypto_aes_sbox_fwd_table[value];
+  }
+}
+
+function crypto_aes_sbox_inv {
+  returns Bits<8>
+  arguments Bits<8> value
+  description {
+    Apply the inverse AES S-box.
+  }
+  body {
+    return crypto_aes_sbox_inv_table[value];
+  }
+}
+
+function crypto_aes_mixcolumn_byte_fwd {
+  returns Bits<32>
+  arguments Bits<8> value
+  description {
+    Return the forward AES MixColumns contribution for one byte.
+  }
+  body {
+    Bits<8> two = crypto_aes_xtime(value);
+    Bits<8> three = two ^ value;
+    return {three, value, value, two};
+  }
+}
+
+function crypto_aes_mixcolumn_byte_inv {
+  returns Bits<32>
+  arguments Bits<8> value
+  description {
+    Return the inverse AES MixColumns contribution for one byte.
+  }
+  body {
+    return {
+      crypto_aes_gf_mul(value, 0x0b),
+      crypto_aes_gf_mul(value, 0x0d),
+      crypto_aes_gf_mul(value, 0x09),
+      crypto_aes_gf_mul(value, 0x0e)
+    };
+  }
+}
+
+function crypto_aes_mixcolumn_fwd {
+  returns Bits<32>
+  arguments Bits<32> value
+  description {
+    Apply the forward AES MixColumns transform to one column.
+  }
+  body {
+    Bits<8> s0 = value[7:0];
+    Bits<8> s1 = value[15:8];
+    Bits<8> s2 = value[23:16];
+    Bits<8> s3 = value[31:24];
+    Bits<8> b0 = crypto_aes_xtime(s0) ^ (crypto_aes_xtime(s1) ^ s1) ^ s2 ^ s3;
+    Bits<8> b1 = s0 ^ crypto_aes_xtime(s1) ^ (crypto_aes_xtime(s2) ^ s2) ^ s3;
+    Bits<8> b2 = s0 ^ s1 ^ crypto_aes_xtime(s2) ^ (crypto_aes_xtime(s3) ^ s3);
+    Bits<8> b3 = (crypto_aes_xtime(s0) ^ s0) ^ s1 ^ s2 ^ crypto_aes_xtime(s3);
+    return {b3, b2, b1, b0};
+  }
+}
+
+function crypto_aes_mixcolumn_inv {
+  returns Bits<32>
+  arguments Bits<32> value
+  description {
+    Apply the inverse AES MixColumns transform to one column.
+  }
+  body {
+    Bits<8> s0 = value[7:0];
+    Bits<8> s1 = value[15:8];
+    Bits<8> s2 = value[23:16];
+    Bits<8> s3 = value[31:24];
+    Bits<8> b0 = crypto_aes_gf_mul(s0, 0x0e) ^ crypto_aes_gf_mul(s1, 0x0b) ^ crypto_aes_gf_mul(s2, 0x0d) ^ crypto_aes_gf_mul(s3, 0x09);
+    Bits<8> b1 = crypto_aes_gf_mul(s0, 0x09) ^ crypto_aes_gf_mul(s1, 0x0e) ^ crypto_aes_gf_mul(s2, 0x0b) ^ crypto_aes_gf_mul(s3, 0x0d);
+    Bits<8> b2 = crypto_aes_gf_mul(s0, 0x0d) ^ crypto_aes_gf_mul(s1, 0x09) ^ crypto_aes_gf_mul(s2, 0x0e) ^ crypto_aes_gf_mul(s3, 0x0b);
+    Bits<8> b3 = crypto_aes_gf_mul(s0, 0x0b) ^ crypto_aes_gf_mul(s1, 0x0d) ^ crypto_aes_gf_mul(s2, 0x09) ^ crypto_aes_gf_mul(s3, 0x0e);
+    return {b3, b2, b1, b0};
+  }
+}
+
+function crypto_aes_subword_fwd {
+  returns Bits<32>
+  arguments Bits<32> value
+  description {
+    Apply the forward AES S-box to each byte in a word.
+  }
+  body {
+    return {
+      crypto_aes_sbox_fwd(value[31:24]),
+      crypto_aes_sbox_fwd(value[23:16]),
+      crypto_aes_sbox_fwd(value[15:8]),
+      crypto_aes_sbox_fwd(value[7:0])
+    };
+  }
+}
+
+function crypto_aes_subword_inv {
+  returns Bits<32>
+  arguments Bits<32> value
+  description {
+    Apply the inverse AES S-box to each byte in a word.
+  }
+  body {
+    return {
+      crypto_aes_sbox_inv(value[31:24]),
+      crypto_aes_sbox_inv(value[23:16]),
+      crypto_aes_sbox_inv(value[15:8]),
+      crypto_aes_sbox_inv(value[7:0])
+    };
+  }
+}
+
+function crypto_aes_subbytes_fwd64 {
+  returns Bits<64>
+  arguments Bits<64> value
+  description {
+    Apply the forward AES S-box to each byte in a doubleword.
+  }
+  body {
+    return {
+      crypto_aes_subword_fwd(value[63:32]),
+      crypto_aes_subword_fwd(value[31:0])
+    };
+  }
+}
+
+function crypto_aes_subbytes_inv64 {
+  returns Bits<64>
+  arguments Bits<64> value
+  description {
+    Apply the inverse AES S-box to each byte in a doubleword.
+  }
+  body {
+    return {
+      crypto_aes_subword_inv(value[63:32]),
+      crypto_aes_subword_inv(value[31:0])
+    };
+  }
+}
+
+function crypto_byte_select64 {
+  returns Bits<8>
+  arguments
+    Bits<64> value,
+    U32 byte_select
+  description {
+    Return byte +byte_select+ from a 64-bit little-endian value.
+  }
+  body {
+    return (value >> (byte_select * 8))[7:0];
+  }
+}
+
+function crypto_aes_rv64_shiftrows_fwd {
+  returns Bits<64>
+  arguments
+    Bits<64> rs2,
+    Bits<64> rs1
+  description {
+    Assemble one forward AES ShiftRows half-state for the RV64 instructions.
+  }
+  body {
+    return {
+      crypto_byte_select64(rs1, 3),
+      crypto_byte_select64(rs2, 6),
+      crypto_byte_select64(rs2, 1),
+      crypto_byte_select64(rs1, 4),
+      crypto_byte_select64(rs2, 7),
+      crypto_byte_select64(rs2, 2),
+      crypto_byte_select64(rs1, 5),
+      crypto_byte_select64(rs1, 0)
+    };
+  }
+}
+
+function crypto_aes_rv64_shiftrows_inv {
+  returns Bits<64>
+  arguments
+    Bits<64> rs2,
+    Bits<64> rs1
+  description {
+    Assemble one inverse AES ShiftRows half-state for the RV64 instructions.
+  }
+  body {
+    return {
+      crypto_byte_select64(rs2, 3),
+      crypto_byte_select64(rs2, 6),
+      crypto_byte_select64(rs1, 1),
+      crypto_byte_select64(rs1, 4),
+      crypto_byte_select64(rs1, 7),
+      crypto_byte_select64(rs2, 2),
+      crypto_byte_select64(rs2, 5),
+      crypto_byte_select64(rs1, 0)
+    };
+  }
+}
+
+function crypto_aes_rcon {
+  returns Bits<32>
+  arguments Bits<4> round
+  description {
+    Return the AES round constant used by AES64KS1I.
+  }
+  body {
+    if (round == 0) {
+      return 0x00000001;
+    } else if (round == 1) {
+      return 0x00000002;
+    } else if (round == 2) {
+      return 0x00000004;
+    } else if (round == 3) {
+      return 0x00000008;
+    } else if (round == 4) {
+      return 0x00000010;
+    } else if (round == 5) {
+      return 0x00000020;
+    } else if (round == 6) {
+      return 0x00000040;
+    } else if (round == 7) {
+      return 0x00000080;
+    } else if (round == 8) {
+      return 0x0000001b;
+    } else if (round == 9) {
+      return 0x00000036;
+    }
+    return 0;
+  }
+}
+
+Bits<8> crypto_sm4_sbox_table[256] = [
+  0xD6, 0x90, 0xE9, 0xFE, 0xCC, 0xE1, 0x3D, 0xB7, 0x16, 0xB6, 0x14, 0xC2, 0x28, 0xFB, 0x2C, 0x05,
+  0x2B, 0x67, 0x9A, 0x76, 0x2A, 0xBE, 0x04, 0xC3, 0xAA, 0x44, 0x13, 0x26, 0x49, 0x86, 0x06, 0x99,
+  0x9C, 0x42, 0x50, 0xF4, 0x91, 0xEF, 0x98, 0x7A, 0x33, 0x54, 0x0B, 0x43, 0xED, 0xCF, 0xAC, 0x62,
+  0xE4, 0xB3, 0x1C, 0xA9, 0xC9, 0x08, 0xE8, 0x95, 0x80, 0xDF, 0x94, 0xFA, 0x75, 0x8F, 0x3F, 0xA6,
+  0x47, 0x07, 0xA7, 0xFC, 0xF3, 0x73, 0x17, 0xBA, 0x83, 0x59, 0x3C, 0x19, 0xE6, 0x85, 0x4F, 0xA8,
+  0x68, 0x6B, 0x81, 0xB2, 0x71, 0x64, 0xDA, 0x8B, 0xF8, 0xEB, 0x0F, 0x4B, 0x70, 0x56, 0x9D, 0x35,
+  0x1E, 0x24, 0x0E, 0x5E, 0x63, 0x58, 0xD1, 0xA2, 0x25, 0x22, 0x7C, 0x3B, 0x01, 0x21, 0x78, 0x87,
+  0xD4, 0x00, 0x46, 0x57, 0x9F, 0xD3, 0x27, 0x52, 0x4C, 0x36, 0x02, 0xE7, 0xA0, 0xC4, 0xC8, 0x9E,
+  0xEA, 0xBF, 0x8A, 0xD2, 0x40, 0xC7, 0x38, 0xB5, 0xA3, 0xF7, 0xF2, 0xCE, 0xF9, 0x61, 0x15, 0xA1,
+  0xE0, 0xAE, 0x5D, 0xA4, 0x9B, 0x34, 0x1A, 0x55, 0xAD, 0x93, 0x32, 0x30, 0xF5, 0x8C, 0xB1, 0xE3,
+  0x1D, 0xF6, 0xE2, 0x2E, 0x82, 0x66, 0xCA, 0x60, 0xC0, 0x29, 0x23, 0xAB, 0x0D, 0x53, 0x4E, 0x6F,
+  0xD5, 0xDB, 0x37, 0x45, 0xDE, 0xFD, 0x8E, 0x2F, 0x03, 0xFF, 0x6A, 0x72, 0x6D, 0x6C, 0x5B, 0x51,
+  0x8D, 0x1B, 0xAF, 0x92, 0xBB, 0xDD, 0xBC, 0x7F, 0x11, 0xD9, 0x5C, 0x41, 0x1F, 0x10, 0x5A, 0xD8,
+  0x0A, 0xC1, 0x31, 0x88, 0xA5, 0xCD, 0x7B, 0xBD, 0x2D, 0x74, 0xD0, 0x12, 0xB8, 0xE5, 0xB4, 0xB0,
+  0x89, 0x69, 0x97, 0x4A, 0x0C, 0x96, 0x77, 0x7E, 0x65, 0xB9, 0xF1, 0x09, 0xC5, 0x6E, 0xC6, 0x84,
+  0x18, 0xF0, 0x7D, 0xEC, 0x3A, 0xDC, 0x4D, 0x20, 0x79, 0xEE, 0x5F, 0x3E, 0xD7, 0xCB, 0x39, 0x48
+];
+
+function crypto_sm4_sbox {
+  returns Bits<8>
+  arguments Bits<8> value
+  description {
+    Apply the SM4 S-box.
+  }
+  body {
+    return crypto_sm4_sbox_table[value];
+  }
+}
+
+function crypto_clmul64 {
+  returns Bits<128>
+  arguments
+    Bits<64> multiplicand,
+    Bits<64> multiplier
+  description {
+    Compute the complete 128-bit carry-less product of two 64-bit values.
+  }
+  body {
+    Bits<128> product = 0;
+    Bits<128> wide_multiplicand = multiplicand;
+
+    for (U32 bit = 0; bit < 64; bit++) {
+      if (multiplier[bit] == 1) {
+        product = product ^ (wide_multiplicand << bit);
+      }
+    }
+
+    return product;
+  }
+}
+
+function crypto_brev8_128 {
+  returns Bits<128>
+  arguments Bits<128> value
+  description {
+    Reverse the bit order independently within every byte of a 128-bit value.
+  }
+  body {
+    Bits<128> output = 0;
+
+    for (U32 byte = 0; byte < 16; byte++) {
+      U32 byte_bit = byte * 8;
+      for (U32 bit = 0; bit < 8; bit++) {
+        output[byte_bit + bit] = value[byte_bit + 7 - bit];
+      }
+    }
+
+    return output;
+  }
+}
+
+function crypto_gcm_gf_mul {
+  returns Bits<128>
+  arguments
+    Bits<128> multiplicand,
+    Bits<128> multiplier
+  description {
+    Multiply two binary field elements using the GCM reflected polynomial form.
+  }
+  body {
+    Bits<128> result = 0;
+    Bits<128> value = multiplicand;
+
+    for (U32 bit = 0; bit < 128; bit++) {
+      if (multiplier[bit] == 1) {
+        result = result ^ value;
+      }
+
+      Bits<128> shifted = value << 1;
+      value = value[127] == 1 ? shifted ^ 0x87 : shifted;
+    }
+
+    return result;
+  }
+}
+
+function crypto_aes_rotword {
+  returns Bits<32>
+  arguments Bits<32> value
+  description {
+    Rotate an AES key-schedule word left by one byte.
+  }
+  body {
+    return {value[7:0], value[31:24], value[23:16], value[15:8]};
+  }
+}
+
+function crypto_aes_subbytes_fwd128 {
+  returns Bits<128>
+  arguments Bits<128> value
+  description {
+    Apply the forward AES S-box to each byte of a 128-bit state.
+  }
+  body {
+    return {
+      crypto_aes_subword_fwd(value[127:96]),
+      crypto_aes_subword_fwd(value[95:64]),
+      crypto_aes_subword_fwd(value[63:32]),
+      crypto_aes_subword_fwd(value[31:0])
+    };
+  }
+}
+
+function crypto_aes_subbytes_inv128 {
+  returns Bits<128>
+  arguments Bits<128> value
+  description {
+    Apply the inverse AES S-box to each byte of a 128-bit state.
+  }
+  body {
+    return {
+      crypto_aes_subword_inv(value[127:96]),
+      crypto_aes_subword_inv(value[95:64]),
+      crypto_aes_subword_inv(value[63:32]),
+      crypto_aes_subword_inv(value[31:0])
+    };
+  }
+}
+
+function crypto_aes_shiftrows_fwd128 {
+  returns Bits<128>
+  arguments Bits<128> value
+  description {
+    Apply the forward AES ShiftRows transform to a 128-bit state.
+  }
+  body {
+    Bits<32> w0 = value[31:0];
+    Bits<32> w1 = value[63:32];
+    Bits<32> w2 = value[95:64];
+    Bits<32> w3 = value[127:96];
+
+    Bits<32> r0 = {w3[31:24], w2[23:16], w1[15:8], w0[7:0]};
+    Bits<32> r1 = {w0[31:24], w3[23:16], w2[15:8], w1[7:0]};
+    Bits<32> r2 = {w1[31:24], w0[23:16], w3[15:8], w2[7:0]};
+    Bits<32> r3 = {w2[31:24], w1[23:16], w0[15:8], w3[7:0]};
+    return {r3, r2, r1, r0};
+  }
+}
+
+function crypto_aes_shiftrows_inv128 {
+  returns Bits<128>
+  arguments Bits<128> value
+  description {
+    Apply the inverse AES ShiftRows transform to a 128-bit state.
+  }
+  body {
+    Bits<32> w0 = value[31:0];
+    Bits<32> w1 = value[63:32];
+    Bits<32> w2 = value[95:64];
+    Bits<32> w3 = value[127:96];
+
+    Bits<32> r0 = {w1[31:24], w2[23:16], w3[15:8], w0[7:0]};
+    Bits<32> r1 = {w2[31:24], w3[23:16], w0[15:8], w1[7:0]};
+    Bits<32> r2 = {w3[31:24], w0[23:16], w1[15:8], w2[7:0]};
+    Bits<32> r3 = {w0[31:24], w1[23:16], w2[15:8], w3[7:0]};
+    return {r3, r2, r1, r0};
+  }
+}
+
+function crypto_aes_mixcolumns_fwd128 {
+  returns Bits<128>
+  arguments Bits<128> value
+  description {
+    Apply the forward AES MixColumns transform to a 128-bit state.
+  }
+  body {
+    return {
+      crypto_aes_mixcolumn_fwd(value[127:96]),
+      crypto_aes_mixcolumn_fwd(value[95:64]),
+      crypto_aes_mixcolumn_fwd(value[63:32]),
+      crypto_aes_mixcolumn_fwd(value[31:0])
+    };
+  }
+}
+
+function crypto_aes_mixcolumns_inv128 {
+  returns Bits<128>
+  arguments Bits<128> value
+  description {
+    Apply the inverse AES MixColumns transform to a 128-bit state.
+  }
+  body {
+    return {
+      crypto_aes_mixcolumn_inv(value[127:96]),
+      crypto_aes_mixcolumn_inv(value[95:64]),
+      crypto_aes_mixcolumn_inv(value[63:32]),
+      crypto_aes_mixcolumn_inv(value[31:0])
+    };
+  }
+}
+
+function crypto_aes_enc_final128 {
+  returns Bits<128>
+  arguments
+    Bits<128> state,
+    Bits<128> round_key
+  description {
+    Perform an AES forward final round on a complete vector element group.
+  }
+  body {
+    return crypto_aes_shiftrows_fwd128(crypto_aes_subbytes_fwd128(state)) ^ round_key;
+  }
+}
+
+function crypto_aes_enc_middle128 {
+  returns Bits<128>
+  arguments
+    Bits<128> state,
+    Bits<128> round_key
+  description {
+    Perform an AES forward middle round on a complete vector element group.
+  }
+  body {
+    return crypto_aes_mixcolumns_fwd128(
+      crypto_aes_shiftrows_fwd128(crypto_aes_subbytes_fwd128(state))) ^ round_key;
+  }
+}
+
+function crypto_aes_dec_final128 {
+  returns Bits<128>
+  arguments
+    Bits<128> state,
+    Bits<128> round_key
+  description {
+    Perform an AES inverse final round on a complete vector element group.
+  }
+  body {
+    return crypto_aes_subbytes_inv128(crypto_aes_shiftrows_inv128(state)) ^ round_key;
+  }
+}
+
+function crypto_aes_dec_middle128 {
+  returns Bits<128>
+  arguments
+    Bits<128> state,
+    Bits<128> round_key
+  description {
+    Perform an AES inverse middle round on a complete vector element group.
+  }
+  body {
+    Bits<128> add_round_key = crypto_aes_dec_final128(state, round_key);
+    return crypto_aes_mixcolumns_inv128(add_round_key);
+  }
+}
+
+function crypto_aes_key_schedule_128 {
+  returns Bits<128>
+  arguments
+    Bits<128> current,
+    Bits<4> round
+  description {
+    Generate one AES-128 forward key-schedule element group.
+  }
+  body {
+    Bits<32> w0 = current[31:0];
+    Bits<32> w1 = current[63:32];
+    Bits<32> w2 = current[95:64];
+    Bits<32> w3 = current[127:96];
+    Bits<4> rcon_round = round - 1;
+    Bits<32> n0 = crypto_aes_subword_fwd(crypto_aes_rotword(w3)) ^
+      crypto_aes_rcon(rcon_round) ^ w0;
+    Bits<32> n1 = n0 ^ w1;
+    Bits<32> n2 = n1 ^ w2;
+    Bits<32> n3 = n2 ^ w3;
+    return {n3, n2, n1, n0};
+  }
+}
+
+function crypto_aes_key_schedule_256 {
+  returns Bits<128>
+  arguments
+    Bits<128> current,
+    Bits<128> previous,
+    Bits<4> round
+  description {
+    Generate one AES-256 forward key-schedule element group.
+  }
+  body {
+    Bits<32> c3 = current[127:96];
+    Bits<32> p0 = previous[31:0];
+    Bits<32> p1 = previous[63:32];
+    Bits<32> p2 = previous[95:64];
+    Bits<32> p3 = previous[127:96];
+    Bits<32> n0;
+
+    if (round[0] == 1) {
+      n0 = crypto_aes_subword_fwd(c3) ^ p0;
+    } else {
+      Bits<4> rcon_round = (round >> 1) - 1;
+      n0 = crypto_aes_subword_fwd(crypto_aes_rotword(c3)) ^ crypto_aes_rcon(rcon_round) ^ p0;
+    }
+
+    Bits<32> n1 = n0 ^ p1;
+    Bits<32> n2 = n1 ^ p2;
+    Bits<32> n3 = n2 ^ p3;
+    return {n3, n2, n1, n0};
+  }
+}
+
+function crypto_sha256_sig0 {
+  returns Bits<32>
+  arguments Bits<32> value
+  description {
+    Compute the SHA-256 small sigma zero function.
+  }
+  body {
+    return crypto_ror32(value, 7) ^ crypto_ror32(value, 18) ^ (value >> 3);
+  }
+}
+
+function crypto_sha256_sig1 {
+  returns Bits<32>
+  arguments Bits<32> value
+  description {
+    Compute the SHA-256 small sigma one function.
+  }
+  body {
+    return crypto_ror32(value, 17) ^ crypto_ror32(value, 19) ^ (value >> 10);
+  }
+}
+
+function crypto_sha256_sum0 {
+  returns Bits<32>
+  arguments Bits<32> value
+  description {
+    Compute the SHA-256 big sigma zero function.
+  }
+  body {
+    return crypto_ror32(value, 2) ^ crypto_ror32(value, 13) ^ crypto_ror32(value, 22);
+  }
+}
+
+function crypto_sha256_sum1 {
+  returns Bits<32>
+  arguments Bits<32> value
+  description {
+    Compute the SHA-256 big sigma one function.
+  }
+  body {
+    return crypto_ror32(value, 6) ^ crypto_ror32(value, 11) ^ crypto_ror32(value, 25);
+  }
+}
+
+function crypto_sha512_sig0 {
+  returns Bits<64>
+  arguments Bits<64> value
+  description {
+    Compute the SHA-512 small sigma zero function.
+  }
+  body {
+    return crypto_ror64(value, 1) ^ crypto_ror64(value, 8) ^ (value >> 7);
+  }
+}
+
+function crypto_sha512_sig1 {
+  returns Bits<64>
+  arguments Bits<64> value
+  description {
+    Compute the SHA-512 small sigma one function.
+  }
+  body {
+    return crypto_ror64(value, 19) ^ crypto_ror64(value, 61) ^ (value >> 6);
+  }
+}
+
+function crypto_sha512_sum0 {
+  returns Bits<64>
+  arguments Bits<64> value
+  description {
+    Compute the SHA-512 big sigma zero function.
+  }
+  body {
+    return crypto_ror64(value, 28) ^ crypto_ror64(value, 34) ^ crypto_ror64(value, 39);
+  }
+}
+
+function crypto_sha512_sum1 {
+  returns Bits<64>
+  arguments Bits<64> value
+  description {
+    Compute the SHA-512 big sigma one function.
+  }
+  body {
+    return crypto_ror64(value, 14) ^ crypto_ror64(value, 18) ^ crypto_ror64(value, 41);
+  }
+}
+
+function crypto_sha256_schedule {
+  returns Bits<128>
+  arguments
+    Bits<128> destination,
+    Bits<128> source2,
+    Bits<128> source1
+  description {
+    Generate four SHA-256 message-schedule words.
+  }
+  body {
+    Bits<32> w0 = destination[31:0];
+    Bits<32> w1 = destination[63:32];
+    Bits<32> w2 = destination[95:64];
+    Bits<32> w3 = destination[127:96];
+    Bits<32> w4 = source2[31:0];
+    Bits<32> w9 = source2[63:32];
+    Bits<32> w10 = source2[95:64];
+    Bits<32> w11 = source2[127:96];
+    Bits<32> w12 = source1[31:0];
+    Bits<32> w13 = source1[63:32];
+    Bits<32> w14 = source1[95:64];
+    Bits<32> w15 = source1[127:96];
+
+    Bits<32> w16 = crypto_sha256_sig1(w14) + w9 + crypto_sha256_sig0(w1) + w0;
+    Bits<32> w17 = crypto_sha256_sig1(w15) + w10 + crypto_sha256_sig0(w2) + w1;
+    Bits<32> w18 = crypto_sha256_sig1(w16) + w11 + crypto_sha256_sig0(w3) + w2;
+    Bits<32> w19 = crypto_sha256_sig1(w17) + w12 + crypto_sha256_sig0(w4) + w3;
+    return {w19, w18, w17, w16};
+  }
+}
+
+function crypto_sha512_schedule {
+  returns Bits<256>
+  arguments
+    Bits<256> destination,
+    Bits<256> source2,
+    Bits<256> source1
+  description {
+    Generate four SHA-512 message-schedule words.
+  }
+  body {
+    Bits<64> w0 = destination[63:0];
+    Bits<64> w1 = destination[127:64];
+    Bits<64> w2 = destination[191:128];
+    Bits<64> w3 = destination[255:192];
+    Bits<64> w4 = source2[63:0];
+    Bits<64> w9 = source2[127:64];
+    Bits<64> w10 = source2[191:128];
+    Bits<64> w11 = source2[255:192];
+    Bits<64> w12 = source1[63:0];
+    Bits<64> w13 = source1[127:64];
+    Bits<64> w14 = source1[191:128];
+    Bits<64> w15 = source1[255:192];
+
+    Bits<64> w16 = crypto_sha512_sig1(w14) + w9 + crypto_sha512_sig0(w1) + w0;
+    Bits<64> w17 = crypto_sha512_sig1(w15) + w10 + crypto_sha512_sig0(w2) + w1;
+    Bits<64> w18 = crypto_sha512_sig1(w16) + w11 + crypto_sha512_sig0(w3) + w2;
+    Bits<64> w19 = crypto_sha512_sig1(w17) + w12 + crypto_sha512_sig0(w4) + w3;
+    return {w19, w18, w17, w16};
+  }
+}
+
+function crypto_sha256_compress {
+  returns Bits<128>
+  arguments
+    Bits<128> state_abef,
+    Bits<128> state_cdgh,
+    Bits<128> message,
+    Boolean high_half
+  description {
+    Perform two SHA-256 compression rounds and return the next working state subset.
+  }
+  body {
+    Bits<32> a = state_abef[127:96];
+    Bits<32> b = state_abef[95:64];
+    Bits<32> e = state_abef[63:32];
+    Bits<32> f = state_abef[31:0];
+    Bits<32> c = state_cdgh[127:96];
+    Bits<32> d = state_cdgh[95:64];
+    Bits<32> g = state_cdgh[63:32];
+    Bits<32> h = state_cdgh[31:0];
+    Bits<32> w0 = high_half ? message[95:64] : message[31:0];
+    Bits<32> w1 = high_half ? message[127:96] : message[63:32];
+
+    Bits<32> t1 = h + crypto_sha256_sum1(e) + ((e & f) ^ ((~e) & g)) + w0;
+    Bits<32> t2 = crypto_sha256_sum0(a) + ((a & b) ^ (a & c) ^ (b & c));
+    h = g;
+    g = f;
+    f = e;
+    e = d + t1;
+    d = c;
+    c = b;
+    b = a;
+    a = t1 + t2;
+
+    t1 = h + crypto_sha256_sum1(e) + ((e & f) ^ ((~e) & g)) + w1;
+    t2 = crypto_sha256_sum0(a) + ((a & b) ^ (a & c) ^ (b & c));
+    h = g;
+    g = f;
+    f = e;
+    e = d + t1;
+    b = a;
+    a = t1 + t2;
+
+    return {a, b, e, f};
+  }
+}
+
+function crypto_sha512_compress {
+  returns Bits<256>
+  arguments
+    Bits<256> state_abef,
+    Bits<256> state_cdgh,
+    Bits<256> message,
+    Boolean high_half
+  description {
+    Perform two SHA-512 compression rounds and return the next working state subset.
+  }
+  body {
+    Bits<64> a = state_abef[255:192];
+    Bits<64> b = state_abef[191:128];
+    Bits<64> e = state_abef[127:64];
+    Bits<64> f = state_abef[63:0];
+    Bits<64> c = state_cdgh[255:192];
+    Bits<64> d = state_cdgh[191:128];
+    Bits<64> g = state_cdgh[127:64];
+    Bits<64> h = state_cdgh[63:0];
+    Bits<64> w0 = high_half ? message[191:128] : message[63:0];
+    Bits<64> w1 = high_half ? message[255:192] : message[127:64];
+
+    Bits<64> t1 = h + crypto_sha512_sum1(e) + ((e & f) ^ ((~e) & g)) + w0;
+    Bits<64> t2 = crypto_sha512_sum0(a) + ((a & b) ^ (a & c) ^ (b & c));
+    h = g;
+    g = f;
+    f = e;
+    e = d + t1;
+    d = c;
+    c = b;
+    b = a;
+    a = t1 + t2;
+
+    t1 = h + crypto_sha512_sum1(e) + ((e & f) ^ ((~e) & g)) + w1;
+    t2 = crypto_sha512_sum0(a) + ((a & b) ^ (a & c) ^ (b & c));
+    h = g;
+    g = f;
+    f = e;
+    e = d + t1;
+    b = a;
+    a = t1 + t2;
+
+    return {a, b, e, f};
+  }
+}
+
+function crypto_rev8_32 {
+  returns Bits<32>
+  arguments Bits<32> value
+  description {
+    Reverse the byte order of a 32-bit word.
+  }
+  body {
+    return {value[7:0], value[15:8], value[23:16], value[31:24]};
+  }
+}
+
+function crypto_sm3_p0 {
+  returns Bits<32>
+  arguments Bits<32> value
+  description {
+    Apply the SM3 P0 permutation.
+  }
+  body {
+    return value ^ crypto_rol32(value, 9) ^ crypto_rol32(value, 17);
+  }
+}
+
+function crypto_sm3_p1 {
+  returns Bits<32>
+  arguments Bits<32> value
+  description {
+    Apply the SM3 P1 permutation.
+  }
+  body {
+    return value ^ crypto_rol32(value, 15) ^ crypto_rol32(value, 23);
+  }
+}
+
+function crypto_sm3_compress {
+  returns Bits<256>
+  arguments
+    Bits<256> state,
+    Bits<256> message,
+    Bits<5> round_group
+  description {
+    Perform two SM3 compression rounds on one 256-bit element group.
+  }
+  body {
+    Bits<32> a = crypto_rev8_32(state[31:0]);
+    Bits<32> b = crypto_rev8_32(state[63:32]);
+    Bits<32> c = crypto_rev8_32(state[95:64]);
+    Bits<32> d = crypto_rev8_32(state[127:96]);
+    Bits<32> e = crypto_rev8_32(state[159:128]);
+    Bits<32> f = crypto_rev8_32(state[191:160]);
+    Bits<32> g = crypto_rev8_32(state[223:192]);
+    Bits<32> h = crypto_rev8_32(state[255:224]);
+    Bits<32> w0 = crypto_rev8_32(message[31:0]);
+    Bits<32> w1 = crypto_rev8_32(message[63:32]);
+    Bits<32> w4 = crypto_rev8_32(message[159:128]);
+    Bits<32> w5 = crypto_rev8_32(message[191:160]);
+    Bits<32> x0 = w0 ^ w4;
+    Bits<32> x1 = w1 ^ w5;
+    U32 j = round_group * 2;
+
+    Bits<32> t = j <= 15 ? 0x79cc4519 : 0x7a879d8a;
+    Bits<32> ss1 = crypto_rol32(crypto_rol32(a, 12) + e + crypto_rol32(t, j % 32), 7);
+    Bits<32> ss2 = ss1 ^ crypto_rol32(a, 12);
+    Bits<32> ff = j <= 15 ? a ^ b ^ c : (a & b) | (a & c) | (b & c);
+    Bits<32> gg = j <= 15 ? e ^ f ^ g : (e & f) | ((~e) & g);
+    Bits<32> tt1 = ff + d + ss2 + x0;
+    Bits<32> tt2 = gg + h + ss1 + w0;
+    Bits<32> c1 = crypto_rol32(b, 9);
+    Bits<32> a1 = tt1;
+    Bits<32> g1 = crypto_rol32(f, 19);
+    Bits<32> e1 = crypto_sm3_p0(tt2);
+
+    j = j + 1;
+    t = j <= 15 ? 0x79cc4519 : 0x7a879d8a;
+    ss1 = crypto_rol32(crypto_rol32(a1, 12) + e1 + crypto_rol32(t, j % 32), 7);
+    ss2 = ss1 ^ crypto_rol32(a1, 12);
+    ff = j <= 15 ? a1 ^ a ^ c1 : (a1 & a) | (a1 & c1) | (a & c1);
+    gg = j <= 15 ? e1 ^ e ^ g1 : (e1 & e) | ((~e1) & g1);
+    tt1 = ff + c + ss2 + x1;
+    tt2 = gg + g + ss1 + w1;
+    Bits<32> c2 = crypto_rol32(a, 9);
+    Bits<32> a2 = tt1;
+    Bits<32> g2 = crypto_rol32(e, 19);
+    Bits<32> e2 = crypto_sm3_p0(tt2);
+
+    return {
+      crypto_rev8_32(g1), crypto_rev8_32(g2),
+      crypto_rev8_32(e1), crypto_rev8_32(e2),
+      crypto_rev8_32(c1), crypto_rev8_32(c2),
+      crypto_rev8_32(a1), crypto_rev8_32(a2)
+    };
+  }
+}
+
+function crypto_sm3_expand {
+  returns Bits<256>
+  arguments
+    Bits<256> source2,
+    Bits<256> source1
+  description {
+    Generate eight SM3 message-schedule words from two element groups.
+  }
+  body {
+    Bits<32> w0 = crypto_rev8_32(source1[31:0]);
+    Bits<32> w1 = crypto_rev8_32(source1[63:32]);
+    Bits<32> w2 = crypto_rev8_32(source1[95:64]);
+    Bits<32> w3 = crypto_rev8_32(source1[127:96]);
+    Bits<32> w4 = crypto_rev8_32(source1[159:128]);
+    Bits<32> w5 = crypto_rev8_32(source1[191:160]);
+    Bits<32> w6 = crypto_rev8_32(source1[223:192]);
+    Bits<32> w7 = crypto_rev8_32(source1[255:224]);
+    Bits<32> w8 = crypto_rev8_32(source2[31:0]);
+    Bits<32> w9 = crypto_rev8_32(source2[63:32]);
+    Bits<32> w10 = crypto_rev8_32(source2[95:64]);
+    Bits<32> w11 = crypto_rev8_32(source2[127:96]);
+    Bits<32> w12 = crypto_rev8_32(source2[159:128]);
+    Bits<32> w13 = crypto_rev8_32(source2[191:160]);
+    Bits<32> w14 = crypto_rev8_32(source2[223:192]);
+    Bits<32> w15 = crypto_rev8_32(source2[255:224]);
+
+    Bits<32> w16 = crypto_sm3_p1(w0 ^ w7 ^ crypto_rol32(w13, 15)) ^ crypto_rol32(w3, 7) ^ w10;
+    Bits<32> w17 = crypto_sm3_p1(w1 ^ w8 ^ crypto_rol32(w14, 15)) ^ crypto_rol32(w4, 7) ^ w11;
+    Bits<32> w18 = crypto_sm3_p1(w2 ^ w9 ^ crypto_rol32(w15, 15)) ^ crypto_rol32(w5, 7) ^ w12;
+    Bits<32> w19 = crypto_sm3_p1(w3 ^ w10 ^ crypto_rol32(w16, 15)) ^ crypto_rol32(w6, 7) ^ w13;
+    Bits<32> w20 = crypto_sm3_p1(w4 ^ w11 ^ crypto_rol32(w17, 15)) ^ crypto_rol32(w7, 7) ^ w14;
+    Bits<32> w21 = crypto_sm3_p1(w5 ^ w12 ^ crypto_rol32(w18, 15)) ^ crypto_rol32(w8, 7) ^ w15;
+    Bits<32> w22 = crypto_sm3_p1(w6 ^ w13 ^ crypto_rol32(w19, 15)) ^ crypto_rol32(w9, 7) ^ w16;
+    Bits<32> w23 = crypto_sm3_p1(w7 ^ w14 ^ crypto_rol32(w20, 15)) ^ crypto_rol32(w10, 7) ^ w17;
+
+    return {
+      crypto_rev8_32(w23), crypto_rev8_32(w22),
+      crypto_rev8_32(w21), crypto_rev8_32(w20),
+      crypto_rev8_32(w19), crypto_rev8_32(w18),
+      crypto_rev8_32(w17), crypto_rev8_32(w16)
+    };
+  }
+}
+
+Bits<32> crypto_sm4_ck_table[32] = [
+  0x00070e15, 0x1c232a31, 0x383f464d, 0x545b6269,
+  0x70777e85, 0x8c939aa1, 0xa8afb6bd, 0xc4cbd2d9,
+  0xe0e7eef5, 0xfc030a11, 0x181f262d, 0x343b4249,
+  0x50575e65, 0x6c737a81, 0x888f969d, 0xa4abb2b9,
+  0xc0c7ced5, 0xdce3eaf1, 0xf8ff060d, 0x141b2229,
+  0x30373e45, 0x4c535a61, 0x686f767d, 0x848b9299,
+  0xa0a7aeb5, 0xbcc3cad1, 0xd8dfe6ed, 0xf4fb0209,
+  0x10171e25, 0x2c333a41, 0x484f565d, 0x646b7279
+];
+
+function crypto_sm4_subword {
+  returns Bits<32>
+  arguments Bits<32> value
+  description {
+    Apply the SM4 S-box to each byte of a word.
+  }
+  body {
+    return {
+      crypto_sm4_sbox(value[31:24]),
+      crypto_sm4_sbox(value[23:16]),
+      crypto_sm4_sbox(value[15:8]),
+      crypto_sm4_sbox(value[7:0])
+    };
+  }
+}
+
+function crypto_sm4_round_word {
+  returns Bits<32>
+  arguments
+    Bits<32> state_word,
+    Bits<32> substitution
+  description {
+    Apply the SM4 data-round linear transform and XOR it with a state word.
+  }
+  body {
+    return state_word ^ substitution ^ crypto_rol32(substitution, 2) ^
+      crypto_rol32(substitution, 10) ^ crypto_rol32(substitution, 18) ^
+      crypto_rol32(substitution, 24);
+  }
+}
+
+function crypto_sm4_key_round_word {
+  returns Bits<32>
+  arguments
+    Bits<32> key_word,
+    Bits<32> substitution
+  description {
+    Apply the SM4 key-schedule linear transform and XOR it with a key word.
+  }
+  body {
+    return key_word ^ substitution ^ crypto_rol32(substitution, 13) ^
+      crypto_rol32(substitution, 23);
+  }
+}
+
+function crypto_sm4_key_schedule {
+  returns Bits<128>
+  arguments
+    Bits<128> current,
+    Bits<3> round
+  description {
+    Generate four SM4 round keys from one input element group.
+  }
+  body {
+    Bits<32> rk0 = current[31:0];
+    Bits<32> rk1 = current[63:32];
+    Bits<32> rk2 = current[95:64];
+    Bits<32> rk3 = current[127:96];
+    U32 base = round * 4;
+    Bits<32> rk4 = crypto_sm4_key_round_word(rk0,
+      crypto_sm4_subword(rk1 ^ rk2 ^ rk3 ^ crypto_sm4_ck_table[base]));
+    Bits<32> rk5 = crypto_sm4_key_round_word(rk1,
+      crypto_sm4_subword(rk2 ^ rk3 ^ rk4 ^ crypto_sm4_ck_table[base + 1]));
+    Bits<32> rk6 = crypto_sm4_key_round_word(rk2,
+      crypto_sm4_subword(rk3 ^ rk4 ^ rk5 ^ crypto_sm4_ck_table[base + 2]));
+    Bits<32> rk7 = crypto_sm4_key_round_word(rk3,
+      crypto_sm4_subword(rk4 ^ rk5 ^ rk6 ^ crypto_sm4_ck_table[base + 3]));
+    return {rk7, rk6, rk5, rk4};
+  }
+}
+
+function crypto_sm4_rounds {
+  returns Bits<128>
+  arguments
+    Bits<128> state,
+    Bits<128> round_keys
+  description {
+    Perform four SM4 encryption or decryption rounds on one element group.
+  }
+  body {
+    Bits<32> x0 = state[31:0];
+    Bits<32> x1 = state[63:32];
+    Bits<32> x2 = state[95:64];
+    Bits<32> x3 = state[127:96];
+    Bits<32> rk0 = round_keys[31:0];
+    Bits<32> rk1 = round_keys[63:32];
+    Bits<32> rk2 = round_keys[95:64];
+    Bits<32> rk3 = round_keys[127:96];
+    Bits<32> x4 = crypto_sm4_round_word(x0, crypto_sm4_subword(x1 ^ x2 ^ x3 ^ rk0));
+    Bits<32> x5 = crypto_sm4_round_word(x1, crypto_sm4_subword(x2 ^ x3 ^ x4 ^ rk1));
+    Bits<32> x6 = crypto_sm4_round_word(x2, crypto_sm4_subword(x3 ^ x4 ^ x5 ^ rk2));
+    Bits<32> x7 = crypto_sm4_round_word(x3, crypto_sm4_subword(x4 ^ x5 ^ x6 ^ rk3));
+    return {x7, x6, x5, x4};
+  }
+}

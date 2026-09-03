@@ -29,3 +29,12 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
+  check_f_ok($encoding);
+  RoundingMode rounding_mode = rm_to_mode(rm, $encoding);
+  Bits<32> input = f32_operand(F[fs1]);
+  Bits<32> result = round_f32_to_integral(input, rounding_mode);
+  if (!is_sp_nan?(input) && (result != input)) {
+    set_fp_flag(FpFlag::NX);
+  }
+  F[fd] = f32_result(result);
+  mark_f_state_dirty();

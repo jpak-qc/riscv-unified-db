@@ -39024,6 +39024,65 @@ None
 |===
 
 
+[#udb-function-abort_fault_only_first_read]
+=== abort_fault_only_first_read (builtin)
+Stops a later fault-only-first vector-load read without entering an
+architectural trap handler. This is internal ISS control flow.
+  
+
+[cols="1,4"]
+|===
+h| Return Type h| `void`
+h| Arguments
+a|
+
+None
+
+|===
+
+
+[#udb-function-access_allowed?]
+=== access_allowed?
+Checks if the physical address paddr is able to access memory without
+raising an exception.
+  
+
+[cols="1,4"]
+|===
+h| Return Type h| `Boolean`
+h| Arguments
+a|
+
+[cols="1,4,4"]
+!===
+! Idx ! Type ! Name
+
+! 0
+h! `Bits<PHYS_ADDR_WIDTH>`
+! paddr
+! 1
+h! `U32`
+! access_size
+! 2
+h! `MemoryOperation`
+! type
+!===
+
+|===
+
+[source,idl,subs="specialchars,macros"]
+----
+if pass:[(]paddr > ((1 pass:[`]<< PHYS_ADDR_WIDTH) - access_size)) {
+  return false;
+}
+if pass:[(]NUM_PMP_ENTRIES > 0) {
+  if pass:[(]!xref:#udb-function-pmp_check[pmp_check]pass:[(]paddr[PHYS_ADDR_WIDTH - 1:0], access_size, type)) {
+    return false;
+  }
+}
+return xref:#udb-function-physical_memory_accessible?[physical_memory_accessible?]pass:[(]paddr, access_size, type);
+----
+
 [#udb-function-access_check]
 === access_check
 Checks if the physical address paddr is able to access memory, and raises
@@ -39055,22 +39114,14 @@ h! `MemoryOperation`
 ! 4
 h! `ExceptionCode`
 ! fault_type
-! 5
-h! `PrivilegeMode`
-! from_mode
 !===
 
 |===
 
 [source,idl,subs="specialchars,macros"]
 ----
-if pass:[(]paddr > ((1 pass:[`]<< PHYS_ADDR_WIDTH) - access_size)) {
-  xref:#udb-function-raise[raise]pass:[(]fault_type, from_mode, vaddr);
-}
-if pass:[(]NUM_PMP_ENTRIES > 0) {
-  if pass:[(]!xref:#udb-function-pmp_check[pmp_check]pass:[(]paddr[PHYS_ADDR_WIDTH - 1:0], access_size, type)) {
-    xref:#udb-function-raise[raise]pass:[(]fault_type, from_mode, vaddr);
-  }
+if pass:[(]!xref:#udb-function-access_allowed?[access_allowed?]pass:[(]paddr, access_size, type)) {
+  xref:#udb-function-raise[raise]pass:[(]fault_type, xref:#udb-function-mode[mode]pass:[(]), vaddr);
 }
 ----
 
@@ -39287,60 +39338,56 @@ PrivilegeMode effective_mode = xref:#udb-function-effective_ldst_mode[effective_
 if pass:[(]effective_mode == PrivilegeMode::M) {
   return SatpMode::Bare;
 }
-if pass:[(]CSR[xref:#udb-csr-misa[misa]].xref:#udb-csrfield-misa-H[H] == 1'b1) {
-  if pass:[(]effective_mode == PrivilegeMode::VS || effective_mode == PrivilegeMode::VU) {
-    Bits<4> mode_val = CSR[xref:#udb-csr-vsatp[vsatp]].xref:#udb-csrfield-vsatp-MODE[MODE];
-    if pass:[(]mode_val == $bits(SatpMode::Bare)) {
-      return SatpMode::Bare;
-    } else if pass:[(]mode_val == $bits(SatpMode::Sv32)) {
-      if pass:[(]MXLEN == 64) {
-        if pass:[(](effective_mode == PrivilegeMode::VS) && (CSR[xref:#udb-csr-hstatus[hstatus]].xref:#udb-csrfield-hstatus-VSXL[VSXL] != $bits(XRegWidth::XLEN32))) {
-          return SatpMode::Reserved;
-        }
-        if pass:[(](effective_mode == PrivilegeMode::VU) && (CSR[xref:#udb-csr-vsstatus[vsstatus]].xref:#udb-csrfield-vsstatus-UXL[UXL] != $bits(XRegWidth::XLEN32))) {
-          return SatpMode::Reserved;
-        }
-      }
-      if pass:[(]!SV32_VSMODE_TRANSLATION) {
+if pass:[(]CSR[xref:#udb-csr-misa[misa]].xref:#udb-csrfield-misa-H[H] == 1'b1 && (effective_mode == PrivilegeMode::VS || effective_mode == PrivilegeMode::VU)) {
+  Bits<4> mode_val = CSR[xref:#udb-csr-vsatp[vsatp]].xref:#udb-csrfield-vsatp-MODE[MODE];
+  if pass:[(]mode_val == $bits(SatpMode::Bare)) {
+    return SatpMode::Bare;
+  } else if pass:[(]mode_val == $bits(SatpMode::Sv32)) {
+    if pass:[(]MXLEN == 64) {
+      if pass:[(](effective_mode == PrivilegeMode::VS) && (CSR[xref:#udb-csr-hstatus[hstatus]].xref:#udb-csrfield-hstatus-VSXL[VSXL] != $bits(XRegWidth::XLEN32))) {
         return SatpMode::Reserved;
       }
-      return SatpMode::Sv32;
-    } else if pass:[(](MXLEN == 64) && (mode_val == $bits(SatpMode::Sv39))) {
-      if pass:[(]effective_mode == PrivilegeMode::VS && CSR[xref:#udb-csr-hstatus[hstatus]].xref:#udb-csrfield-hstatus-VSXL[VSXL] != $bits(XRegWidth::XLEN64)) {
+      if pass:[(](effective_mode == PrivilegeMode::VU) && (CSR[xref:#udb-csr-vsstatus[vsstatus]].xref:#udb-csrfield-vsstatus-UXL[UXL] != $bits(XRegWidth::XLEN32))) {
         return SatpMode::Reserved;
       }
-      if pass:[(]effective_mode == PrivilegeMode::VU && CSR[xref:#udb-csr-vsstatus[vsstatus]].xref:#udb-csrfield-vsstatus-UXL[UXL] != $bits(XRegWidth::XLEN64)) {
-        return SatpMode::Reserved;
-      }
-      if pass:[(]!SV39_VSMODE_TRANSLATION) {
-        return SatpMode::Reserved;
-      }
-      return SatpMode::Sv39;
-    } else if pass:[(](MXLEN == 64) && (mode_val == $bits(SatpMode::Sv48))) {
-      if pass:[(]effective_mode == PrivilegeMode::VS && CSR[xref:#udb-csr-hstatus[hstatus]].xref:#udb-csrfield-hstatus-VSXL[VSXL] != $bits(XRegWidth::XLEN64)) {
-        return SatpMode::Reserved;
-      }
-      if pass:[(]effective_mode == PrivilegeMode::VU && CSR[xref:#udb-csr-vsstatus[vsstatus]].xref:#udb-csrfield-vsstatus-UXL[UXL] != $bits(XRegWidth::XLEN64)) {
-        return SatpMode::Reserved;
-      }
-      if pass:[(]!SV48_VSMODE_TRANSLATION) {
-        return SatpMode::Reserved;
-      }
-      return SatpMode::Sv48;
-    } else if pass:[(](MXLEN == 64) && (mode_val == $bits(SatpMode::Sv57))) {
-      if pass:[(]effective_mode == PrivilegeMode::VS && CSR[xref:#udb-csr-hstatus[hstatus]].xref:#udb-csrfield-hstatus-VSXL[VSXL] != $bits(XRegWidth::XLEN64)) {
-        return SatpMode::Reserved;
-      }
-      if pass:[(]effective_mode == PrivilegeMode::VU && CSR[xref:#udb-csr-vsstatus[vsstatus]].xref:#udb-csrfield-vsstatus-UXL[UXL] != $bits(XRegWidth::XLEN64)) {
-        return SatpMode::Reserved;
-      }
-      if pass:[(]!SV57_VSMODE_TRANSLATION) {
-        return SatpMode::Reserved;
-      }
-      return SatpMode::Sv57;
-    } else {
+    }
+    if pass:[(]!SV32_VSMODE_TRANSLATION) {
       return SatpMode::Reserved;
     }
+    return SatpMode::Sv32;
+  } else if pass:[(](MXLEN == 64) && (mode_val == $bits(SatpMode::Sv39))) {
+    if pass:[(]effective_mode == PrivilegeMode::VS && CSR[xref:#udb-csr-hstatus[hstatus]].xref:#udb-csrfield-hstatus-VSXL[VSXL] != $bits(XRegWidth::XLEN64)) {
+      return SatpMode::Reserved;
+    }
+    if pass:[(]effective_mode == PrivilegeMode::VU && CSR[xref:#udb-csr-vsstatus[vsstatus]].xref:#udb-csrfield-vsstatus-UXL[UXL] != $bits(XRegWidth::XLEN64)) {
+      return SatpMode::Reserved;
+    }
+    if pass:[(]!SV39_VSMODE_TRANSLATION) {
+      return SatpMode::Reserved;
+    }
+    return SatpMode::Sv39;
+  } else if pass:[(](MXLEN == 64) && (mode_val == $bits(SatpMode::Sv48))) {
+    if pass:[(]effective_mode == PrivilegeMode::VS && CSR[xref:#udb-csr-hstatus[hstatus]].xref:#udb-csrfield-hstatus-VSXL[VSXL] != $bits(XRegWidth::XLEN64)) {
+      return SatpMode::Reserved;
+    }
+    if pass:[(]effective_mode == PrivilegeMode::VU && CSR[xref:#udb-csr-vsstatus[vsstatus]].xref:#udb-csrfield-vsstatus-UXL[UXL] != $bits(XRegWidth::XLEN64)) {
+      return SatpMode::Reserved;
+    }
+    if pass:[(]!SV48_VSMODE_TRANSLATION) {
+      return SatpMode::Reserved;
+    }
+    return SatpMode::Sv48;
+  } else if pass:[(](MXLEN == 64) && (mode_val == $bits(SatpMode::Sv57))) {
+    if pass:[(]effective_mode == PrivilegeMode::VS && CSR[xref:#udb-csr-hstatus[hstatus]].xref:#udb-csrfield-hstatus-VSXL[VSXL] != $bits(XRegWidth::XLEN64)) {
+      return SatpMode::Reserved;
+    }
+    if pass:[(]effective_mode == PrivilegeMode::VU && CSR[xref:#udb-csr-vsstatus[vsstatus]].xref:#udb-csrfield-vsstatus-UXL[UXL] != $bits(XRegWidth::XLEN64)) {
+      return SatpMode::Reserved;
+    }
+    if pass:[(]!SV57_VSMODE_TRANSLATION) {
+      return SatpMode::Reserved;
+    }
+    return SatpMode::Sv57;
   } else {
     return SatpMode::Reserved;
   }
@@ -39536,6 +39583,23 @@ if pass:[(]xref:#udb-function-mode[mode]pass:[(]) == PrivilegeMode::M) {
 }
 ----
 
+[#udb-function-fault_only_first_trap_suppressed?]
+=== fault_only_first_trap_suppressed? (builtin)
+Returns true while a later fault-only-first vector-load read is in
+progress. This is internal ISS control state.
+  
+
+[cols="1,4"]
+|===
+h| Return Type h| `Boolean`
+h| Arguments
+a|
+
+None
+
+|===
+
+
 [#udb-function-fence_tso]
 === fence_tso (builtin)
 Execute a TSO memory ordering fence.(according to the FENCE instruction).
@@ -39624,6 +39688,7 @@ for pass:[(]Bits<8> i = xref:#udb-function-xlen[xlen]pass:[(]); i > 0; i--) {
   }
 }
 return -'sd1;
+return result;
 ----
 
 [#udb-function-ialign]
@@ -39730,7 +39795,7 @@ h! `U32`
 [source,idl,subs="specialchars,macros"]
 ----
 XReg Mask = (N / 8) - 1;
-return (address & ~Mask) == ((address pass:[+] length - 1) & ~Mask);
+return (address & ~Mask) == ((address pass:[+] (length / 8) - 1) & ~Mask);
 ----
 
 [#udb-function-is_naturally_aligned]
@@ -40060,6 +40125,36 @@ h! `PrivilegeMode`
 |===
 
 
+[#udb-function-physical_memory_accessible?]
+=== physical_memory_accessible? (builtin)
+Checks if the execution environment can complete a physical memory access
+for the entire region [paddr, paddr + len).
+  
+
+[cols="1,4"]
+|===
+h| Return Type h| `Boolean`
+h| Arguments
+a|
+
+[cols="1,4,4"]
+!===
+! Idx ! Type ! Name
+
+! 0
+h! `Bits<PHYS_ADDR_WIDTH>`
+! paddr
+! 1
+h! `U32`
+! len
+! 2
+h! `MemoryOperation`
+! op
+!===
+
+|===
+
+
 [#udb-function-pma_applies?]
 === pma_applies? (builtin)
 Checks if _attr_ is applied to the entire physical address region
@@ -40120,12 +40215,17 @@ h! `MemoryOperation`
 
 [source,idl,subs="specialchars,macros"]
 ----
-PrivilegeMode mode = xref:#udb-function-effective_ldst_mode[effective_ldst_mode]pass:[(]);
+PrivilegeMode access_mode;
+if pass:[(]type == MemoryOperation::Fetch) {
+  access_mode = xref:#udb-function-mode[mode]pass:[(]);
+} else {
+  access_mode = xref:#udb-function-effective_ldst_mode[effective_ldst_mode]pass:[(]);
+}
 PmpMatchResult match_result;
 PmpCfg cfg;
 (match_result, cfg = xref:#udb-function-pmp_match[pmp_match]pass:[(]paddr, access_size));
 if pass:[(]match_result == PmpMatchResult::FullMatch) {
-  if pass:[(]mode == PrivilegeMode::M && (cfg.L == 0)) {
+  if pass:[(]access_mode == PrivilegeMode::M && (cfg.L == 0)) {
     return true;
   }
   if pass:[(]type == MemoryOperation::Write && (cfg.W == 0)) {
@@ -40136,7 +40236,7 @@ if pass:[(]match_result == PmpMatchResult::FullMatch) {
     return false;
   }
 } else if pass:[(]match_result == PmpMatchResult::NoMatch) {
-  if pass:[(]mode == PrivilegeMode::M) {
+  if pass:[(]access_mode == PrivilegeMode::M) {
     return true;
   } else {
     return false;
@@ -40288,6 +40388,9 @@ h! `XReg`
 
 [source,idl,subs="specialchars,macros"]
 ----
+if pass:[(]xref:#udb-function-fault_only_first_trap_suppressed?[fault_only_first_trap_suppressed?]pass:[(])) {
+  xref:#udb-function-abort_fault_only_first_read[abort_fault_only_first_read]pass:[(]);
+}
 if pass:[(]!PRECISE_SYNCHRONOUS_EXCEPTIONS) {
   xref:#udb-function-unpredictable[unpredictable]pass:[(]"Imprecise synchronous exception");
 } else {
@@ -40325,9 +40428,14 @@ h! `XReg`
 
 [source,idl,subs="specialchars,macros"]
 ----
+if pass:[(]xref:#udb-function-fault_only_first_trap_suppressed?[fault_only_first_trap_suppressed?]pass:[(])) {
+  xref:#udb-function-abort_fault_only_first_read[abort_fault_only_first_read]pass:[(]);
+}
 PrivilegeMode handling_mode = xref:#udb-function-exception_handling_mode[exception_handling_mode]pass:[(]exception_code);
 if pass:[(]handling_mode == PrivilegeMode::M) {
   CSR[xref:#udb-csr-mepc[mepc]].xref:#udb-csrfield-mepc-PC[PC] = $pc;
+  CSR[xref:#udb-csr-mstatus[mstatus]].xref:#udb-csrfield-mstatus-MPIE[MPIE] = CSR[xref:#udb-csr-mstatus[mstatus]].xref:#udb-csrfield-mstatus-MIE[MIE];
+  CSR[xref:#udb-csr-mstatus[mstatus]].xref:#udb-csrfield-mstatus-MIE[MIE] = 0;
   if pass:[(]!xref:#udb-function-mtval_readonly?[mtval_readonly?]pass:[(])) {
     CSR[xref:#udb-csr-mtval[mtval]].xref:#udb-csrfield-mtval-VALUE[VALUE] = xref:#udb-function-mtval_for[mtval_for]pass:[(]exception_code, tval);
   }
@@ -40354,6 +40462,8 @@ if pass:[(]handling_mode == PrivilegeMode::M) {
   CSR[xref:#udb-csr-mstatus[mstatus]].xref:#udb-csrfield-mstatus-MPP[MPP] = $bits(from_mode);
 } else if pass:[(]CSR[xref:#udb-csr-misa[misa]].xref:#udb-csrfield-misa-S[S] == 1 && (handling_mode == PrivilegeMode::S)) {
   CSR[xref:#udb-csr-sepc[sepc]].xref:#udb-csrfield-sepc-PC[PC] = $pc;
+  CSR[xref:#udb-csr-mstatus[mstatus]].xref:#udb-csrfield-mstatus-SPIE[SPIE] = CSR[xref:#udb-csr-mstatus[mstatus]].xref:#udb-csrfield-mstatus-SIE[SIE];
+  CSR[xref:#udb-csr-mstatus[mstatus]].xref:#udb-csrfield-mstatus-SIE[SIE] = 0;
   if pass:[(]!xref:#udb-function-stval_readonly?[stval_readonly?]pass:[(])) {
     CSR[xref:#udb-csr-stval[stval]].xref:#udb-csrfield-stval-VALUE[VALUE] = xref:#udb-function-stval_for[stval_for]pass:[(]exception_code, tval);
   }
@@ -40380,6 +40490,8 @@ if pass:[(]handling_mode == PrivilegeMode::M) {
   }
 } else if pass:[(]CSR[xref:#udb-csr-misa[misa]].xref:#udb-csrfield-misa-H[H] == 1 && (handling_mode == PrivilegeMode::VS)) {
   CSR[xref:#udb-csr-vsepc[vsepc]].xref:#udb-csrfield-vsepc-PC[PC] = $pc;
+  CSR[xref:#udb-csr-vsstatus[vsstatus]].xref:#udb-csrfield-vsstatus-SPIE[SPIE] = CSR[xref:#udb-csr-vsstatus[vsstatus]].xref:#udb-csrfield-vsstatus-SIE[SIE];
+  CSR[xref:#udb-csr-vsstatus[vsstatus]].xref:#udb-csrfield-vsstatus-SIE[SIE] = 0;
   if pass:[(]!xref:#udb-function-vstval_readonly?[vstval_readonly?]pass:[(])) {
     CSR[xref:#udb-csr-vstval[vstval]].xref:#udb-csrfield-vstval-VALUE[VALUE] = xref:#udb-function-vstval_for[vstval_for]pass:[(]exception_code, tval);
   }
@@ -40456,14 +40568,14 @@ if pass:[(]MISALIGNED_MAX_ATOMICITY_GRANULE_SIZE > 0) {
   xref:#udb-function-assert[assert]pass:[(]MISALIGNED_LDST_EXCEPTION_PRIORITY == "low", "Invalid config: can't mix low-priority misaligned exceptions with large atomicity granule");
   physical_address = (CSR[xref:#udb-csr-misa[misa]].xref:#udb-csrfield-misa-S[S] == 1) ? xref:#udb-function-translate[translate]pass:[(]virtual_address, MemoryOperation::Read, xref:#udb-function-effective_ldst_mode[effective_ldst_mode]pass:[(]), encoding).paddr : virtual_address;
   if pass:[(]xref:#udb-function-misaligned_is_atomic?[misaligned_is_atomic?]pass:[(]LEN, physical_address)) {
-    xref:#udb-function-access_check[access_check]pass:[(]physical_address, LEN, virtual_address, MemoryOperation::Read, ExceptionCode::LoadAccessFault, xref:#udb-function-effective_ldst_mode[effective_ldst_mode]pass:[(]));
+    xref:#udb-function-access_check[access_check]pass:[(]physical_address, LEN, virtual_address, MemoryOperation::Read, ExceptionCode::LoadAccessFault);
     return xref:#udb-function-read_physical_memory[read_physical_memory]pass:[(]LEN, physical_address);
   }
 }
 if pass:[(]!MISALIGNED_LDST) {
   if pass:[(]MISALIGNED_LDST_EXCEPTION_PRIORITY == "low") {
     physical_address = (CSR[xref:#udb-csr-misa[misa]].xref:#udb-csrfield-misa-S[S] == 1) ? xref:#udb-function-translate[translate]pass:[(]virtual_address, MemoryOperation::Read, xref:#udb-function-effective_ldst_mode[effective_ldst_mode]pass:[(]), encoding).paddr : virtual_address;
-    xref:#udb-function-access_check[access_check]pass:[(]physical_address, LEN, virtual_address, MemoryOperation::Read, ExceptionCode::LoadAccessFault, xref:#udb-function-effective_ldst_mode[effective_ldst_mode]pass:[(]));
+    xref:#udb-function-access_check[access_check]pass:[(]physical_address, LEN, virtual_address, MemoryOperation::Read, ExceptionCode::LoadAccessFault);
   }
   xref:#udb-function-raise[raise]pass:[(]ExceptionCode::LoadAddressMisaligned, xref:#udb-function-mode[mode]pass:[(]), virtual_address);
 } else {
@@ -40527,7 +40639,7 @@ if pass:[(]CSR[xref:#udb-csr-misa[misa]].xref:#udb-csrfield-misa-S[S] == 1) {
 } else {
   result.paddr = virtual_address;
 }
-xref:#udb-function-access_check[access_check]pass:[(]result.paddr, LEN, virtual_address, MemoryOperation::Read, ExceptionCode::LoadAccessFault, xref:#udb-function-effective_ldst_mode[effective_ldst_mode]pass:[(]));
+xref:#udb-function-access_check[access_check]pass:[(]result.paddr, LEN, virtual_address, MemoryOperation::Read, ExceptionCode::LoadAccessFault);
 if pass:[(]rl == 1'b1) {
   xref:#udb-function-memory_model_release[memory_model_release]pass:[(]);
 }
@@ -40692,7 +40804,7 @@ if pass:[(]mmode_pending_and_enabled != 0) {
   return ;
 }
 if pass:[(]CSR[xref:#udb-csr-misa[misa]].xref:#udb-csrfield-misa-S[S] == 1'b1) {
-  Bits<MXLEN> smode_enabled_ints = ((xref:#udb-function-mode[mode]pass:[(]) == PrivilegeMode::M) || (CSR[xref:#udb-csr-mstatus[mstatus]].xref:#udb-csrfield-mstatus-SIE[SIE] == 1'b0)) ? 0 : $bits(CSR[xref:#udb-csr-mie[CSR[mie]]]) & ($bits(CSR[xref:#udb-csr-mideleg[CSR[mideleg]]]));
+  Bits<MXLEN> smode_enabled_ints = ((xref:#udb-function-mode[mode]pass:[(]) == PrivilegeMode::M) || ((xref:#udb-function-mode[mode]pass:[(]) == PrivilegeMode::S) && (CSR[xref:#udb-csr-mstatus[mstatus]].xref:#udb-csrfield-mstatus-SIE[SIE] == 1'b0))) ? 0 : $bits(CSR[xref:#udb-csr-mie[CSR[mie]]]) & ($bits(CSR[xref:#udb-csr-mideleg[CSR[mideleg]]]));
   Bits<MXLEN> smode_pending_and_enabled = pending_ints & smode_enabled_ints;
   if pass:[(]smode_pending_and_enabled != 0) {
     pending_and_enabled_interrupts = smode_pending_and_enabled;
@@ -40985,7 +41097,7 @@ if pass:[(]MISALIGNED_MAX_ATOMICITY_GRANULE_SIZE > 0) {
   xref:#udb-function-assert[assert]pass:[(]MISALIGNED_LDST_EXCEPTION_PRIORITY == "low", "Invalid config: can't mix low-priority misaligned exceptions with large atomicity granule");
   physical_address = (CSR[xref:#udb-csr-misa[misa]].xref:#udb-csrfield-misa-S[S] == 1) ? xref:#udb-function-translate[translate]pass:[(]virtual_address, MemoryOperation::Write, xref:#udb-function-effective_ldst_mode[effective_ldst_mode]pass:[(]), encoding).paddr : virtual_address;
   if pass:[(]xref:#udb-function-misaligned_is_atomic?[misaligned_is_atomic?]pass:[(]LEN, physical_address)) {
-    xref:#udb-function-access_check[access_check]pass:[(]physical_address, LEN, virtual_address, MemoryOperation::Write, ExceptionCode::StoreAmoAccessFault, xref:#udb-function-effective_ldst_mode[effective_ldst_mode]pass:[(]));
+    xref:#udb-function-access_check[access_check]pass:[(]physical_address, LEN, virtual_address, MemoryOperation::Write, ExceptionCode::StoreAmoAccessFault);
     xref:#udb-function-write_physical_memory[write_physical_memory]pass:[(]LEN, physical_address, value);
     return ;
   }
@@ -40993,7 +41105,7 @@ if pass:[(]MISALIGNED_MAX_ATOMICITY_GRANULE_SIZE > 0) {
 if pass:[(]!MISALIGNED_LDST) {
   if pass:[(]MISALIGNED_LDST_EXCEPTION_PRIORITY == "low") {
     physical_address = (CSR[xref:#udb-csr-misa[misa]].xref:#udb-csrfield-misa-S[S] == 1) ? xref:#udb-function-translate[translate]pass:[(]virtual_address, MemoryOperation::Write, xref:#udb-function-effective_ldst_mode[effective_ldst_mode]pass:[(]), encoding).paddr : virtual_address;
-    xref:#udb-function-access_check[access_check]pass:[(]physical_address, LEN, virtual_address, MemoryOperation::Write, ExceptionCode::StoreAmoAccessFault, xref:#udb-function-effective_ldst_mode[effective_ldst_mode]pass:[(]));
+    xref:#udb-function-access_check[access_check]pass:[(]physical_address, LEN, virtual_address, MemoryOperation::Write, ExceptionCode::StoreAmoAccessFault);
   }
   xref:#udb-function-raise[raise]pass:[(]ExceptionCode::StoreAmoAddressMisaligned, xref:#udb-function-mode[mode]pass:[(]), virtual_address);
 } else {
@@ -41052,7 +41164,7 @@ h! `Bits<1>`
 ----
 XReg physical_address;
 physical_address = (CSR[xref:#udb-csr-misa[misa]].xref:#udb-csrfield-misa-S[S] == 1) ? xref:#udb-function-translate[translate]pass:[(]virtual_address, MemoryOperation::Write, xref:#udb-function-effective_ldst_mode[effective_ldst_mode]pass:[(]), encoding).paddr : virtual_address;
-xref:#udb-function-access_check[access_check]pass:[(]physical_address, LEN, virtual_address, MemoryOperation::Write, ExceptionCode::StoreAmoAccessFault, xref:#udb-function-effective_ldst_mode[effective_ldst_mode]pass:[(]));
+xref:#udb-function-access_check[access_check]pass:[(]physical_address, LEN, virtual_address, MemoryOperation::Write, ExceptionCode::StoreAmoAccessFault);
 if pass:[(]rl == 1'b1) {
   xref:#udb-function-memory_model_release[memory_model_release]pass:[(]);
 }

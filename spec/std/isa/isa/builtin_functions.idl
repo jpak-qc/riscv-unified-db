@@ -42,6 +42,22 @@ struct Csr {
   Boolean writable;
 }
 
+struct EntropySourceSample {
+  Bits<2> opst;
+  Bits<8> custom;
+  Bits<16> entropy;
+}
+
+builtin function poll_entropy_source {
+  returns EntropySourceSample
+  description {
+    Poll the platform entropy source for one `seed` CSR access.
+
+    The platform owns entropy-source state transitions, including BIST latching,
+    entropy uniqueness, and wipe-on-read behavior.
+  }
+}
+
 # implementation is generated from CSR YAML defintions
 generated function direct_csr_lookup {
   returns Csr
@@ -571,6 +587,62 @@ builtin function pma_applies? {
   }
 }
 
+builtin function physical_memory_accessible? {
+  returns Boolean
+  arguments
+    Bits<PHYS_ADDR_WIDTH> paddr,  #< Start of the physical address region
+    U32                   len,    #< Size of the region, in bits
+    MemoryOperation       op      #< Access type
+  description {
+    Checks if the execution environment can complete a physical memory access
+    for the entire region [paddr, paddr + len).
+  }
+}
+
+builtin function fault_only_first_read? {
+  returns Boolean
+  arguments
+    U32 LEN,
+    XReg virtual_address,
+    Bits<INSTR_ENC_SIZE> encoding
+  description {
+    Performs one translation-aware virtual-memory read for a later
+    fault-only-first vector-load element. Returns false when the read would
+    raise a synchronous access or page fault; the loaded value is available
+    through +fault_only_first_read_value+ when it returns true.
+  }
+}
+
+builtin function begin_fault_only_first_reads {
+  description {
+    Clears the buffered values used by a fault-only-first vector-load element.
+  }
+}
+
+builtin function fault_only_first_read_value {
+  returns Bits<64>
+  arguments U32 index
+  description {
+    Returns a value previously read by +fault_only_first_read?+ for the
+    current vector-load element.
+  }
+}
+
+builtin function fault_only_first_trap_suppressed? {
+  returns Boolean
+  description {
+    Returns true while a later fault-only-first vector-load read is in
+    progress. This is internal ISS control state.
+  }
+}
+
+builtin function abort_fault_only_first_read {
+  description {
+    Stops a later fault-only-first vector-load read without entering an
+    architectural trap handler. This is internal ISS control flow.
+  }
+}
+
 builtin function atomic_check_then_write_32 {
   returns Boolean
   arguments
@@ -651,6 +723,38 @@ builtin function atomically_set_pte_a_d {
     Preconditions:
 
       * pte_addr will be aligned to 64-bits
+  }
+}
+
+builtin function atomic_read_modify_write_8 {
+  returns Bits<8>
+  arguments
+    Bits<PHYS_ADDR_WIDTH>  phys_addr,
+    Bits<8>                value,
+    AmoOperation           op
+  description {
+    Atomically read-modify-write 8-bits starting at phys_address using +value+ and +op+.
+
+    Return the original (unmodified) read value.
+
+    All access checks/alignment checks/etc. should be done before calling this function;
+    it's assumed the RMW is OK to proceed.
+  }
+}
+
+builtin function atomic_read_modify_write_16 {
+  returns Bits<16>
+  arguments
+    Bits<PHYS_ADDR_WIDTH>  phys_addr,
+    Bits<16>               value,
+    AmoOperation           op
+  description {
+    Atomically read-modify-write 16-bits starting at phys_address using +value+ and +op+.
+
+    Return the original (unmodified) read value.
+
+    All access checks/alignment checks/etc. should be done before calling this function;
+    it's assumed the RMW is OK to proceed.
   }
 }
 

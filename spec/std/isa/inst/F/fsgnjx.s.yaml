@@ -37,12 +37,9 @@ pseudoinstructions:
 operation(): |
   check_f_ok($encoding);
 
-  Bits<32> sp_value = {F[fs1][31] ^ F[fs2][31], F[fs1][30:0]};
-
-  if (implemented?(ExtensionName::D)) {
-    F[fd] = nan_box(32, 64, sp_value);
-  } else {
-    F[fd] = sp_value;
-  }
+  Bits<32> fs1_value = f32_operand(F[fs1]);
+  Bits<32> fs2_value = f32_operand(F[fs2]);
+  Bits<32> sp_value = {fs1_value[31] ^ fs2_value[31], fs1_value[30:0]};
+  F[fd] = f32_result(sp_value);
 
   mark_f_state_dirty();

@@ -31,3 +31,21 @@ access:
   vu: always
 data_independent_timing: true
 operation(): |
+  VectorState state = vector_state();
+  if (state.sew != 64) {
+    raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
+  }
+
+  U32 elems_per_reg = VLEN >> state.log2_sew;
+  Bits<64> scalar = X[xs1];
+  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
+    if (vm == 1'b1 || V[0][i] == 1'b1) {
+      U32 reg_off = i / elems_per_reg;
+      U32 start_bit = (i % elems_per_reg) * state.sew;
+      U32 end_bit = start_bit + state.sew - 1;
+      Bits<128> product = crypto_clmul64(V[vs2 + reg_off][end_bit:start_bit], scalar);
+      V[vd + reg_off][end_bit:start_bit] = product[127:64];
+    }
+  }
+
+  CSR[vstart].VALUE = 0;

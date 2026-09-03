@@ -20,7 +20,7 @@ function fetch_memory_aligned_16 {
     }
 
     # may raise an exception
-    access_check(result.paddr, 16, virtual_address, MemoryOperation::Fetch, ExceptionCode::InstructionAccessFault, mode());
+    access_check(result.paddr, 16, virtual_address, MemoryOperation::Fetch, ExceptionCode::InstructionAccessFault);
 
     return read_physical_memory(16, result.paddr);
   }
@@ -43,7 +43,7 @@ function fetch_memory_aligned_32 {
     }
 
     # may raise an exception
-    access_check(result.paddr, 32, virtual_address, MemoryOperation::Fetch, ExceptionCode::InstructionAccessFault, mode());
+    access_check(result.paddr, 32, virtual_address, MemoryOperation::Fetch, ExceptionCode::InstructionAccessFault);
 
     return read_physical_memory(32, result.paddr);
   }
@@ -55,6 +55,9 @@ fetch {
   if (pending_and_enabled_interrupts != 0) {
     # this will adjust CSRs and set the PC to the interrupt handler
     take_interrupt();
+    # Do not decode or execute the interrupted instruction. The C++ ISS
+    # advances to the trap PC through its normal abort path.
+    abort_current_instruction();
   }
 
   if (ialign() == 16) {

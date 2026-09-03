@@ -43,6 +43,32 @@ class TestCfgArch < Minitest::Test
     FileUtils.rm_rf @gen_dir
   end
 
+  def test_cfg_info_accepts_a_config_path_string
+    config = <<~CFG
+      $schema: config_schema.json#
+      kind: architecture configuration
+      type: partially configured
+      name: external-config
+    CFG
+
+    Tempfile.create(["external-config", ".yaml"]) do |f|
+      f.write config
+      f.flush
+
+      info = @resolver.cfg_info(f.path)
+
+      assert_equal Pathname.new(f.path).realpath, info.path
+      assert_equal "external-config", info.name
+      assert_same info, @resolver.cfg_info("external-config")
+    end
+  end
+
+  def test_implemented_instructions_exclude_unimplemented_extensions
+    cfg_arch = @resolver.cfg_arch_for("example_rv64_with_overlay")
+
+    refute_includes cfg_arch.implemented_instructions.map(&:name), "mnret"
+  end
+
   def test_invalid_partial_config
     cfg = <<~CFG
       $schema: config_schema.json#

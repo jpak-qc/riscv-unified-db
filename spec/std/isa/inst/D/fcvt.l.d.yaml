@@ -34,3 +34,6 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
+  check_f_ok($encoding);
+  RoundingMode mode = rm_to_mode(rm, $encoding);
+  X[xd] = f64_to_i64(F[fs1], mode);

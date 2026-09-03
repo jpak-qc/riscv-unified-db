@@ -29,3 +29,24 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
+  check_f_ok($encoding);
+  Bits<32> value_a = f32_operand(F[fs1]);
+  Bits<32> value_b = f32_operand(F[fs2]);
+
+  if (is_sp_nan?(value_a) || is_sp_nan?(value_b)) {
+    if (is_sp_signaling_nan?(value_a) || is_sp_signaling_nan?(value_b)) {
+      set_fp_flag(FpFlag::NV);
+    }
+    F[fd] = f32_result(SP_CANONICAL_NAN);
+  } else {
+    Boolean sign_a = value_a[31] == 1;
+    Boolean sign_b = value_b[31] == 1;
+    Boolean a_lt_b;
+    if (sign_a != sign_b) {
+      a_lt_b = sign_a;
+    } else {
+      a_lt_b = (value_a != value_b) && (sign_a != (value_a < value_b));
+    }
+    F[fd] = f32_result(a_lt_b ? value_a : value_b);
+  }
+  mark_f_state_dirty();

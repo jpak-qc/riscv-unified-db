@@ -21,11 +21,12 @@ encoding:
   variables:
     - name: imm
       location: 12|6-2
+      not: 0
       left_shift: 12
       sign_extend: true
     - name: xd
       location: 11-7
-      not: [0, 2]
+      not: 2
 access:
   s: always
   u: always

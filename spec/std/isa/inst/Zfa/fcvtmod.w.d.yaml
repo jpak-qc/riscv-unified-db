@@ -40,3 +40,66 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
+  check_f_ok($encoding);
+  Bits<1>  sign = signF64UI(F[fs1]);
+  Bits<16> exp  = expF64UI(F[fs1]);
+  Bits<64> sig  = fracF64UI(F[fs1]);
+
+  if (exp == 11'h7FF) {
+    X[xd] = 0;
+  } else if (exp == 0) {
+    X[xd] = 0;
+  } else {
+    sig = sig | 64'h0010000000000000;
+    Bits<32> result32;
+    if (exp >= 16'h0433) {
+      Bits<16> leftShift = exp - 16'h0433;
+      if (leftShift >= 32) {
+        result32 = 0;
+      } else {
+        result32 = sig[31:0];
+        for (U32 i = 0; i < leftShift; i++) {
+          result32 = result32 `<< 1;
+        }
+      }
+    } else {
+      Bits<16> rightShift = 16'h0433 - exp;
+      Bits<64> roundedSig;
+      if (rightShift >= 16'h0040) {
+        roundedSig = 0;
+      } else {
+        roundedSig = sig >> rightShift;
+      }
+      result32 = roundedSig[31:0];
+    }
+    Bits<32> signed_result = (sign == 1) ? -result32 : result32;
+    X[xd] = $signed(signed_result);
+  }
+
+  # Raise the flags required by FCVT.W.D with RTZ without constraining the
+  # unbounded conversion used for the FCVTMOD result.
+  if (exp == 11'h7FF) {
+    set_fp_flag(FpFlag::NV);
+  } else if (exp == 0) {
+    if (sig != 0) { set_fp_flag(FpFlag::NX); }
+  } else {
+    Bits<64> normalizedSig = sig | 64'h0010000000000000;
+    if (exp > 16'h041E) {
+      set_fp_flag(FpFlag::NV);
+    } else if (exp == 16'h041E) {
+      Bits<64> integerMagnitude = normalizedSig >> 21;
+      if ((sign == 0) || (integerMagnitude > 64'h0000000080000000)) {
+        set_fp_flag(FpFlag::NV);
+      } else if ((normalizedSig & 64'h00000000001FFFFF) != 0) {
+        set_fp_flag(FpFlag::NX);
+      }
+    } else {
+      Bits<16> rightShiftForFlags = 16'h0433 - exp;
+      if (rightShiftForFlags >= 64) {
+        set_fp_flag(FpFlag::NX);
+      } else {
+        Bits<64> discardedBits = normalizedSig & ((64'h1 << rightShiftForFlags) - 1);
+        if (discardedBits != 0) { set_fp_flag(FpFlag::NX); }
+      }
+    }
+  }

@@ -9,6 +9,7 @@ require_relative "test_helper"
 require "concurrent"
 require "sorbet-runtime"
 require "udb/obj/csr"
+require "udb/obj/csr_field"
 require "udb/cfg_arch"
 
 # Tests for Csr's XLEN reasoning: Csr#dynamic_length?, Csr#length_cond32,
@@ -189,5 +190,22 @@ class TestCsr < Minitest::Test
 
     err = assert_raises(RuntimeError) { csr.length_cond32 }
     assert_match(/has a dynamic XLEN/, err.message)
+  end
+
+  def test_alias_range_preserves_all_digits_of_lower_bound
+    target_field = CsrField.allocate
+    target_field.define_singleton_method(:exists_in_cfg?) { |_cfg_arch| true }
+
+    target_csr = Csr.allocate
+    target_csr.define_singleton_method(:field) { |name| name == "COUNT" ? target_field : nil }
+
+    cfg_arch = ConfiguredArchitecture.allocate
+    cfg_arch.define_singleton_method(:csr) { |name| name == "target" ? target_csr : nil }
+
+    field = CsrField.allocate
+    field.instance_variable_set(:@data, { "alias" => "target.COUNT[63:32]" })
+    field.instance_variable_set(:@cfg_arch, cfg_arch)
+
+    assert_equal 63..32, field.alias.range
   end
 end

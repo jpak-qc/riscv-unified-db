@@ -41,4 +41,5 @@ access:
   vu: always
 operation(): |
   XReg index = shamt & (xlen() - 1);
-  X[xd] = X[xs1] & ~(1 << index);
+  XReg mask = 1;
+  X[xd] = X[xs1] & ~(mask << index);

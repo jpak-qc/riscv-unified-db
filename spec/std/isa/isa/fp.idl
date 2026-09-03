@@ -20,6 +20,101 @@ Bits<32> SP_CANONICAL_NAN = 32'b0_11111111_10000000000000000000000;
 
 Bits<16> HP_CANONICAL_NAN = 16'b0_11111_1000000000;
 
+function is_hp_neg_inf? {
+  returns Boolean
+  arguments Bits<16> hp_value
+  description { Returns true if +hp_value+ is negative infinity. }
+  body { return hp_value == 16'hFC00; }
+}
+
+function is_hp_pos_inf? {
+  returns Boolean
+  arguments Bits<16> hp_value
+  description { Returns true if +hp_value+ is positive infinity. }
+  body { return hp_value == 16'h7C00; }
+}
+
+function is_hp_neg_norm? {
+  returns Boolean
+  arguments Bits<16> hp_value
+  description { Returns true if +hp_value+ is a negative normal number. }
+  body {
+    return (hp_value[15] == 1) && (hp_value[14:10] != 0) && (hp_value[14:10] != 5'h1F);
+  }
+}
+
+function is_hp_pos_norm? {
+  returns Boolean
+  arguments Bits<16> hp_value
+  description { Returns true if +hp_value+ is a positive normal number. }
+  body {
+    return (hp_value[15] == 0) && (hp_value[14:10] != 0) && (hp_value[14:10] != 5'h1F);
+  }
+}
+
+function is_hp_neg_subnorm? {
+  returns Boolean
+  arguments Bits<16> hp_value
+  description { Returns true if +hp_value+ is a negative subnormal number. }
+  body { return (hp_value[15] == 1) && (hp_value[14:10] == 0) && (hp_value[9:0] != 0); }
+}
+
+function is_hp_pos_subnorm? {
+  returns Boolean
+  arguments Bits<16> hp_value
+  description { Returns true if +hp_value+ is a positive subnormal number. }
+  body { return (hp_value[15] == 0) && (hp_value[14:10] == 0) && (hp_value[9:0] != 0); }
+}
+
+function is_hp_neg_zero? {
+  returns Boolean
+  arguments Bits<16> hp_value
+  description { Returns true if +hp_value+ is negative zero. }
+  body { return hp_value == 16'h8000; }
+}
+
+function is_hp_pos_zero? {
+  returns Boolean
+  arguments Bits<16> hp_value
+  description { Returns true if +hp_value+ is positive zero. }
+  body { return hp_value == 0; }
+}
+
+function is_hp_nan? {
+  returns Boolean
+  arguments Bits<16> hp_value
+  description { Returns true if +hp_value+ is a NaN. }
+  body { return (hp_value[14:10] == 5'h1F) && (hp_value[9:0] != 0); }
+}
+
+function is_hp_signaling_nan? {
+  returns Boolean
+  arguments Bits<16> hp_value
+  description { Returns true if +hp_value+ is a signaling NaN. }
+  body {
+    return (hp_value[14:10] == 5'h1F) && (hp_value[9] == 0) && (hp_value[8:0] != 0);
+  }
+}
+
+function hp_equal? {
+  returns Boolean
+  arguments Bits<16> a, Bits<16> b
+  description { Compares two non-NaN half-precision values for equality. }
+  body { return (a == b) || ((a[14:0] | b[14:0]) == 0); }
+}
+
+function hp_less_than? {
+  returns Boolean
+  arguments Bits<16> a, Bits<16> b
+  description { Compares two non-NaN half-precision values. }
+  body {
+    Bits<1> sign_a = a[15];
+    Bits<1> sign_b = b[15];
+    return ((sign_a != sign_b) && (sign_a == 1) && ((a[14:0] | b[14:0]) != 0)) ||
+           ((sign_a == sign_b) && (a != b) && ((sign_a ^ ((a < b) ? 1'b1 : 1'b0)) != 0));
+  }
+}
+
 Bits<32> WORD_NEG_OVERFLOW = 32'h8000_0000; # minimum signed 32-bit integer
 Bits<32> WORD_POS_OVERFLOW = 32'h7FFF_FFFF; # maximum signed 32-bit integer
 
@@ -78,6 +173,7 @@ function set_fp_flag {
     } else if (flag == FpFlag::NV) {
       CSR[fcsr].NV = 1;
     }
+    mark_f_state_dirty();
   }
 }
 
@@ -118,10 +214,12 @@ function mark_f_state_dirty {
     Potentially updates `mstatus.FS` to the Dirty (3) state, depending on configuration settings.
   }
   body {
-    if (HW_MSTATUS_FS_DIRTY_UPDATE== "precise") {
-      CSR[mstatus].FS = 3; # set dirty state
-    } else if (HW_MSTATUS_FS_DIRTY_UPDATE == "imprecise") {
-      unpredictable("The hart may or may not update mstatus.FS now");
+    if (implemented?(ExtensionName::Sm)) {
+      if (HW_MSTATUS_FS_DIRTY_UPDATE == "precise") {
+        CSR[mstatus].FS = 3; # set dirty state
+      } else if (HW_MSTATUS_FS_DIRTY_UPDATE == "imprecise") {
+        unpredictable("The hart may or may not update mstatus.FS now");
+      }
     }
   }
 }
@@ -136,7 +234,70 @@ function nan_box {
   body {
     assert(FROM_SIZE < TO_SIZE, "Bad arguments; FROM_SIZE must be less than TO_SIZE");
 
-    return {{TO_SIZE - FROM_SIZE{1'b1}}, from_value};
+    return {{TO_SIZE - FROM_SIZE{1'b1}}, from_value[FROM_SIZE-1:0]};
+  }
+}
+
+function f32_operand {
+  returns Bits<32>
+  arguments Bits<64> f_value
+  description {
+    Reads a single-precision value from an FP register, converting an
+    incorrectly NaN-boxed value to the canonical NaN when D is implemented.
+  }
+  body {
+    if (implemented?(ExtensionName::D) && f_value[63:32] != 32'hffffffff) {
+      return SP_CANONICAL_NAN;
+    }
+
+    return f_value[31:0];
+  }
+}
+
+function f32_result {
+  returns Bits<64>
+  arguments Bits<32> value
+  description {
+    Produces the FP-register representation of a single-precision result.
+  }
+  body {
+    if (implemented?(ExtensionName::D)) {
+      return 64'hFFFFFFFF00000000 | value;
+    }
+
+    return value;
+  }
+}
+
+function f16_operand {
+  returns Bits<16>
+  arguments Bits<64> f_value
+  description {
+    Reads a half-precision value from an FP register, converting an incorrectly
+    NaN-boxed value to the canonical NaN.
+  }
+  body {
+    if (implemented?(ExtensionName::D) && f_value[63:16] != 48'hFFFFFFFFFFFF) {
+      return HP_CANONICAL_NAN;
+    }
+    if (!implemented?(ExtensionName::D) && f_value[31:16] != 16'hFFFF) {
+      return HP_CANONICAL_NAN;
+    }
+    return f_value[15:0];
+  }
+}
+
+function f16_result {
+  returns Bits<64>
+  arguments Bits<16> value
+  description {
+    Produces the FP-register representation of a half-precision result.
+  }
+  body {
+    if (implemented?(ExtensionName::D)) {
+      return 64'hFFFFFFFFFFFF0000 | value;
+    }
+    return 32'hFFFF0000 | value;
   }
 }
 
@@ -154,6 +315,34 @@ function check_f_ok {
 
     if (CSR[mstatus].FS == 0) {
       raise(ExceptionCode::IllegalInstruction, mode(), encoding);
+    }
+  }
+}
+
+function check_fcsr_ok {
+  arguments
+    Bits<12> csr_addr,
+    Bits<INSTR_ENC_SIZE> encoding
+  description {
+    Checks whether an access to an F-extension control and status register is
+    permitted by the floating-point state.
+  }
+  body {
+    if ((csr_addr == 12'h001) || (csr_addr == 12'h002) || (csr_addr == 12'h003)) {
+      check_f_ok(encoding);
+    }
+  }
+}
+
+function mark_fcsr_state_dirty {
+  arguments Bits<12> csr_addr
+  description {
+    Marks floating-point state dirty after a successful software write to an
+    F-extension control and status register.
+  }
+  body {
+    if ((csr_addr == 12'h001) || (csr_addr == 12'h002) || (csr_addr == 12'h003)) {
+      mark_f_state_dirty();
     }
   }
 }
@@ -471,7 +660,7 @@ function f32_muladd {
       if (sigC != 0) {
         return SP_CANONICAL_NAN;
       }
-      return c;
+      return packToF32UI(signC, 0xFF, 0);
     }
 
     # Handle zero/subnormal A
@@ -480,7 +669,7 @@ function f32_muladd {
         if (((expC | sigC) == 0) && (signProd != signC)) {
           return packToF32UI((mode == RoundingMode::RDN) ? 1 : 0, 0, 0);
         }
-        return c;
+        return packToF32UI(signC, expC, sigC);
       }
       ExpAndSig norm = softfloat_normSubnormalF32Sig(sigA);
       expA = norm.exp;
@@ -493,7 +682,7 @@ function f32_muladd {
         if (((expC | sigC) == 0) && (signProd != signC)) {
           return packToF32UI((mode == RoundingMode::RDN) ? 1 : 0, 0, 0);
         }
-        return c;
+        return packToF32UI(signC, expC, sigC);
       }
       ExpAndSig norm = softfloat_normSubnormalF32Sig(sigB);
       expB = norm.exp;
@@ -539,7 +728,7 @@ function f32_muladd {
         sigZ = softfloat_shiftRightJam64(sig64Z, 32);
       }
       if (sigZ < 0x40000000) {
-        expZ = expZ - 1;
+        expZ = expZ `- 1;
         sigZ = sigZ << 1;
       }
       return softfloat_roundPackToF32(signZ, expZ, sigZ, mode);
@@ -565,7 +754,7 @@ function f32_muladd {
         sig64Z = sigProd - softfloat_shiftRightJam64(sig64C, expDiff);
       }
       Bits<8> shiftDist = count_leading_zeros_64(64, sig64Z) - 1;
-      expZ = expZ - shiftDist;
+      expZ = expZ `- shiftDist;
       shiftDist = shiftDist - 8'h20;
       if ($signed(shiftDist) < 0s) {
         sigZ = softfloat_shiftRightJam64(sig64Z, -shiftDist);
@@ -613,7 +802,7 @@ function f32_sqrt {
     }
 
     Bits<16> adjExp = expA - 16'h007F;
-    Bits<16> expZ = ((adjExp >> 1) ^ (adjExp & 16'h8000)) + 16'h007E;
+    Bits<16> expZ = (adjExp >>> 1) + 16'h007E;
     Bits<1> oddExpA = expA[0];
     Bits<32> sigA32 = (fracA | 32'h00800000) << 8;
     Bits<32> sigZ = (sigA32 `* softfloat_approxRecipSqrt32_1(oddExpA, sigA32)) >> 32;
@@ -640,11 +829,11 @@ function f32_sqrt {
 # Lookup tables for reciprocal and reciprocal-sqrt approximation (Berkeley Softfloat)
 Bits<16> softfloat_approxRecip_1k0s[16] = [
   0xFFC4, 0xF0BE, 0xE363, 0xD76F, 0xCCAD, 0xC2F0, 0xBA16, 0xB201,
-  0xAA97, 0xA3C1, 0x9D49, 0x9715, 0x9128, 0x8B7C, 0x8600, 0x80B6
+  0xAA97, 0xA3C6, 0x9D7A, 0x97A6, 0x923C, 0x8D32, 0x887E, 0x8417
 ];
 Bits<16> softfloat_approxRecip_1k1s[16] = [
-  0xF0F1, 0xD62C, 0xBFA1, 0xAC77, 0x9C0A, 0x8DDE, 0x8185, 0x7709,
-  0x6E7D, 0x6794, 0x6188, 0x5C71, 0x5764, 0x52BE, 0x4E55, 0x4A67
+  0xF0F1, 0xD62C, 0xBFA1, 0xAC77, 0x9C0A, 0x8DDB, 0x8185, 0x76BA,
+  0x6D3B, 0x64D4, 0x5D5C, 0x56B1, 0x50B6, 0x4B55, 0x4679, 0x4211
 ];
 Bits<16> softfloat_approxRecipSqrt_1k0s[16] = [
   0xB4C9, 0xFFAB, 0xAA7D, 0xF11C, 0xA1C5, 0xE4C7, 0x9A43, 0xDA29,
@@ -652,7 +841,7 @@ Bits<16> softfloat_approxRecipSqrt_1k0s[16] = [
 ];
 Bits<16> softfloat_approxRecipSqrt_1k1s[16] = [
   0xA5A5, 0xEA42, 0x8C21, 0xC62D, 0x788F, 0xAA7F, 0x6928, 0x94B6,
-  0x5CC7, 0x8335, 0x52A6, 0x74EA, 0x4A3E, 0x68C8, 0x42BC, 0x5EFF
+  0x5CC7, 0x8335, 0x52A6, 0x74E2, 0x4A3E, 0x68FE, 0x432B, 0x5EFD
 ];
 
 function softfloat_approxRecip32_1 {
@@ -1095,7 +1284,7 @@ function softfloat_roundToUI32 {
       roundIncrement = 0;
       if ( sign == 1) {
         if (sig == 0) { return 0; }
-        if (roundingMode == RoundingMode::RDN) { set_fp_flag(FpFlag::NV); }
+        if (roundingMode == RoundingMode::RDN) { roundIncrement = 0xFFF; }
       } else {
         if (roundingMode == RoundingMode::RUP) { roundIncrement = 0xFFF; }
       }
@@ -1142,16 +1331,400 @@ function packToF32UI {
 }
 
 function packToF16UI {
-  returns Bits<32>
+  returns Bits<16>
   arguments
     Bits<1> sign,
     Bits<5> exp,
-    Bits<10> sig
+    Bits<16> sig
   description {
     Pack components into a 16-bit value
   }
   body {
-    return {sign, exp, sig};
+    return (sign `<< 15) + (exp `<< 10) + sig;
+  }
+}
+
+function f16_to_f32 {
+  returns Bits<32>
+  arguments Bits<16> a
+  description {
+    Converts a binary16 value to binary32 without changing floating-point flags.
+  }
+  body {
+    Bits<1> sign = a[15];
+    Bits<5> exp = a[14:10];
+    Bits<10> frac = a[9:0];
+
+    if (exp == 5'h1F) {
+      if (is_hp_signaling_nan?(a)) { set_fp_flag(FpFlag::NV); }
+      if (frac != 0) { return SP_CANONICAL_NAN; }
+      return packToF32UI(sign, 8'hFF, 0);
+    }
+    if (exp == 0) {
+      if (frac == 0) { return packToF32UI(sign, 0, 0); }
+      Bits<8> shiftDist = count_leading_zeros(10, frac);
+      Bits<10> normFrac = frac << (shiftDist + 1);
+      return packToF32UI(sign, 8'h70 - shiftDist, normFrac `<< 13);
+    }
+    return packToF32UI(sign, exp + 8'h70, frac `<< 13);
+  }
+}
+
+function softfloat_roundPackToF16 {
+  returns Bits<16>
+  arguments
+    Bits<1> sign,
+    Bits<16> exp,
+    Bits<16> sig,
+    RoundingMode mode
+  description {
+    Rounds and packs a binary16 significand using the SoftFloat convention.
+  }
+  body {
+    Bits<16> roundIncrement = 16'h0008;
+    if ((mode != RoundingMode::RNE) && (mode != RoundingMode::RMM)) {
+      roundIncrement =
+        (mode == ((sign != 0) ? RoundingMode::RDN : RoundingMode::RUP)) ? 16'h000F : 0;
+    }
+    Bits<16> roundBits = sig & 16'h000F;
+
+    if (16'h001D <= exp) {
+      if ($signed(exp) < 's0) {
+        Boolean isTiny = (exp < 16'hFFFF) || (sig + roundIncrement < 16'h8000);
+        Bits<16> shiftDist = -$signed(exp);
+        sig = softfloat_shiftRightJam32(sig, shiftDist);
+        exp = 0;
+        roundBits = sig & 16'h000F;
+        if (isTiny && (roundBits != 0)) { set_fp_flag(FpFlag::UF); }
+      } else if ((16'h001D < exp) || (16'h8000 <= sig + roundIncrement)) {
+        set_fp_flag(FpFlag::OF);
+        set_fp_flag(FpFlag::NX);
+        return packToF16UI(sign, 5'h1F, 0) - ((roundIncrement == 0) ? 1 : 0);
+      }
+    }
+
+    sig = (sig + roundIncrement) >> 4;
+    if (roundBits != 0) { set_fp_flag(FpFlag::NX); }
+    if ((roundBits == 16'h0008) && (mode == RoundingMode::RNE)) { sig = sig & ~16'h0001; }
+    if (sig == 0) { exp = 0; }
+    return packToF16UI(sign, exp, sig);
+  }
+}
+
+function f32_to_f16 {
+  returns Bits<16>
+  arguments
+    Bits<32> a,
+    RoundingMode mode
+  description {
+    Converts a binary32 value to binary16 using the requested rounding mode.
+  }
+  body {
+    Bits<1> sign = signF32UI(a);
+    Bits<16> exp = expF32UI(a);
+    Bits<32> frac = fracF32UI(a);
+
+    if (exp == 8'hFF) {
+      if (frac != 0) {
+        if (is_sp_signaling_nan?(a)) { set_fp_flag(FpFlag::NV); }
+        return HP_CANONICAL_NAN;
+      }
+      return packToF16UI(sign, 5'h1F, 0);
+    }
+
+    Bits<16> frac16 = softfloat_shiftRightJam32(frac, 9);
+    if ((exp | frac16) == 0) { return packToF16UI(sign, 0, 0); }
+    Bits<16> z = softfloat_roundPackToF16(sign, exp - 16'h0071, 16'h4000 | frac16, mode);
+
+    # Keep the inexact flag tied to the binary16 result.  The intermediate
+    # binary32 arithmetic can otherwise conceal discarded low-order bits.
+    if (!is_sp_nan?(a) && (f16_to_f32(z) != a)) {
+      set_fp_flag(FpFlag::NX);
+    }
+    return z;
+  }
+}
+
+function f32_to_f16_rod {
+  returns Bits<16>
+  arguments Bits<32> a
+  description { Converts binary32 to binary16 using round-to-odd. }
+  body {
+    Bits<16> result = f32_to_f16(a, RoundingMode::RTZ);
+    if (!is_sp_nan?(a) && (f16_to_f32(result) != a)) {
+      result = result | 1;
+    }
+    return result;
+  }
+}
+
+function f16_add {
+  returns Bits<16>
+  arguments Bits<16> a, Bits<16> b, RoundingMode mode
+  description { Adds two binary16 values. }
+  body { return f32_to_f16(f32_add(f16_to_f32(a), f16_to_f32(b), mode), mode); }
+}
+
+function f16_sub {
+  returns Bits<16>
+  arguments Bits<16> a, Bits<16> b, RoundingMode mode
+  description { Subtracts two binary16 values. }
+  body { return f32_to_f16(f32_sub(f16_to_f32(a), f16_to_f32(b), mode), mode); }
+}
+
+function f16_mul {
+  returns Bits<16>
+  arguments Bits<16> a, Bits<16> b, RoundingMode mode
+  description { Multiplies two binary16 values. }
+  body { return f32_to_f16(f32_mul(f16_to_f32(a), f16_to_f32(b), mode), mode); }
+}
+
+function f16_div {
+  returns Bits<16>
+  arguments Bits<16> a, Bits<16> b, RoundingMode mode
+  description { Divides two binary16 values. }
+  body { return f32_to_f16(f32_div(f16_to_f32(a), f16_to_f32(b), mode), mode); }
+}
+
+function f16_sqrt {
+  returns Bits<16>
+  arguments Bits<16> a, RoundingMode mode
+  description { Computes the square root of a binary16 value. }
+  body { return f32_to_f16(f32_sqrt(f16_to_f32(a), mode), mode); }
+}
+
+Bits<7> vfrec7_sig_table[128] = [
+  127, 125, 123, 121, 119, 117, 116, 114, 112, 110, 109, 107, 105, 104, 102, 100,
+   99,  97,  96,  94,  93,  91,  90,  88,  87,  85,  84,  83,  81,  80,  79,  77,
+   76,  75,  74,  72,  71,  70,  69,  68,  66,  65,  64,  63,  62,  61,  60,  59,
+   58,  57,  56,  55,  54,  53,  52,  51,  50,  49,  48,  47,  46,  45,  44,  43,
+   42,  41,  40,  40,  39,  38,  37,  36,  35,  35,  34,  33,  32,  31,  31,  30,
+   29,  28,  28,  27,  26,  25,  25,  24,  23,  23,  22,  21,  21,  20,  19,  19,
+   18,  17,  17,  16,  15,  15,  14,  14,  13,  12,  12,  11,  11,  10,   9,   9,
+    8,   8,   7,   7,   6,   5,   5,   4,   4,   3,   3,   2,   2,   1,   1,   0
+];
+
+Bits<7> vfrsqrt7_sig_table[128] = [
+  7'h34,  51,  50,  48,  47,  46,  44,  43,  42,  41,  40,  39,  38,  36,  35,  34,
+   33,  32,  31,  30,  30,  29,  28,  27,  26,  25,  24,  23,  23,  22,  21,  20,
+   19,  19,  18,  17,  16,  16,  15,  14,  14,  13,  12,  12,  11,  10,  10,   9,
+    9,   8,   7,   7,   6,   6,   5,   4,   4,   3,   3,   2,   2,   1,   1,   0,
+  127, 125, 123, 121, 119, 118, 116, 114, 113, 111, 109, 108, 106, 105, 103, 102,
+  100,  99,  97,  96,  95,  93,  92,  91,  90,  88,  87,  86,  85,  84,  83,  82,
+   80,  79,  78,  77,  76,  75,  74,  73,  72,  71,  70,  70,  69,  68,  67,  66,
+   65,  64,  63,  63,  62,  61,  60,  59,  59,  58,  57,  56,  56,  55,  54,  53
+];
+
+function vfrec7_sig {
+  returns Bits<7>
+  arguments Bits<7> index
+  description { Returns the mandated vfrec7 table entry. }
+  body {
+    return vfrec7_sig_table[index];
+  }
+}
+
+function vfrsqrt7_sig {
+  returns Bits<7>
+  arguments Bits<7> index
+  description { Returns the mandated vfrsqrt7 table entry. }
+  body {
+    return vfrsqrt7_sig_table[index];
+  }
+}
+
+function f16_muladd {
+  returns Bits<16>
+  arguments Bits<16> a, Bits<16> b, Bits<16> c, F32MulAddOp op, RoundingMode mode
+  description { Computes a fused multiply-add on binary16 operands. }
+  body {
+    # A binary32 FMA can double-round a binary16 result.  Binary16 operands
+    # and their exact product are representable in binary64, so perform the
+    # fused operation there and round directly to binary16.
+    Bits<64> a64 = f32_to_f64(f16_to_f32(a));
+    Bits<64> b64 = f32_to_f64(f16_to_f32(b));
+    Bits<64> c64 = f32_to_f64(f16_to_f32(c));
+    return f64_to_f16(f64_muladd(a64, b64, c64, op, mode), mode);
+  }
+}
+
+function f32_to_i8 {
+  returns Bits<8>
+  arguments Bits<32> a, RoundingMode mode
+  description { Converts a binary32 value to a signed 8-bit integer. }
+  body {
+    Bits<1> sign = signF32UI(a);
+    Bits<16> exp = expF32UI(a);
+    Bits<32> frac = fracF32UI(a);
+
+    if (exp == 8'hFF) {
+      set_fp_flag(FpFlag::NV);
+      return (frac != 0 || sign == 0) ? 8'h7F : 8'h80;
+    }
+
+    Boolean invalid = false;
+    if (sign == 0) {
+      if ((mode == RoundingMode::RNE) || (mode == RoundingMode::RMM)) {
+        invalid = a >= 32'h42FF0000; # +127.5
+      } else if ((mode == RoundingMode::RTZ) || (mode == RoundingMode::RDN)) {
+        invalid = a >= 32'h43000000; # +128
+      } else {
+        invalid = a > 32'h42FE0000; # +127
+      }
+    } else {
+      if (mode == RoundingMode::RNE) {
+        invalid = a > 32'hC3008000; # -128.5 rounds to -128 (even)
+      } else if (mode == RoundingMode::RMM) {
+        invalid = a >= 32'hC3008000;
+      } else {
+        invalid = a > 32'hC3000000; # -128
+      }
+    }
+    if (invalid) {
+      set_fp_flag(FpFlag::NV);
+      return (sign == 1) ? 8'h80 : 8'h7F;
+    }
+
+    Bits<32> z = f32_to_i32(a, mode);
+    return z[7:0];
+  }
+}
+
+function f32_to_ui8 {
+  returns Bits<8>
+  arguments Bits<32> a, RoundingMode mode
+  description { Converts a binary32 value to an unsigned 8-bit integer. }
+  body {
+    Bits<1> sign = signF32UI(a);
+    Bits<16> exp = expF32UI(a);
+
+    if (exp == 8'hFF) {
+      set_fp_flag(FpFlag::NV);
+      return (fracF32UI(a) != 0 || sign == 0) ? 8'hFF : 0;
+    }
+
+    Boolean invalid = false;
+    if (sign == 0) {
+      if ((mode == RoundingMode::RNE) || (mode == RoundingMode::RMM)) {
+        invalid = a >= 32'h437F8000; # +255.5
+      } else if ((mode == RoundingMode::RTZ) || (mode == RoundingMode::RDN)) {
+        invalid = a >= 32'h43800000; # +256
+      } else {
+        invalid = a > 32'h437F0000; # +255
+      }
+    } else if (mode == RoundingMode::RNE) {
+      invalid = a > 32'hBF000000; # -0.5 rounds to zero (even)
+    } else if (mode == RoundingMode::RMM) {
+      invalid = a >= 32'hBF000000;
+    } else if ((mode == RoundingMode::RTZ) || (mode == RoundingMode::RUP)) {
+      invalid = a >= 32'hBF800000; # -1
+    } else {
+      invalid = a != 32'h80000000; # negative zero is the sole valid RDN case
+    }
+    if (invalid) {
+      set_fp_flag(FpFlag::NV);
+      return (sign == 0) ? 8'hFF : 0;
+    }
+
+    Bits<32> z = f32_to_ui32(a, mode);
+    return z[7:0];
+  }
+}
+
+function f32_to_i16 {
+  returns Bits<16>
+  arguments Bits<32> a, RoundingMode mode
+  description { Converts a binary32 value to a signed 16-bit integer. }
+  body {
+    Bits<1> sign = signF32UI(a);
+    Bits<16> exp = expF32UI(a);
+    Bits<32> frac = fracF32UI(a);
+
+    if (exp == 8'hFF) {
+      set_fp_flag(FpFlag::NV);
+      return (frac != 0 || sign == 0) ? 16'h7FFF : 16'h8000;
+    }
+
+    # Detect invalid results before the 32-bit conversion can set NX for a
+    # discarded fractional part.  IEEE 754 requires NV alone in this case.
+    Boolean invalid = false;
+    if (sign == 0) {
+      if ((mode == RoundingMode::RNE) || (mode == RoundingMode::RMM)) {
+        invalid = a >= 32'h46FFFF00; # +32767.5
+      } else if ((mode == RoundingMode::RTZ) || (mode == RoundingMode::RDN)) {
+        invalid = a >= 32'h47000000; # +32768
+      } else {
+        invalid = a > 32'h46FFFE00; # +32767
+      }
+    } else {
+      if (mode == RoundingMode::RNE) {
+        invalid = a > 32'hC7000080; # -32768.5 rounds to -32768 (even)
+      } else if (mode == RoundingMode::RMM) {
+        invalid = a >= 32'hC7000080;
+      } else {
+        invalid = a > 32'hC7000000; # -32768
+      }
+    }
+    if (invalid) {
+      set_fp_flag(FpFlag::NV);
+      return (sign == 1) ? 16'h8000 : 16'h7FFF;
+    }
+
+    Bits<32> z = f32_to_i32(a, mode);
+    if ($signed(z) > $signed(32'h00007FFF)) {
+      set_fp_flag(FpFlag::NV);
+      return 16'h7FFF;
+    }
+    if ($signed(z) < $signed(32'hFFFF8000)) {
+      set_fp_flag(FpFlag::NV);
+      return 16'h8000;
+    }
+    return z[15:0];
+  }
+}
+
+function f32_to_ui16 {
+  returns Bits<16>
+  arguments Bits<32> a, RoundingMode mode
+  description { Converts a binary32 value to an unsigned 16-bit integer. }
+  body {
+    Bits<1> sign = signF32UI(a);
+    Bits<16> exp = expF32UI(a);
+
+    if (exp == 8'hFF) {
+      set_fp_flag(FpFlag::NV);
+      return (fracF32UI(a) != 0 || sign == 0) ? 16'hFFFF : 0;
+    }
+
+    Boolean invalid = false;
+    if (sign == 0) {
+      if ((mode == RoundingMode::RNE) || (mode == RoundingMode::RMM)) {
+        invalid = a >= 32'h477FFF80; # +65535.5
+      } else if ((mode == RoundingMode::RTZ) || (mode == RoundingMode::RDN)) {
+        invalid = a >= 32'h47800000; # +65536
+      } else {
+        invalid = a > 32'h477FFF00; # +65535
+      }
+    } else if (mode == RoundingMode::RNE) {
+      invalid = a > 32'hBF000000; # -0.5 rounds to zero (even)
+    } else if (mode == RoundingMode::RMM) {
+      invalid = a >= 32'hBF000000;
+    } else if ((mode == RoundingMode::RTZ) || (mode == RoundingMode::RUP)) {
+      invalid = a >= 32'hBF800000; # -1
+    } else {
+      invalid = a != 32'h80000000; # negative zero is the sole valid RDN case
+    }
+    if (invalid) {
+      set_fp_flag(FpFlag::NV);
+      return (sign == 0) ? 16'hFFFF : 0;
+    }
+
+    Bits<32> z = f32_to_ui32(a, mode);
+    if (z > 32'h0000FFFF) {
+      set_fp_flag(FpFlag::NV);
+      return 16'hFFFF;
+    }
+    return z[15:0];
   }
 }
 
@@ -1191,8 +1764,9 @@ function softfloat_roundPackToF32 {
     if ( 0xFD <= exp ) {
       if ($signed(exp) < 's0) {
         Boolean isTiny =
-          ($signed(exp) < -8's1) || (sig + roundIncrement < 0x80000000);
-        sig = softfloat_shiftRightJam32( sig, -exp );
+          (exp < 16'hFFFF) || (sig + roundIncrement < 0x80000000);
+        Bits<16> f32_shift_dist = -$signed(exp);
+        sig = softfloat_shiftRightJam32( sig, f32_shift_dist );
         exp = 0;
         roundBits = sig & 0x7F;
         if (isTiny && (roundBits != 0)) {
@@ -1367,8 +1941,9 @@ function softfloat_addMagsF32 {
 
     if (expDiff == 16'd0) {
       if (expA == 8'd0) {
-        z = a + b;
-        return z; # if exponents of both numbers are zero, then return sum of both numbers
+        Bits<1> signZ_sub = signF32UI(a);
+        U32 sig_sum = sigA + sigB;
+        return packToF32UI(signZ_sub, 0, sig_sum);
       }
 
       # check if A is infinity or NaN
@@ -1389,8 +1964,8 @@ function softfloat_addMagsF32 {
       if (((sigZ & 0x1) == 0) && (expZ < 8'hFE)) {
         # if significand is even, remove trailing zero
         sigZ = sigZ >> 1;
-        # pack the sign, exponent and significand
-        return (32'h0 + (signZ << 31) + (expZ << 23) + sigZ);
+        # use XReg (32-bit) promotion for expZ to avoid truncation in shift << 23
+        return (32'h0 + (signZ `<< 31) + (expZ `<< 23) + sigZ);
       }
 
       sigZ = sigZ << 6;
@@ -1409,7 +1984,7 @@ function softfloat_addMagsF32 {
           if (sigB != 0) {
             return SP_CANONICAL_NAN;
           }
-          # return infinity with same sign as A
+          # return infinity with correct sign (signZ already accounts for sub vs add context)
           return packToF32UI(signZ, 8'hFF, 23'h0);
         }
         expZ  = expB;
@@ -1470,7 +2045,7 @@ function softfloat_subMagsF32 {
     Bits<1> signZ;
 
     # declare a variable to store the exponent part of difference
-    Bits<8> expZ;
+    Bits<16> expZ;
 
     # declare a variable to store the difference in significand
     U32 sigDiff;
@@ -1489,34 +2064,35 @@ function softfloat_subMagsF32 {
 
       # check if A is infinity or NaN
       if (expA == 8'hFF) {
+        # If either is NaN (sig != 0), return canonical NaN
+        # sNaN was already checked above; for qNaN, no NV
+        if ((sigA != 0) || (sigB != 0)) {
+          return SP_CANONICAL_NAN;
+        }
+        # Inf - Inf: invalid operation
         set_fp_flag(FpFlag::NV);
         return SP_CANONICAL_NAN;
       }
 
-      sigDiff = sigA - sigB;
-
-      # check if no difference in significand
-      if (sigDiff == 0) {
-        # return -0 if rounding mode is round down, else return +0
+      signZ = signF32UI(a);
+      if (sigA == sigB) {
         return packToF32UI(((mode == RoundingMode::RDN) ? 1 : 0),0,0);
+      }
+      if (sigA < sigB) {
+        signZ = signZ ^ 1'b1;
+        sigDiff = sigB - sigA;
+      } else {
+        sigDiff = sigA - sigB;
       }
 
       if (expA != 0) {
         expA = expA - 1;
       }
 
-      signZ = signF32UI(a);
-
-      # if difference is negative, change the sign of the result
-      if (sigDiff < 0) {
-        signZ = ~signZ;
-        sigDiff = -32'sh1 * sigDiff;
-      }
-
       shiftDist = count_leading_zeros(32, sigDiff) - 8;
       expZ = expA - shiftDist;
 
-      if (expZ < 0) {
+      if ($signed(expZ) < 's0) {
         shiftDist = expA;
         expZ       = 0;
       }
@@ -1529,7 +2105,7 @@ function softfloat_subMagsF32 {
       sigA = sigA << 7;
       sigB = sigB << 7;
       if ($signed(expDiff) < 0s) {
-        signZ = ~signZ;
+        signZ = signZ ^ 1'b1;
         if (expB == 0xFF) {
           if (sigB != 0) {
             return SP_CANONICAL_NAN;
@@ -1689,11 +2265,30 @@ function f32_to_ui32 {
     Bits<32> sig = fracF32UI(a);
     Bits<16> shiftDist;
     U64 sig64;
-    # for NaN return the highest positive value and set floating-point flag to invalid.
-    if ((exp == 8'hFF) && (sig != 0)) {
-      sign = 0;
+    # Detect every invalid input before rounding, since invalid conversions
+    # must not also raise NX.
+    if (exp == 8'hFF) {
       set_fp_flag(FpFlag::NV);
-      return UI32_NAN;
+      return (sig != 0 || sign == 0) ? UI32_NAN : UI32_NEG_OVERFLOW;
+    }
+
+    Boolean invalid = false;
+    if (sign == 1) {
+      if (mode == RoundingMode::RNE) {
+        invalid = a > 32'hBF000000; # -0.5 rounds to zero (even)
+      } else if (mode == RoundingMode::RMM) {
+        invalid = a >= 32'hBF000000;
+      } else if ((mode == RoundingMode::RTZ) || (mode == RoundingMode::RUP)) {
+        invalid = a >= 32'hBF800000; # -1
+      } else {
+        invalid = a != 32'h80000000; # negative zero is valid
+      }
+    } else {
+      invalid = a >= 32'h4F800000; # +2^32
+    }
+    if (invalid) {
+      set_fp_flag(FpFlag::NV);
+      return (sign == 0) ? UI32_POS_OVERFLOW : UI32_NEG_OVERFLOW;
     }
 
     # MSB of significand is set to 1 because minimum 32-bit integer in IEEE 754 is 32'h80000000
@@ -1736,8 +2331,9 @@ function softfloat_roundPackToF32_no_flag {
     if ( 0xFD <= exp ) {
       if ($signed(exp) < 's0) {
         Boolean isTiny =
-          ($signed(exp) < -8's1) || (sig + roundIncrement < 0x80000000);
-        sig = softfloat_shiftRightJam32( sig, -exp );
+          (exp < 16'hFFFF) || (sig + roundIncrement < 0x80000000);
+        Bits<16> f32_noflag_shift_dist = -$signed(exp);
+        sig = softfloat_shiftRightJam32( sig, f32_noflag_shift_dist );
         exp = 0;
         roundBits = sig & 0x7F;
       } else if ('shFD < $signed(exp) || (0x80000000 <= sig + roundIncrement)) {
@@ -1890,20 +2486,47 @@ function round_f32_to_integral {
     This 32-bit integer is represented as a floating point number and returned.
   }
   body {
-    if ((is_sp_neg_inf?(a)) || (is_sp_pos_inf?(a)) || (is_sp_pos_zero?(a)) || (is_sp_neg_zero?(a))) {
-      # Return zero or infinity respectively for zero or infinity inputs
-      return a;
-    } else if (is_sp_signaling_nan?(a)) {
-      # set invalid flag for signaling NaN
-      set_fp_flag(FpFlag::NV);
+    Bits<8> exp = expF32UI(a);
+    Bits<32> frac = fracF32UI(a);
+
+    if (exp <= 8'h7E) {
+      if ((a & 32'h7FFF_FFFF) == 0) { return a; }
+
+      Bits<32> result = a & 32'h8000_0000;
+      if ((mode == RoundingMode::RMM) && (exp == 8'h7E)) {
+        result = result | 32'h3F80_0000;
+      } else if ((mode == RoundingMode::RNE) && (exp == 8'h7E) && (frac != 0)) {
+        result = result | 32'h3F80_0000;
+      } else if ((mode == RoundingMode::RDN) && (a[31] == 1)) {
+        result = 32'hBF80_0000;
+      } else if ((mode == RoundingMode::RUP) && (a[31] == 0)) {
+        result = 32'h3F80_0000;
+      }
+      return result;
+    }
+
+    if (exp >= 8'h96) {
+      if ((exp == 8'hFF) && (frac != 0)) {
+        if (is_sp_signaling_nan?(a)) { set_fp_flag(FpFlag::NV); }
+        return SP_CANONICAL_NAN;
+      }
       return a;
     }
-    # intermediate variable for storing 32-bit rounded integer
-    U32 intermediate;
-    # round 32-bit floating point number to integer, no flags to be set
-    intermediate = f32_to_i32_no_flag(a, mode);
-    # represent the integer as floating point number
-    return i32_to_f32_no_flag(intermediate, mode);
+
+    Bits<32> lastBitMask = 32'h1 << (8'h96 - exp);
+    Bits<32> roundBitsMask = lastBitMask - 32'h1;
+    Bits<32> result = a;
+    if (mode == RoundingMode::RMM) {
+      result = result + (lastBitMask >> 1);
+    } else if (mode == RoundingMode::RNE) {
+      result = result + (lastBitMask >> 1);
+      if ((result & roundBitsMask) == 0) { result = result & ~lastBitMask; }
+    } else if ((mode == RoundingMode::RDN) && (a[31] == 1)) {
+      result = result + roundBitsMask;
+    } else if ((mode == RoundingMode::RUP) && (a[31] == 0)) {
+      result = result + roundBitsMask;
+    }
+    return result & ~roundBitsMask;
   }
 }
 
@@ -2063,5 +2686,1482 @@ function softfloat_roundToUI64 {
       set_fp_flag(FpFlag::NX);
     }
     return sig;
+  }
+}
+
+# ============================================================
+# Double-Precision (f64) IEEE 754 SoftFloat implementation
+# ============================================================
+
+# DP constants
+Bits<64> DP_POS_INF       = 64'b0_11111111111_0000000000000000000000000000000000000000000000000000;
+Bits<64> DP_NEG_INF       = 64'b1_11111111111_0000000000000000000000000000000000000000000000000000;
+Bits<64> DP_POS_ZERO      = 64'h0000_0000_0000_0000;
+Bits<64> DP_NEG_ZERO      = 64'h8000_0000_0000_0000;
+Bits<64> DP_CANONICAL_NAN = 64'h7FF8_0000_0000_0000;
+
+function packToF64UI {
+  returns Bits<64>
+  arguments
+    Bits<1> sign,
+    Bits<16> exp,
+    Bits<64> sig
+  description {
+    Pack components into a 64-bit double-precision value
+  }
+  body {
+    return (sign `<< 63) + (exp `<< 52) + sig;
+  }
+}
+
+function signF64UI {
+  returns Bits<1>
+  arguments
+    Bits<64> a
+  description {
+    Extract sign-bit of a 64-bit floating point number
+  }
+  body {
+    return a[63];
+  }
+}
+
+function expF64UI {
+  returns Bits<11>
+  arguments
+    Bits<64> a
+  description {
+    Extract exponent of a 64-bit floating point number
+  }
+  body {
+    return a[62:52];
+  }
+}
+
+function fracF64UI {
+  returns Bits<52>
+  arguments
+    Bits<64> a
+  description {
+    Extract significand of a 64-bit floating point number
+  }
+  body {
+    return a[51:0];
+  }
+}
+
+function is_dp_nan? {
+  returns Boolean
+  arguments Bits<64> a
+  description {
+    Returns true if a is a NaN (quiet or signaling)
+  }
+  body {
+    return (a[62:52] == 11'h7FF) && (a[51:0] != 0);
+  }
+}
+
+function is_dp_signaling_nan? {
+  returns Boolean
+  arguments Bits<64> a
+  description {
+    Returns true if a is a signaling NaN
+  }
+  body {
+    return (a[62:52] == 11'h7FF) && (a[51] == 0) && (a[50:0] != 0);
+  }
+}
+
+function is_dp_quiet_nan? {
+  returns Boolean
+  arguments Bits<64> a
+  description {
+    Returns true if a is a quiet NaN
+  }
+  body {
+    return (a[62:52] == 11'h7FF) && (a[51] == 1);
+  }
+}
+
+function is_dp_pos_inf? {
+  returns Boolean
+  arguments Bits<64> a
+  description {
+    Returns true if a is positive infinity
+  }
+  body {
+    return a == DP_POS_INF;
+  }
+}
+
+function is_dp_neg_inf? {
+  returns Boolean
+  arguments Bits<64> a
+  description {
+    Returns true if a is negative infinity
+  }
+  body {
+    return a == DP_NEG_INF;
+  }
+}
+
+function is_dp_pos_zero? {
+  returns Boolean
+  arguments Bits<64> a
+  description {
+    Returns true if a is positive zero
+  }
+  body {
+    return a == DP_POS_ZERO;
+  }
+}
+
+function is_dp_neg_zero? {
+  returns Boolean
+  arguments Bits<64> a
+  description {
+    Returns true if a is negative zero
+  }
+  body {
+    return a == DP_NEG_ZERO;
+  }
+}
+
+function is_dp_neg_norm? {
+  returns Boolean
+  arguments Bits<64> a
+  description {
+    Returns true if a is a negative normal number
+  }
+  body {
+    return (a[63] == 1) && (a[62:52] != 11'h7FF) && (a[62:52] != 0);
+  }
+}
+
+function is_dp_pos_norm? {
+  returns Boolean
+  arguments Bits<64> a
+  description {
+    Returns true if a is a positive normal number
+  }
+  body {
+    return (a[63] == 0) && (a[62:52] != 11'h7FF) && (a[62:52] != 0);
+  }
+}
+
+function is_dp_neg_subnorm? {
+  returns Boolean
+  arguments Bits<64> a
+  description {
+    Returns true if a is a negative subnormal number
+  }
+  body {
+    return (a[63] == 1) && (a[62:52] == 0) && (a[51:0] != 0);
+  }
+}
+
+function is_dp_pos_subnorm? {
+  returns Boolean
+  arguments Bits<64> a
+  description {
+    Returns true if a is a positive subnormal number
+  }
+  body {
+    return (a[63] == 0) && (a[62:52] == 0) && (a[51:0] != 0);
+  }
+}
+
+struct ExpAndSig64 {
+  Bits<16> exp;
+  Bits<64> sig;
+}
+
+function softfloat_normSubnormalF64Sig {
+  returns ExpAndSig64
+  arguments
+    Bits<64> sig
+  description {
+    Normalize a subnormal F64 significand.
+    Returns (exp, sig64) where exp is the adjusted exponent and sig64 is
+    the normalized significand with implicit leading 1 at bit 52.
+  }
+  body {
+    Bits<16> shiftDist = count_leading_zeros(64, sig) - 11;
+    ExpAndSig64 ret;
+    ret.exp = 1 - shiftDist;
+    ret.sig = sig << shiftDist;
+    return ret;
+  }
+}
+
+function softfloat_roundPackToF64 {
+  returns Bits<64>
+  arguments
+    Bits<1> sign,
+    Bits<16> exp,
+    Bits<64> sig,
+    RoundingMode mode
+  description {
+    Round FP value according to mode and then pack it in IEEE 754 double-precision format.
+    Translated from Berkeley Softfloat softfloat_roundPackToF64.
+  }
+  body {
+    Bits<16> roundIncrement = 0x200;
+    if ((mode != RoundingMode::RNE) && (mode != RoundingMode::RMM)) {
+      roundIncrement = (mode == ((sign != 0) ? RoundingMode::RDN : RoundingMode::RUP)) ? 0x3FF : 0;
+    }
+    Bits<16> roundBits = sig & 0x3FF;
+
+    if (0x7FD <= exp) {
+      if ($signed(exp) < 's0) {
+        Boolean isTiny = (exp < 16'hFFFF) || (sig + roundIncrement < 64'h8000000000000000);
+        Bits<16> shiftAmt = -$signed(exp);
+        sig = softfloat_shiftRightJam64(sig, shiftAmt);
+        exp = 0;
+        roundBits = sig & 0x3FF;
+        if (isTiny && (roundBits != 0)) { set_fp_flag(FpFlag::UF); }
+      } else if (16'sh7FD < $signed(exp) || (64'h8000000000000000 <= sig + roundIncrement)) {
+        set_fp_flag(FpFlag::OF);
+        set_fp_flag(FpFlag::NX);
+        return packToF64UI(sign, 0x7FF, 0) - ((roundIncrement == 0) ? 1 : 0);
+      }
+    }
+    sig = (sig + roundIncrement) >> 10;
+    if (roundBits != 0) { set_fp_flag(FpFlag::NX); }
+    if ((roundBits == 0x200) && (mode == RoundingMode::RNE)) { sig = sig & ~64'b1; }
+    if (sig == 0) { exp = 0; }
+    return packToF64UI(sign, exp, sig);
+  }
+}
+
+function softfloat_normRoundPackToF64 {
+  returns Bits<64>
+  arguments
+    Bits<1> sign,
+    Bits<16> exp,
+    Bits<64> sig,
+    RoundingMode mode
+  description {
+    Normalize, round, and pack into a 64-bit double-precision value.
+    Translated from Berkeley Softfloat softfloat_normRoundPackToF64.
+  }
+  body {
+    Bits<8> shiftDist = count_leading_zeros(64, sig) - 1;
+    exp = exp - shiftDist;
+    if ((10 <= shiftDist) && (exp < 0x7FD)) {
+      return packToF64UI(sign, (sig != 0) ? exp : 0, sig << (shiftDist - 10));
+    } else {
+      return softfloat_roundPackToF64(sign, exp, sig << shiftDist, mode);
+    }
+  }
+}
+
+function softfloat_addMagsF64 {
+  returns U64
+  arguments
+    U64 a,
+    U64 b,
+    RoundingMode mode
+  description {
+    Returns sum of the magnitudes of 2 double-precision floating point numbers.
+    Translated from Berkeley Softfloat softfloat_addMagsF64.
+  }
+  body {
+    if (is_dp_signaling_nan?(a) || is_dp_signaling_nan?(b)) {
+      set_fp_flag(FpFlag::NV);
+    }
+
+    Bits<16> expA = expF64UI(a);
+    Bits<64> sigA = fracF64UI(a);
+    Bits<16> expB = expF64UI(b);
+    Bits<64> sigB = fracF64UI(b);
+
+    U64 sigZ;
+    Bits<1> signZ;
+    Bits<16> expZ;
+    Bits<16> expDiff = expA - expB;
+
+    if (expDiff == 16'd0) {
+      if (expA == 11'h0) {
+        return (a + sigB);
+      }
+
+      if (expA == 11'h7FF) {
+        if ((sigA != 0) || (sigB != 0)) {
+          return DP_CANONICAL_NAN;
+        }
+        return a;
+      }
+
+      signZ = signF64UI(a);
+      expZ = expA;
+      sigZ = 64'h0020000000000000 + sigA + sigB;
+
+      if (((sigZ & 1) == 0) && (expZ < 16'h7FE)) {
+        sigZ = sigZ >> 1;
+        return (64'h0 + (signZ `<< 63) + (expZ `<< 52) + sigZ);
+      }
+
+      sigZ = sigZ << 9;
+    } else {
+      signZ = signF64UI(a);
+      sigA = sigA << 9;
+      sigB = sigB << 9;
+
+      if ($signed(expDiff) < 0s) {
+        if (expB == 11'h7FF) {
+          if (sigB != 0) {
+            return DP_CANONICAL_NAN;
+          }
+          return packToF64UI(signZ, 11'h7FF, 0);
+        }
+        expZ = expB;
+        sigA = (expA == 0) ? 2*sigA : (sigA + 64'h2000000000000000);
+        sigA = softfloat_shiftRightJam64(sigA, -expDiff);
+      } else {
+        if (expA == 11'h7FF) {
+          if (sigA != 0) {
+            return DP_CANONICAL_NAN;
+          }
+          return a;
+        }
+        expZ = expA;
+        sigB = (expB == 0) ? 2*sigB : (sigB + 64'h2000000000000000);
+        sigB = softfloat_shiftRightJam64(sigB, expDiff);
+      }
+
+      sigZ = 64'h2000000000000000 + sigA + sigB;
+      if (sigZ < 64'h4000000000000000) {
+        expZ = expZ - 1;
+        sigZ = sigZ << 1;
+      }
+    }
+    return softfloat_roundPackToF64(signZ, expZ, sigZ, mode);
+  }
+}
+
+function softfloat_subMagsF64 {
+  returns U64
+  arguments
+    U64 a,
+    U64 b,
+    RoundingMode mode
+  description {
+    Returns difference of the magnitudes of 2 double-precision floating point numbers.
+    Translated from Berkeley Softfloat softfloat_subMagsF64.
+  }
+  body {
+    if (is_dp_signaling_nan?(a) || is_dp_signaling_nan?(b)) {
+      set_fp_flag(FpFlag::NV);
+    }
+
+    Bits<16> expA = expF64UI(a);
+    Bits<64> sigA = fracF64UI(a);
+    Bits<16> expB = expF64UI(b);
+    Bits<64> sigB = fracF64UI(b);
+
+    U64 sigZ;
+    Bits<1> signZ;
+    Bits<16> expZ;
+    U64 sigDiff;
+    U64 sigX;
+    U64 sigY;
+    Bits<8> shiftDist;
+
+    Bits<16> expDiff = expA - expB;
+
+    if (expDiff == 16'd0) {
+      if (expA == 11'h7FF) {
+        if ((sigA != 0) || (sigB != 0)) {
+          return DP_CANONICAL_NAN;
+        }
+        set_fp_flag(FpFlag::NV);
+        return DP_CANONICAL_NAN;
+      }
+
+      signZ = signF64UI(a);
+      if (sigA == sigB) {
+        return packToF64UI(((mode == RoundingMode::RDN) ? 1 : 0), 0, 0);
+      }
+      if (sigA < sigB) {
+        signZ = signZ ^ 1'b1;
+        sigDiff = sigB - sigA;
+      } else {
+        sigDiff = sigA - sigB;
+      }
+
+      if (expA != 0) {
+        expA = expA - 1;
+      }
+
+      shiftDist = count_leading_zeros(64, sigDiff) - 11;
+      expZ = expA - shiftDist;
+
+      if ($signed(expZ) < 's0) {
+        shiftDist = expA;
+        expZ = 0;
+      }
+
+      return packToF64UI(signZ, expZ, sigDiff << shiftDist);
+
+    } else {
+      signZ = signF64UI(a);
+      sigA = sigA << 10;
+      sigB = sigB << 10;
+      if ($signed(expDiff) < 0s) {
+        signZ = signZ ^ 1'b1;
+        if (expB == 11'h7FF) {
+          if (sigB != 0) {
+            return DP_CANONICAL_NAN;
+          }
+          return packToF64UI(signZ, expB, 0);
+        }
+        expZ = expB - 1;
+        sigX = sigB | 64'h4000000000000000;
+        sigY = sigA + ((expA != 0) ? 64'h4000000000000000 : sigA);
+        expDiff = -expDiff;
+      } else {
+        if (expA == 11'h7FF) {
+          if (sigA != 0) {
+            return DP_CANONICAL_NAN;
+          }
+          return a;
+        }
+        expZ = expA - 1;
+        sigX = sigA | 64'h4000000000000000;
+        sigY = sigB + ((expB != 0) ? 64'h4000000000000000 : sigB);
+      }
+      return softfloat_normRoundPackToF64(signZ, expZ, sigX - softfloat_shiftRightJam64(sigY, expDiff), mode);
+    }
+  }
+}
+
+function f64_add {
+  returns U64
+  arguments
+    U64 a,
+    U64 b,
+    RoundingMode mode
+  description {
+    Returns sum of 2 double-precision floating point numbers
+  }
+  body {
+    U64 a_xor_b = a ^ b;
+    if (signF64UI(a_xor_b) == 1) {
+      return softfloat_subMagsF64(a, b, mode);
+    } else {
+      return softfloat_addMagsF64(a, b, mode);
+    }
+  }
+}
+
+function f64_sub {
+  returns U64
+  arguments
+    U64 a,
+    U64 b,
+    RoundingMode mode
+  description {
+    Returns difference of 2 double-precision floating point numbers
+  }
+  body {
+    U64 a_xor_b = a ^ b;
+    if (signF64UI(a_xor_b) == 1) {
+      return softfloat_addMagsF64(a, b, mode);
+    } else {
+      return softfloat_subMagsF64(a, b, mode);
+    }
+  }
+}
+
+function mul64Hi {
+  returns Bits<64>
+  arguments
+    Bits<64> a,
+    Bits<64> b
+  description {
+    Returns the upper 64 bits of the 128-bit product of two 64-bit unsigned integers.
+    Uses four 32x32->64 multiplies to compute the full 128-bit product.
+  }
+  body {
+    Bits<64> a_hi = a >> 32;
+    Bits<64> a_lo = a & 64'hFFFFFFFF;
+    Bits<64> b_hi = b >> 32;
+    Bits<64> b_lo = b & 64'hFFFFFFFF;
+
+    Bits<64> lo_lo = a_lo `* b_lo;
+    Bits<64> hi_lo = a_hi `* b_lo;
+    Bits<64> lo_hi = a_lo `* b_hi;
+    Bits<64> hi_hi = a_hi `* b_hi;
+
+    Bits<64> cross = (lo_lo >> 32) + (hi_lo & 64'hFFFFFFFF) + (lo_hi & 64'hFFFFFFFF);
+    return hi_hi + (hi_lo >> 32) + (lo_hi >> 32) + (cross >> 32);
+  }
+}
+
+function f64_mul {
+  returns U64
+  arguments
+    U64 a,
+    U64 b,
+    RoundingMode mode
+  description {
+    Multiplies two 64-bit double-precision floating point numbers.
+    Translated from Berkeley Softfloat f64_mul.
+  }
+  body {
+    if (is_dp_signaling_nan?(a) || is_dp_signaling_nan?(b)) {
+      set_fp_flag(FpFlag::NV);
+    }
+    Bits<1> signA = signF64UI(a);
+    Bits<16> expA = expF64UI(a);
+    Bits<64> fracA = fracF64UI(a);
+    Bits<1> signB = signF64UI(b);
+    Bits<16> expB = expF64UI(b);
+    Bits<64> fracB = fracF64UI(b);
+    Bits<1> signZ = signA ^ signB;
+
+    Bits<64> sigA = fracA;
+    Bits<64> sigB = fracB;
+    Bits<16> expZ;
+    Bits<64> sigZ;
+
+    if (expA == 11'h7FF) {
+      if ((fracA != 0) || ((expB == 11'h7FF) && (fracB != 0))) {
+        return DP_CANONICAL_NAN;
+      }
+      if ((expB == 0) && (fracB == 0)) {
+        set_fp_flag(FpFlag::NV);
+        return DP_CANONICAL_NAN;
+      }
+      return packToF64UI(signZ, 11'h7FF, 0);
+    }
+    if (expB == 11'h7FF) {
+      if (fracB != 0) {
+        return DP_CANONICAL_NAN;
+      }
+      if ((expA == 0) && (fracA == 0)) {
+        set_fp_flag(FpFlag::NV);
+        return DP_CANONICAL_NAN;
+      }
+      return packToF64UI(signZ, 11'h7FF, 0);
+    }
+
+    if (expA == 0) {
+      if (fracA == 0) { return packToF64UI(signZ, 0, 0); }
+      ExpAndSig64 norm = softfloat_normSubnormalF64Sig(fracA);
+      expA = norm.exp;
+      sigA = norm.sig;
+    }
+
+    if (expB == 0) {
+      if (fracB == 0) { return packToF64UI(signZ, 0, 0); }
+      ExpAndSig64 norm = softfloat_normSubnormalF64Sig(fracB);
+      expB = norm.exp;
+      sigB = norm.sig;
+    }
+
+    expZ = expA + expB - 16'h03FF;
+    sigA = (sigA | 64'h0010000000000000) << 10;
+    sigB = (sigB | 64'h0010000000000000) << 11;
+    Bits<64> sigZ_hi = mul64Hi(sigA, sigB);
+    Bits<64> sigZ_lo = sigA `* sigB;  # lower 64 bits for jam
+    sigZ = sigZ_hi | ((sigZ_lo != 0) ? 1 : 0);
+    if (sigZ < 64'h4000000000000000) {
+      expZ = expZ - 1;
+      sigZ = sigZ << 1;
+    }
+
+    return softfloat_roundPackToF64(signZ, expZ, sigZ, mode);
+  }
+}
+
+function f64_div {
+  returns U64
+  arguments
+    U64 a,
+    U64 b,
+    RoundingMode mode
+  description {
+    Divides two 64-bit double-precision floating point numbers.
+    Translated from Berkeley Softfloat f64_div.
+  }
+  body {
+    if (is_dp_signaling_nan?(a) || is_dp_signaling_nan?(b)) {
+      set_fp_flag(FpFlag::NV);
+    }
+    Bits<1> signA = signF64UI(a);
+    Bits<16> expA = expF64UI(a);
+    Bits<64> sigA = fracF64UI(a);
+    Bits<1> signB = signF64UI(b);
+    Bits<16> expB = expF64UI(b);
+    Bits<64> sigB = fracF64UI(b);
+    Bits<1> signZ = signA ^ signB;
+
+    Bits<16> expZ;
+
+    if (expA == 11'h7FF) {
+      if (sigA != 0) { return DP_CANONICAL_NAN; }
+      if (expB == 11'h7FF) {
+        if (sigB != 0) { return DP_CANONICAL_NAN; }
+        set_fp_flag(FpFlag::NV);
+        return DP_CANONICAL_NAN;
+      }
+      return packToF64UI(signZ, 11'h7FF, 0);
+    }
+    if (expB == 11'h7FF) {
+      if (sigB != 0) { return DP_CANONICAL_NAN; }
+      return packToF64UI(signZ, 0, 0);
+    }
+
+    if (expB == 0) {
+      if (sigB == 0) {
+        if ((expA == 0) && (sigA == 0)) {
+          set_fp_flag(FpFlag::NV);
+          return DP_CANONICAL_NAN;
+        }
+        set_fp_flag(FpFlag::DZ);
+        return packToF64UI(signZ, 11'h7FF, 0);
+      }
+      ExpAndSig64 norm = softfloat_normSubnormalF64Sig(sigB);
+      expB = norm.exp;
+      sigB = norm.sig;
+    }
+
+    if (expA == 0) {
+      if (sigA == 0) { return packToF64UI(signZ, 0, 0); }
+      ExpAndSig64 norm = softfloat_normSubnormalF64Sig(sigA);
+      expA = norm.exp;
+      sigA = norm.sig;
+    }
+
+    expZ = (expA - expB) + 16'h03FE;
+    sigA = sigA | 64'h0010000000000000;
+    sigB = sigB | 64'h0010000000000000;
+
+    if (sigA < sigB) {
+      expZ = expZ - 1;
+      sigA = sigA << 11;
+    } else {
+      sigA = sigA << 10;
+    }
+    sigB = sigB << 11;
+
+    # Refine the 32-bit reciprocal seed to a full f64 significand, matching
+    # Berkeley SoftFloat's f64_div implementation.
+    Bits<32> recip32 = softfloat_approxRecip32_1((sigB >> 32)[31:0]) - 2;
+    Bits<32> sig32Z = ((((sigA >> 32)[31:0]) `* recip32) >> 32)[31:0];
+    Bits<64> doubleTerm = sig32Z << 1;
+    Bits<64> rem =
+      ((sigA - (doubleTerm * ((sigB >> 32)[31:0]))) << 28)
+        - (doubleTerm * ((sigB[31:0]) >> 4));
+    Bits<32> q = (((((rem >> 32)[31:0]) `* recip32) >> 32)[31:0]) + 4;
+    Bits<64> sigZ = (sig32Z `<< 32) + (q `<< 4);
+
+    if ((sigZ & 64'h1FF) < 64'h40) {
+      q = q & ~32'h7;
+      sigZ = sigZ & ~64'h7F;
+      doubleTerm = q << 1;
+      rem =
+        ((rem - (doubleTerm * ((sigB >> 32)[31:0]))) << 28)
+          - (doubleTerm * ((sigB[31:0]) >> 4));
+      if ((rem & 64'h8000000000000000) != 0) {
+        sigZ = sigZ - 64'h80;
+      } else {
+        if (rem != 0) { sigZ = sigZ | 1; }
+      }
+    }
+
+    return softfloat_roundPackToF64(signZ, expZ, sigZ, mode);
+  }
+}
+
+function f64_sqrt {
+  returns U64
+  arguments
+    U64 a,
+    RoundingMode mode
+  description {
+    Computes the square root of a 64-bit double-precision floating point number.
+    Translated from Berkeley Softfloat f64_sqrt.
+  }
+  body {
+    if (is_dp_signaling_nan?(a)) {
+      set_fp_flag(FpFlag::NV);
+    }
+    Bits<1> signA = signF64UI(a);
+    Bits<16> expA = expF64UI(a);
+    Bits<64> fracA = fracF64UI(a);
+
+    if (expA == 11'h7FF) {
+      if (fracA != 0) { return DP_CANONICAL_NAN; }
+      if (signA == 0) { return a; }
+      set_fp_flag(FpFlag::NV);
+      return DP_CANONICAL_NAN;
+    }
+    if (signA == 1) {
+      if ((expA == 0) && (fracA == 0)) { return a; }
+      set_fp_flag(FpFlag::NV);
+      return DP_CANONICAL_NAN;
+    }
+    if (expA == 0) {
+      if (fracA == 0) { return a; }
+      ExpAndSig64 norm = softfloat_normSubnormalF64Sig(fracA);
+      expA = norm.exp;
+      fracA = norm.sig;
+    }
+
+    Bits<16> expZ = ((expA - 16'h03FF) >>> 1) + 16'h03FE;
+    Bits<1> oddExpA = expA[0];
+    Bits<64> sigA = fracA | 64'h0010000000000000;
+    Bits<32> sig32A = (sigA >> 21)[31:0];
+    Bits<32> recipSqrt32 = softfloat_approxRecipSqrt32_1(oddExpA, sig32A);
+    Bits<32> sig32Z = ((sig32A `* recipSqrt32) >> 32)[31:0];
+
+    if (oddExpA == 1) {
+      sigA = sigA << 8;
+      sig32Z = sig32Z >> 1;
+    } else {
+      sigA = sigA << 9;
+    }
+
+    Bits<64> rem = sigA - (sig32Z `* sig32Z);
+    Bits<32> q = ((((rem >> 2)[31:0]) `* recipSqrt32) >> 32)[31:0];
+    Bits<64> sigZ = ((sig32Z `<< 32) | 64'h20) + (q `<< 3);
+
+    if ((sigZ & 64'h1FF) < 64'h22) {
+      sigZ = sigZ & ~64'h3F;
+      Bits<64> shiftedSigZ = sigZ >> 6;
+      rem = (sigA << 52) - (shiftedSigZ * shiftedSigZ);
+      if ((rem & 64'h8000000000000000) != 0) {
+        sigZ = sigZ - 1;
+      } else {
+        if (rem != 0) { sigZ = sigZ | 1; }
+      }
+    }
+
+    return softfloat_roundPackToF64(0, expZ, sigZ, mode);
+  }
+}
+
+function f64_muladd {
+  returns U64
+  arguments
+    U64 a,
+    U64 b,
+    U64 c,
+    F32MulAddOp op,
+    RoundingMode mode
+  description {
+    Fused multiply-add for double-precision floats.
+    Computes (a * b) + c, with sign modifications based on op.
+    Translated from Berkeley Softfloat softfloat_mulAddF64.
+  }
+  body {
+    if (is_dp_signaling_nan?(a) || is_dp_signaling_nan?(b) || is_dp_signaling_nan?(c)) {
+      set_fp_flag(FpFlag::NV);
+    }
+    Bits<1>  signA    = signF64UI(a);
+    Bits<16> expA     = expF64UI(a);
+    Bits<64> sigA     = fracF64UI(a);
+    Bits<1>  signB    = signF64UI(b);
+    Bits<16> expB     = expF64UI(b);
+    Bits<64> sigB     = fracF64UI(b);
+    Bits<1>  signC    = signF64UI(c) ^ ((op == F32MulAddOp::Softfloat_mulAdd_subC) ? 1 : 0);
+    Bits<16> expC     = expF64UI(c);
+    Bits<64> sigC     = fracF64UI(c);
+    Bits<1>  signProd = (signA ^ signB) ^ ((op == F32MulAddOp::Softfloat_mulAdd_subProd) ? 1 : 0);
+
+    Bits<64> magBits;
+
+    # Handle NaN/Inf in A
+    if (expA == 11'h7FF) {
+      if ((sigA != 0) || ((expB == 11'h7FF) && (sigB != 0))) {
+        return DP_CANONICAL_NAN;
+      }
+      magBits = expB | sigB;
+      if (magBits != 0) {
+        U64 zA = packToF64UI(signProd, 11'h7FF, 0);
+        if (expC != 11'h7FF) {
+          return zA;
+        }
+        if (sigC != 0) {
+          return DP_CANONICAL_NAN;
+        }
+        if (signProd == signC) {
+          return zA;
+        }
+      }
+      set_fp_flag(FpFlag::NV);
+      return DP_CANONICAL_NAN;
+    }
+
+    # Handle NaN/Inf in B
+    if (expB == 11'h7FF) {
+      if (sigB != 0) {
+        return DP_CANONICAL_NAN;
+      }
+      magBits = expA | sigA;
+      if (magBits != 0) {
+        U64 zB = packToF64UI(signProd, 11'h7FF, 0);
+        if (expC != 11'h7FF) {
+          return zB;
+        }
+        if (sigC != 0) {
+          return DP_CANONICAL_NAN;
+        }
+        if (signProd == signC) {
+          return zB;
+        }
+      }
+      set_fp_flag(FpFlag::NV);
+      return DP_CANONICAL_NAN;
+    }
+
+    # Handle NaN/Inf in C
+    if (expC == 11'h7FF) {
+      if (sigC != 0) {
+        return DP_CANONICAL_NAN;
+      }
+      return packToF64UI(signC, 11'h7FF, 0);
+    }
+
+    # Handle zero/subnormal A
+    if (expA == 0) {
+      if (sigA == 0) {
+        if (((expC | sigC) == 0) && (signProd != signC)) {
+          return packToF64UI((mode == RoundingMode::RDN) ? 1 : 0, 0, 0);
+        }
+        return packToF64UI(signC, expC, sigC);
+      }
+      ExpAndSig64 norm = softfloat_normSubnormalF64Sig(sigA);
+      expA = norm.exp;
+      sigA = norm.sig;
+    }
+
+    # Handle zero/subnormal B
+    if (expB == 0) {
+      if (sigB == 0) {
+        if (((expC | sigC) == 0) && (signProd != signC)) {
+          return packToF64UI((mode == RoundingMode::RDN) ? 1 : 0, 0, 0);
+        }
+        return packToF64UI(signC, expC, sigC);
+      }
+      ExpAndSig64 norm = softfloat_normSubnormalF64Sig(sigB);
+      expB = norm.exp;
+      sigB = norm.sig;
+    }
+
+    Bits<1> signZ = signProd;
+    Bits<16> expZ = expA + expB - 16'h03FE;
+    Bits<64> sigA_full = (sigA | 64'h0010000000000000) << 10;
+    Bits<64> sigB_full = (sigB | 64'h0010000000000000) << 10;
+    Bits<64> sigProd_hi = mul64Hi(sigA_full, sigB_full);
+    Bits<64> sigProd_lo = sigA_full `* sigB_full;
+
+    if (sigProd_hi < 64'h2000000000000000) {
+      expZ = expZ - 1;
+      sigProd_hi = (sigProd_hi << 1) | (sigProd_lo >> 63);
+      sigProd_lo = sigProd_lo << 1;
+    }
+
+    if (expC == 0) {
+      if (sigC == 0) {
+        expZ = expZ - 1;
+        Bits<64> sigZ = (sigProd_hi << 1) | ((sigProd_lo != 0) ? 1 : 0);
+        return softfloat_roundPackToF64(signZ, expZ, sigZ, mode);
+      }
+      ExpAndSig64 norm = softfloat_normSubnormalF64Sig(sigC);
+      expC = norm.exp;
+      sigC = norm.sig;
+    }
+
+    Bits<64> sigC_hi = (sigC | 64'h0010000000000000) << 9;
+    Bits<16> expDiff = expZ - expC;
+    Bits<64> sigC_shifted_hi;
+    Bits<64> sigC_shifted_lo;
+
+    if ($signed(expDiff) < 0s) {
+      expZ = expC;
+      if ((signZ == signC) || ($signed(expDiff) < -1s)) {
+        sigProd_hi = softfloat_shiftRightJam64(sigProd_hi, -expDiff);
+      } else {
+        Bits<64> shifted_out = sigProd_lo & 1;
+        sigProd_lo = (sigProd_hi << 63) | (sigProd_lo >> 1) | shifted_out;
+        sigProd_hi = sigProd_hi >> 1;
+      }
+    } else if (expDiff != 0) {
+      if (expDiff < 64) {
+        sigC_shifted_hi = sigC_hi >> expDiff;
+        sigC_shifted_lo = sigC_hi << (64 - expDiff);
+      } else {
+        sigC_shifted_hi = 0;
+        if (expDiff == 64) {
+          sigC_shifted_lo = sigC_hi;
+        } else {
+          sigC_shifted_lo = softfloat_shiftRightJam64(sigC_hi, expDiff - 64);
+        }
+      }
+    }
+
+    if (signZ == signC) {
+      Bits<64> sigZ;
+      if ($signed(expDiff) <= 0s) {
+        sigZ = (sigC_hi + sigProd_hi) | ((sigProd_lo != 0) ? 1 : 0);
+      } else {
+        Bits<64> sigSum_lo = sigProd_lo + sigC_shifted_lo;
+        Bits<64> sigSum_hi = sigProd_hi + sigC_shifted_hi + ((sigSum_lo < sigProd_lo) ? 1 : 0);
+        sigZ = sigSum_hi | ((sigSum_lo != 0) ? 1 : 0);
+      }
+      if (sigZ < 64'h4000000000000000) {
+        expZ = expZ - 1;
+        sigZ = sigZ << 1;
+      }
+      return softfloat_roundPackToF64(signZ, expZ, sigZ, mode);
+    }
+
+    Bits<64> sigDiff_hi;
+    Bits<64> sigDiff_lo;
+    if ($signed(expDiff) < 0s) {
+      signZ = signC;
+      sigDiff_hi = sigC_hi - sigProd_hi - ((sigProd_lo != 0) ? 1 : 0);
+      sigDiff_lo = -sigProd_lo;
+    } else if (expDiff == 0) {
+      sigDiff_hi = sigProd_hi - sigC_hi;
+      sigDiff_lo = sigProd_lo;
+      if ((sigDiff_hi == 0) && (sigDiff_lo == 0)) {
+        return packToF64UI((mode == RoundingMode::RDN) ? 1 : 0, 0, 0);
+      }
+      if ((sigDiff_hi & 64'h8000000000000000) != 0) {
+        signZ = signZ ^ 1;
+        Bits<64> neg_lo = -sigDiff_lo;
+        sigDiff_hi = -sigDiff_hi - ((sigDiff_lo != 0) ? 1 : 0);
+        sigDiff_lo = neg_lo;
+      }
+    } else {
+      sigDiff_hi = sigProd_hi - sigC_shifted_hi - ((sigC_shifted_lo > sigProd_lo) ? 1 : 0);
+      sigDiff_lo = sigProd_lo - sigC_shifted_lo;
+    }
+
+    if (sigDiff_hi == 0) {
+      expZ = expZ - 64;
+      sigDiff_hi = sigDiff_lo;
+      sigDiff_lo = 0;
+    }
+    Bits<16> shiftDist = count_leading_zeros(64, sigDiff_hi) - 1;
+    expZ = expZ - shiftDist;
+    Bits<64> sigZ;
+    if ($signed(shiftDist) < 0s) {
+      sigZ = softfloat_shiftRightJam64(sigDiff_hi, -shiftDist);
+    } else {
+      if (shiftDist != 0) {
+        sigDiff_hi = (sigDiff_hi << shiftDist) | (sigDiff_lo >> (64 - shiftDist));
+        sigDiff_lo = sigDiff_lo << shiftDist;
+      }
+      sigZ = sigDiff_hi;
+    }
+    sigZ = sigZ | ((sigDiff_lo != 0) ? 1 : 0);
+    return softfloat_roundPackToF64(signZ, expZ, sigZ, mode);
+  }
+}
+
+function f32_to_f64 {
+  returns U64
+  arguments
+    U32 a
+  description {
+    Converts a 32-bit single-precision float to 64-bit double-precision.
+    Translated from Berkeley Softfloat f32_to_f64.
+  }
+  body {
+    Bits<1>  sign = signF32UI(a);
+    Bits<16> exp  = expF32UI(a);
+    Bits<32> frac = fracF32UI(a);
+
+    if (exp == 8'hFF) {
+      if (frac != 0) {
+        if (is_sp_signaling_nan?(a)) {
+          set_fp_flag(FpFlag::NV);
+        }
+        return DP_CANONICAL_NAN;
+      }
+      return packToF64UI(sign, 11'h7FF, 0);
+    }
+
+    if (exp == 0) {
+      if (frac == 0) {
+        return packToF64UI(sign, 0, 0);
+      }
+      ExpAndSig norm = softfloat_normSubnormalF32Sig(frac);
+      exp = norm.exp;
+      frac = norm.sig & ~32'h00800000;
+    }
+
+    return packToF64UI(sign, exp + 16'h0380, frac `<< 29);
+  }
+}
+
+function f64_to_f32 {
+  returns U32
+  arguments
+    U64 a,
+    RoundingMode mode
+  description {
+    Converts a 64-bit double-precision float to 32-bit single-precision.
+    Translated from Berkeley Softfloat f64_to_f32.
+  }
+  body {
+    Bits<1>  sign = signF64UI(a);
+    Bits<16> exp  = expF64UI(a);
+    Bits<64> frac = fracF64UI(a);
+
+    if (exp == 11'h7FF) {
+      if (frac != 0) {
+        if (is_dp_signaling_nan?(a)) {
+          set_fp_flag(FpFlag::NV);
+        }
+        return SP_CANONICAL_NAN;
+      }
+      return packToF32UI(sign, 8'hFF, 0);
+    }
+
+    Bits<32> frac32 = softfloat_shiftRightJam64(frac, 22);
+    if ((exp | frac32) == 0) {
+      return packToF32UI(sign, 0, 0);
+    }
+
+    return softfloat_roundPackToF32(sign, exp - 16'h0381, 0x40000000 | frac32, mode);
+  }
+}
+
+function f64_to_f16 {
+  returns Bits<16>
+  arguments
+    U64 a,
+    RoundingMode mode
+  description {
+    Converts a binary64 value directly to binary16 using the requested rounding mode.
+  }
+  body {
+    Bits<1> sign = signF64UI(a);
+    Bits<16> exp = expF64UI(a);
+    Bits<64> frac = fracF64UI(a);
+
+    if (exp == 11'h7FF) {
+      if (frac != 0) {
+        if (is_dp_signaling_nan?(a)) { set_fp_flag(FpFlag::NV); }
+        return HP_CANONICAL_NAN;
+      }
+      return packToF16UI(sign, 5'h1F, 0);
+    }
+
+    Bits<16> frac16 = softfloat_shiftRightJam64(frac, 38);
+    if ((exp | frac16) == 0) { return packToF16UI(sign, 0, 0); }
+    return softfloat_roundPackToF16(sign, exp - 16'h03F1, 16'h4000 | frac16, mode);
+  }
+}
+
+function f64_to_f32_rod {
+  returns U32
+  arguments
+    U64 a
+  description {
+    Converts a 64-bit double-precision float to 32-bit single-precision using round-to-odd.
+    If the result is inexact, the LSB of the f32 mantissa is forced to 1.
+  }
+  body {
+    Bits<32> result = f64_to_f32(a, RoundingMode::RTZ);
+    if (!is_dp_nan?(a) && (f32_to_f64(result) != a)) {
+      result = result | 1;
+    }
+    return result;
+  }
+}
+
+function f64_to_i32 {
+  returns Bits<32>
+  arguments
+    U64 a,
+    RoundingMode mode
+  description {
+    Converts 64-bit double-precision float to a signed 32-bit integer.
+    Translated from Berkeley Softfloat f64_to_i32.
+  }
+  body {
+    Bits<1>  sign = signF64UI(a);
+    Bits<16> exp  = expF64UI(a);
+    Bits<64> sig  = fracF64UI(a);
+
+    if (exp == 11'h7FF) {
+      set_fp_flag(FpFlag::NV);
+      if (sig != 0) {
+        return I32_NAN;
+      }
+      return sign == 1 ? WORD_NEG_OVERFLOW : WORD_POS_OVERFLOW;
+    }
+
+    if (exp != 0) {
+      sig = sig | 64'h0010000000000000;
+    }
+
+    Bits<16> shiftDist = 16'h0431 - exp;
+    Bits<64> sig64 = sig `<< 10;
+
+    if ($signed(shiftDist) > 0s) {
+      sig64 = softfloat_shiftRightJam64(sig64, shiftDist);
+    }
+
+    return softfloat_roundToI32(sign, sig64, mode);
+  }
+}
+
+function f64_to_ui32 {
+  returns Bits<32>
+  arguments
+    U64 a,
+    RoundingMode mode
+  description {
+    Converts 64-bit double-precision float to an unsigned 32-bit integer.
+    Translated from Berkeley Softfloat f64_to_ui32.
+  }
+  body {
+    Bits<1>  sign = signF64UI(a);
+    Bits<16> exp  = expF64UI(a);
+    Bits<64> sig  = fracF64UI(a);
+
+    if (exp == 11'h7FF) {
+      set_fp_flag(FpFlag::NV);
+      if (sig != 0) {
+        return UI32_NAN;
+      }
+      return sign == 1 ? UI32_NEG_OVERFLOW : UI32_POS_OVERFLOW;
+    }
+
+    if (exp != 0) {
+      sig = sig | 64'h0010000000000000;
+    }
+
+    Bits<16> shiftDist = 16'h0431 - exp;
+    Bits<64> sig64 = sig `<< 10;
+
+    if ($signed(shiftDist) > 0s) {
+      sig64 = softfloat_shiftRightJam64(sig64, shiftDist);
+    }
+
+    return softfloat_roundToUI32(sign, sig64, mode);
+  }
+}
+
+function f64_to_i64 {
+  returns Bits<64>
+  arguments
+    U64 a,
+    RoundingMode mode
+  description {
+    Converts 64-bit double-precision float to a signed 64-bit integer.
+    Translated from Berkeley Softfloat f64_to_i64.
+  }
+  body {
+    Bits<1>  sign = signF64UI(a);
+    Bits<16> exp  = expF64UI(a);
+    Bits<64> sig  = fracF64UI(a);
+
+    if (exp != 0) {
+      sig = sig | 64'h0010000000000000;
+    }
+
+    Bits<16> shiftDist = 16'h043D - exp;
+
+    if ($signed(shiftDist) < 0s) {
+      set_fp_flag(FpFlag::NV);
+      if ((exp == 11'h7FF) && (sig != 64'h0010000000000000)) {
+        return I64_NAN;
+      }
+      return sign == 1 ? I64_NEG_OVERFLOW : I64_POS_OVERFLOW;
+    }
+
+    Bits<64> sig64 = sig `<< 10;
+    Bits<64> extra = 0;
+    if (shiftDist != 0) {
+      TwoU64s sig64Extra = softfloat_shiftRightJam64Extra(sig64, 0, shiftDist);
+      sig64 = sig64Extra.u1;
+      extra = sig64Extra.u2;
+    }
+    return softfloat_roundToI64(sign, sig64, extra, mode);
+  }
+}
+
+function f64_to_ui64 {
+  returns Bits<64>
+  arguments
+    U64 a,
+    RoundingMode mode
+  description {
+    Converts 64-bit double-precision float to an unsigned 64-bit integer.
+    Translated from Berkeley Softfloat f64_to_ui64.
+  }
+  body {
+    Bits<1>  sign = signF64UI(a);
+    Bits<16> exp  = expF64UI(a);
+    Bits<64> sig  = fracF64UI(a);
+
+    if (exp != 0) {
+      sig = sig | 64'h0010000000000000;
+    }
+
+    Bits<16> shiftDist = 16'h043D - exp;
+
+    if ($signed(shiftDist) < 0s) {
+      set_fp_flag(FpFlag::NV);
+      if ((exp == 11'h7FF) && (sig != 64'h0010000000000000)) {
+        return UI64_NAN;
+      }
+      return sign == 1 ? UI64_NEG_OVERFLOW : UI64_POS_OVERFLOW;
+    }
+
+    Bits<64> sig64 = sig `<< 10;
+    Bits<64> extra = 0;
+    if (shiftDist != 0) {
+      TwoU64s sig64Extra = softfloat_shiftRightJam64Extra(sig64, 0, shiftDist);
+      sig64 = sig64Extra.u1;
+      extra = sig64Extra.u2;
+    }
+    return softfloat_roundToUI64(sign, sig64, extra, mode);
+  }
+}
+
+function i32_to_f64 {
+  returns U64
+  arguments
+    Bits<32> a,
+    RoundingMode mode
+  description {
+    Converts 32-bit signed integer to 64-bit double-precision float.
+    Translated from Berkeley Softfloat i32_to_f64.
+  }
+  body {
+    if (a == 0) { return 0; }
+    Bits<1> sign = a[31];
+    Bits<64> absA = (sign == 1) ? -a : a;
+    Bits<8> shiftDist = count_leading_zeros(32, absA[31:0]);
+    return packToF64UI(sign, 16'h041D - shiftDist, absA << (21 + shiftDist));
+  }
+}
+
+function ui32_to_f64 {
+  returns U64
+  arguments
+    Bits<32> a,
+    RoundingMode mode
+  description {
+    Converts 32-bit unsigned integer to 64-bit double-precision float.
+    Translated from Berkeley Softfloat ui32_to_f64.
+  }
+  body {
+    if (a == 0) { return 0; }
+    Bits<64> absA = a;
+    Bits<8> shiftDist = count_leading_zeros(32, a);
+    return packToF64UI(0, 16'h041D - shiftDist, absA << (21 + shiftDist));
+  }
+}
+
+function i64_to_f64 {
+  returns U64
+  arguments
+    Bits<64> a,
+    RoundingMode mode
+  description {
+    Converts 64-bit signed integer to 64-bit double-precision float.
+    Translated from Berkeley Softfloat i64_to_f64.
+  }
+  body {
+    Bits<1> sign = a[63];
+    if ((a & 64'h7FFFFFFFFFFFFFFF) == 0) {
+      return (sign == 1) ? packToF64UI(1, 16'h43E, 0) : 0;
+    }
+    Bits<64> absA = (sign == 1) ? -a : a;
+    return softfloat_normRoundPackToF64(sign, 16'h43C, absA, mode);
+  }
+}
+
+function ui64_to_f64 {
+  returns U64
+  arguments
+    Bits<64> a,
+    RoundingMode mode
+  description {
+    Converts 64-bit unsigned integer to 64-bit double-precision float.
+    Translated from Berkeley Softfloat ui64_to_f64.
+  }
+  body {
+    if (a == 0) { return 0; }
+    if (a[63] == 1) {
+      return softfloat_roundPackToF64(0, 16'h43D, a >> 1 | (a & 1), mode);
+    } else {
+      return softfloat_normRoundPackToF64(0, 16'h43C, a, mode);
+    }
+  }
+}
+
+function f64_to_i32_no_flag {
+  returns Bits<32>
+  arguments
+    U64 a,
+    RoundingMode mode
+  description {
+    Converts 64-bit double-precision float to a signed 32-bit integer, no flags set.
+  }
+  body {
+    Bits<1>  sign = signF64UI(a);
+    Bits<16> exp  = expF64UI(a);
+    Bits<64> sig  = fracF64UI(a);
+
+    if (exp == 11'h7FF) {
+      if (sig != 0) {
+        return I32_NAN;
+      }
+      return sign == 1 ? WORD_NEG_OVERFLOW : WORD_POS_OVERFLOW;
+    }
+
+    if (exp != 0) {
+      sig = sig | 64'h0010000000000000;
+    }
+
+    Bits<16> shiftDist = 16'h0431 - exp;
+    Bits<64> sig64 = sig `<< 10;
+
+    if ($signed(shiftDist) > 0s) {
+      sig64 = softfloat_shiftRightJam64(sig64, shiftDist);
+    }
+
+    return softfloat_roundToI32_no_flag(sign, sig64, mode);
+  }
+}
+
+function i32_to_f64_no_flag {
+  returns U64
+  arguments
+    Bits<32> a,
+    RoundingMode mode
+  description {
+    Converts 32-bit signed integer to 64-bit double-precision float, no flags set.
+  }
+  body {
+    if (a == 0) { return 0; }
+    Bits<1> sign = a[31];
+    Bits<64> absA = (sign == 1) ? -a : a;
+    Bits<8> shiftDist = count_leading_zeros(64, absA) - 21;
+    return packToF64UI(sign, 16'h041E - shiftDist, absA << shiftDist);
+  }
+}
+
+function f64_to_i64_no_flag {
+  returns Bits<64>
+  arguments
+    U64 a,
+    RoundingMode mode
+  description {
+    Converts 64-bit double-precision float to a signed 64-bit integer, no flags set.
+  }
+  body {
+    Bits<1>  sign = signF64UI(a);
+    Bits<16> exp  = expF64UI(a);
+    Bits<64> sig  = fracF64UI(a);
+
+    if (exp == 11'h7FF) {
+      if (sig != 0) { return I64_NAN; }
+      return sign == 1 ? I64_NEG_OVERFLOW : I64_POS_OVERFLOW;
+    }
+
+    if (exp != 0) {
+      sig = sig | 64'h0010000000000000;
+    }
+
+    Bits<16> shiftDist = 16'h043D - exp;
+
+    if ($signed(shiftDist) < 0s) {
+      return sign == 1 ? I64_NEG_OVERFLOW : I64_POS_OVERFLOW;
+    }
+
+    Bits<64> sig64 = sig `<< 10;
+    Bits<64> extra = 0;
+    if (shiftDist != 0) {
+      TwoU64s sig64Extra = softfloat_shiftRightJam64Extra(sig64, 0, shiftDist);
+      sig64 = sig64Extra.u1;
+      extra = sig64Extra.u2;
+    }
+    return softfloat_roundToI64(sign, sig64, extra, mode);
+  }
+}
+
+function i64_to_f64_no_flag {
+  returns U64
+  arguments
+    Bits<64> a,
+    RoundingMode mode
+  description {
+    Converts 64-bit signed integer to 64-bit double-precision float, no flags set.
+  }
+  body {
+    Bits<1> sign = a[63];
+    if ((a & 64'h7FFFFFFFFFFFFFFF) == 0) {
+      return (sign == 1) ? packToF64UI(1, 16'h43E, 0) : 0;
+    }
+    Bits<64> absA = (sign == 1) ? -a : a;
+    return softfloat_normRoundPackToF64(sign, 16'h43C, absA, mode);
+  }
+}
+
+function round_f64_to_integral {
+  returns U64
+  arguments
+    U64 a,
+    RoundingMode mode
+  description {
+    Rounds 64-bit double-precision float to an integer value, returned as double.
+    If the exponent is large enough that the value is already integral, return it unchanged.
+  }
+  body {
+    Bits<16> exp = expF64UI(a);
+    Bits<64> frac = fracF64UI(a);
+
+    if (exp <= 16'h03FE) {
+      if ((a & 64'h7FFF_FFFF_FFFF_FFFF) == 0) { return a; }
+
+      Bits<64> result = a & 64'h8000_0000_0000_0000;
+      if ((mode == RoundingMode::RMM) && (exp == 16'h03FE)) {
+        result = result | 64'h3FF0_0000_0000_0000;
+      } else if ((mode == RoundingMode::RNE) && (exp == 16'h03FE) && (frac != 0)) {
+        result = result | 64'h3FF0_0000_0000_0000;
+      } else if ((mode == RoundingMode::RDN) && (a[63] == 1)) {
+        result = 64'hBFF0_0000_0000_0000;
+      } else if ((mode == RoundingMode::RUP) && (a[63] == 0)) {
+        result = 64'h3FF0_0000_0000_0000;
+      }
+      return result;
+    }
+
+    if (exp >= 16'h0433) {
+      if ((exp == 16'h07FF) && (frac != 0)) {
+        if (is_dp_signaling_nan?(a)) { set_fp_flag(FpFlag::NV); }
+        return DP_CANONICAL_NAN;
+      }
+      return a;
+    }
+
+    Bits<64> lastBitMask = 64'h1 << (16'h0433 - exp);
+    Bits<64> roundBitsMask = lastBitMask - 64'h1;
+    Bits<64> result = a;
+    if (mode == RoundingMode::RMM) {
+      result = result + (lastBitMask >> 1);
+    } else if (mode == RoundingMode::RNE) {
+      result = result + (lastBitMask >> 1);
+      if ((result & roundBitsMask) == 0) { result = result & ~lastBitMask; }
+    } else if ((mode == RoundingMode::RDN) && (a[63] == 1)) {
+      result = result + roundBitsMask;
+    } else if ((mode == RoundingMode::RUP) && (a[63] == 0)) {
+      result = result + roundBitsMask;
+    }
+    return result & ~roundBitsMask;
   }
 }

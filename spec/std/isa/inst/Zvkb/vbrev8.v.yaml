@@ -29,3 +29,23 @@ access:
   vu: always
 data_independent_timing: true
 operation(): |
+  VectorState state = vector_state();
+  U32 elems_per_reg = VLEN >> state.log2_sew;
+
+  for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
+    if (vm == 1'b1 || V[0][i] == 1'b1) {
+      U32 reg_off = i / elems_per_reg;
+      U32 start_bit = (i % elems_per_reg) * state.sew;
+      U32 end_bit = start_bit + state.sew - 1;
+      XReg input = V[vs2 + reg_off][end_bit:start_bit];
+
+      for (U32 byte = 0; byte < state.sew / 8; byte++) {
+        U32 byte_bit = byte * 8;
+        for (U32 bit = 0; bit < 8; bit++) {
+          V[vd + reg_off][start_bit + byte_bit + bit] = input[byte_bit + 7 - bit];
+        }
+      }
+    }
+  }
+
+  CSR[vstart].VALUE = 0;

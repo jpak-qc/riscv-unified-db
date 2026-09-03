@@ -32,3 +32,26 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
+  check_f_ok($encoding);
+
+  Bits<64> dp_value_a = F[fs1];
+  Bits<64> dp_value_b = F[fs2];
+  Bits<1> sign_a = dp_value_a[63];
+  Bits<1> sign_b = dp_value_b[63];
+
+  if (is_dp_nan?(dp_value_a) || is_dp_nan?(dp_value_b)) {
+    set_fp_flag(FpFlag::NV);
+    X[xd] = 0;
+  } else {
+    if (sign_a != sign_b) {
+      X[xd] = (
+        (sign_a == 1)
+        && ((dp_value_a[62:0] | dp_value_b[62:0]) != 0)
+      ) ? 1 : 0;
+    } else {
+      X[xd] = (
+        (dp_value_a != dp_value_b)
+        && ((sign_a ^ ((dp_value_a < dp_value_b) ? 1 : 0)) != 0)
+      ) ? 1 : 0;
+    }
+  }

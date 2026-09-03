@@ -185,7 +185,8 @@ function refresh_pending_interrupts {
 
     if (CSR[misa].S == 1'b1) {
       Bits<MXLEN> smode_enabled_ints =
-        ((mode() == PrivilegeMode::M) || (CSR[mstatus].SIE == 1'b0))
+      ((mode() == PrivilegeMode::M) ||
+       ((mode() == PrivilegeMode::S) && (CSR[mstatus].SIE == 1'b0)))
           ? 0
           : $bits(CSR[mie]) & ($bits(CSR[mideleg]));
       Bits<MXLEN> smode_pending_and_enabled = pending_ints & smode_enabled_ints;
@@ -336,6 +337,8 @@ function take_interrupt {
 
     if (to_mode == PrivilegeMode::M) {
       CSR[mepc].PC = $pc;
+      CSR[mstatus].MPIE = CSR[mstatus].MIE;
+      CSR[mstatus].MIE = 0;
       CSR[mstatus].MPP = $bits(mode())[1:0];
       if (CSR[misa].H == 1'b1) {
         if(MXLEN == 64) {
@@ -354,10 +357,12 @@ function take_interrupt {
         $pc = {CSR[mtvec].BASE, 2'b00};
       } else if (CSR[mtvec].MODE == 1'b1) {
         # vectored
-        $pc = {CSR[mtvec].BASE, 2'b00} + ($bits(code)*4);
+        $pc = {CSR[mtvec].BASE, 2'b00} + ($bits(code) `* 4);
       }
     } else if ((CSR[misa].S == 1'b1) && (to_mode == PrivilegeMode::S)) {
       CSR[sepc].PC = $pc;
+      CSR[mstatus].SPIE = CSR[mstatus].SIE;
+      CSR[mstatus].SIE = 0;
       CSR[mstatus].SPP = $bits(mode())[0];
       if (CSR[misa].H == 1'b1) {
         CSR[hstatus].SPV = $bits(mode())[2];
@@ -370,10 +375,12 @@ function take_interrupt {
         $pc = {CSR[stvec].BASE, 2'b00};
       } else if (CSR[stvec].MODE == 1'b1) {
         # vectored
-        $pc = {CSR[stvec].BASE, 2'b00} + ($bits(code)*4);
+        $pc = {CSR[stvec].BASE, 2'b00} + ($bits(code) `* 4);
       }
     } else if ((CSR[misa].H == 1'b1) && (to_mode == PrivilegeMode::VS)) {
       CSR[vsepc].PC = $pc;
+      CSR[vsstatus].SPIE = CSR[vsstatus].SIE;
+      CSR[vsstatus].SIE = 0;
       CSR[vsstatus].SPP = $bits(mode())[0];
       CSR[vscause].CODE = $bits(code);
       CSR[vscause].INT = 1'b1;
@@ -383,10 +390,11 @@ function take_interrupt {
         $pc = {CSR[vstvec].BASE, 2'b00};
       } else if (CSR[vstvec].MODE == 1'b1) {
         # vectored
-        $pc = {CSR[vstvec].BASE, 2'b00} + ($bits(code)*4);
+        $pc = {CSR[vstvec].BASE, 2'b00} + ($bits(code) `* 4);
       }
     }
 
     set_mode_no_refresh(to_mode);
+    refresh_pending_interrupts();
   }
 }
