@@ -6,8 +6,6 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
-export PATH="${ROOT}/bin:${PATH}"
-
 CONFIG="${CONFIG:-udb-64-max}"
 BUILD_TYPE="${BUILD_TYPE:-debug}"
 IGNOREUNDEFINED="${IGNOREUNDEFINED:-YES}"
