@@ -167,19 +167,20 @@ EOF
 "${ROOT}/do" build:iss "CONFIG=${CONFIG}" "BUILD_TYPE=${BUILD_TYPE}" \
   "IGNOREUNDEFINED=${IGNOREUNDEFINED}" "JOBS=${JOBS}"
 
-# `bin/mise` bootstraps the project-selected Mise binary into this cache
-# location, but its PATH update only applies to the command it launches.
-# riscv-arch-test invokes `mise` itself while running its Makefile, so make
-# that same binary resolvable here as well.  In particular, the public UDB
-# container's preinstalled Mise is too old to parse riscv-arch-test's hooks.
-MISE_BIN="${MISE_INSTALL_PATH:-${XDG_CACHE_HOME:-${HOME}/.cache}/mise/mise-2026.7.5}"
-if [ -x "${MISE_BIN}" ]; then
-  MISE_SHIM_DIR="${ROOT}/.tmp/riscv-arch-test-mise"
-  mkdir -p "${MISE_SHIM_DIR}"
-  ln -sf "${MISE_BIN}" "${MISE_SHIM_DIR}/mise"
-  export PATH="${MISE_SHIM_DIR}:${PATH}"
+# riscv-arch-test prefers `mise exec -- uv run` when Mise is on PATH. That
+# makes Mise discover UDB's parent .mise.toml from the arch-test checkout,
+# which is unrelated to this regression. Use the exact UDB-managed uv binary
+# directly, then force the Makefile's supported uv-only path.
+UV_VERSION="$(sed -nE 's/^[[:space:]]*uv[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' "${ROOT}/.mise.toml")"
+UV_INSTALL_DIR="${XDG_DATA_HOME:-${HOME}/.local/share}/mise/installs/uv/${UV_VERSION}"
+UV_BIN="$(find "${UV_INSTALL_DIR}" -type f -name uv -perm -u+x -print -quit)"
+if [ ! -x "${UV_BIN}" ]; then
+  echo "Unable to locate the UDB-managed uv executable: ${UV_BIN}" >&2
+  exit 2
 fi
 
 make -C "${RISCV_ARCH_TEST_DIR}" udb-64-max \
+  MISE= \
+  "UV=${UV_BIN}" \
   "EXTENSIONS=${EXTENSIONS}" \
   "JOBS=${JOBS}"
