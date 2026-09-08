@@ -1,0 +1,33 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+name: Probe public UDB container
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe-toolchain:
+    runs-on: ubuntu-latest
+    container: ghcr.io/riscv/udb:0.46
+    steps:
+      - name: Report available build tools
+        shell: sh
+        run: |
+          set -eu
+          for tool in \
+            g++ clang++ cmake ruby python3 \
+            riscv64-unknown-elf-gcc riscv64-elf-gcc riscv64-unknown-linux-gnu-gcc; do
+            if command -v "$tool" >/dev/null 2>&1; then
+              echo "== $tool =="
+              "$tool" --version | head -n 1
+            else
+              echo "MISSING: $tool"
+            fi
+          done
