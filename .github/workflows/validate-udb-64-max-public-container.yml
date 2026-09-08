@@ -20,7 +20,8 @@ jobs:
     # GitHub-hosted runners cannot currently reach Sigstore's TUF CDN. Mise
     # still verifies the downloaded Ruby archive checksum.
     env:
-      MISE_VERSION: v2026.8.14
+      # .mise.toml's [hooks] table requires a post-2026.8 Mise release.
+      MISE_VERSION: v2026.9.3
       MISE_RUBY_GITHUB_ATTESTATIONS: "false"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
