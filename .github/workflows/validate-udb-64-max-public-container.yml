@@ -25,6 +25,19 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: true
+      - name: Install native build dependency
+        shell: bash
+        run: |
+          set -euo pipefail
+          if command -v apt-get >/dev/null; then
+            apt-get update
+            apt-get install --yes pkg-config
+          elif command -v dnf >/dev/null; then
+            dnf install --assumeyes pkgconf-pkg-config
+          else
+            echo "No supported package manager found to install pkg-config." >&2
+            exit 1
+          fi
       - name: Set up project dependencies with the container toolchain
         shell: bash
         run: |
