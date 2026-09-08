@@ -167,6 +167,19 @@ EOF
 "${ROOT}/do" build:iss "CONFIG=${CONFIG}" "BUILD_TYPE=${BUILD_TYPE}" \
   "IGNOREUNDEFINED=${IGNOREUNDEFINED}" "JOBS=${JOBS}"
 
+# `bin/mise` bootstraps the project-selected Mise binary into this cache
+# location, but its PATH update only applies to the command it launches.
+# riscv-arch-test invokes `mise` itself while running its Makefile, so make
+# that same binary resolvable here as well.  In particular, the public UDB
+# container's preinstalled Mise is too old to parse riscv-arch-test's hooks.
+MISE_BIN="${MISE_INSTALL_PATH:-${XDG_CACHE_HOME:-${HOME}/.cache}/mise/mise-2026.7.5}"
+if [ -x "${MISE_BIN}" ]; then
+  MISE_SHIM_DIR="${ROOT}/.tmp/riscv-arch-test-mise"
+  mkdir -p "${MISE_SHIM_DIR}"
+  ln -sf "${MISE_BIN}" "${MISE_SHIM_DIR}/mise"
+  export PATH="${MISE_SHIM_DIR}:${PATH}"
+fi
+
 make -C "${RISCV_ARCH_TEST_DIR}" udb-64-max \
   "EXTENSIONS=${EXTENSIONS}" \
   "JOBS=${JOBS}"
