@@ -44,7 +44,12 @@ jobs:
         run: |
           set -euo pipefail
           printf 'UDB_TOOLCHAIN_CONTAINER=0\n' > .toolchain-local
+          # The public image ships an older Mise at the cache path used by
+          # bin/mise.  The bootstrap wrapper only checks for file existence,
+          # so remove that image-provided binary and install MISE_VERSION.
+          rm -f "${XDG_CACHE_HOME:-$HOME/.cache}/mise/mise-2026.7.5"
           ./bin/setup
+          "${XDG_CACHE_HOME:-$HOME/.cache}/mise/mise-2026.7.5" version
       - name: Run udb-64-max vector arch-tests
         shell: bash
         run: |
