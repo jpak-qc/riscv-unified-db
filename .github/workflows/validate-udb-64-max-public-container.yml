@@ -17,6 +17,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     container: ghcr.io/riscv/udb:0.46
+    # GitHub-hosted runners cannot currently reach Sigstore's TUF CDN. Mise
+    # still verifies the downloaded Ruby archive checksum.
+    env:
+      MISE_RUBY_GITHUB_ATTESTATIONS: "false"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
