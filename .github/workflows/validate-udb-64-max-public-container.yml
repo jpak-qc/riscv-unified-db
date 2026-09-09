@@ -58,6 +58,20 @@ jobs:
           rm -f "${sail_archive}"
           /opt/riscv/bin/sail_riscv_sim --version
           echo /opt/riscv/bin >> "${GITHUB_PATH}"
+      - name: Install GCC 15 RISC-V toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcc_archive=/tmp/xpack-riscv-none-elf-gcc-15.2.0-1-linux-x64.tar.gz
+          curl --fail --location --retry 3 \
+            https://github.com/xpack-dev-tools/riscv-none-elf-gcc-xpack/releases/download/v15.2.0-1/xpack-riscv-none-elf-gcc-15.2.0-1-linux-x64.tar.gz \
+            --output "${gcc_archive}"
+          echo 'aaaa8060c914851a3e5ee1ba82cc3d6f80972f90638a05c6e823a37557a33758  /tmp/xpack-riscv-none-elf-gcc-15.2.0-1-linux-x64.tar.gz' \
+            | sha256sum --check
+          tar --extract --gzip --file "${gcc_archive}" --directory /opt
+          rm -f "${gcc_archive}"
+          /opt/xpack-riscv-none-elf-gcc-15.2.0-1/bin/riscv-none-elf-gcc --version
+          echo /opt/xpack-riscv-none-elf-gcc-15.2.0-1/bin >> "${GITHUB_PATH}"
       - name: Set up project dependencies with the container toolchain
         shell: bash
         run: |
@@ -74,6 +88,8 @@ jobs:
         run: |
           set -euo pipefail
           EXTENSIONS=Vx8,Vx16,Vx32,Vx64,Vls8,Vls16,Vls32,Vls64,Vf16,Vf32,Vf64 \
+            ACT_COMPILER_EXE=riscv-none-elf-gcc \
+            ACT_OBJDUMP_EXE=riscv-none-elf-objdump \
             JOBS=4 \
             BUILD_TYPE=debug \
             IGNOREUNDEFINED=YES \

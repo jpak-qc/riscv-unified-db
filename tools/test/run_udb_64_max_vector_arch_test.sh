@@ -11,6 +11,8 @@ BUILD_TYPE="${BUILD_TYPE:-debug}"
 IGNOREUNDEFINED="${IGNOREUNDEFINED:-YES}"
 JOBS="${JOBS:-4}"
 EXTENSIONS="${EXTENSIONS:-Vx8,Vx16,Vx32,Vx64,Vls8,Vls16,Vls32,Vls64,Vf16,Vf32,Vf64}"
+ACT_COMPILER_EXE="${ACT_COMPILER_EXE:-riscv64-unknown-elf-gcc}"
+ACT_OBJDUMP_EXE="${ACT_OBJDUMP_EXE:-riscv64-unknown-elf-objdump}"
 
 RISCV_ARCH_TEST_REPO="${RISCV_ARCH_TEST_REPO:-https://github.com/riscv-non-isa/riscv-arch-test.git}"
 RISCV_ARCH_TEST_REF="${RISCV_ARCH_TEST_REF:-ba53eb88ad021dd69419cacfcfc9a3f8c104f988}"
@@ -63,6 +65,8 @@ cp "${ROOT}/cfgs/udb-64-max.yaml" "${UDB_CONFIG}"
 
 perl -0pi -e 's/name: spike-rv64-max/name: udb-64-max/' "${TARGET_CONFIG_DIR}/test_config.yaml"
 perl -0pi -e 's/udb_config: spike-rv64-max\.yaml/udb_config: udb-64-max.yaml/' "${TARGET_CONFIG_DIR}/test_config.yaml"
+sed -i "s|^compiler_exe:.*|compiler_exe: ${ACT_COMPILER_EXE}|" "${TARGET_CONFIG_DIR}/test_config.yaml"
+sed -i "s|^objdump_exe:.*|objdump_exe: ${ACT_OBJDUMP_EXE}|" "${TARGET_CONFIG_DIR}/test_config.yaml"
 
 perl -0pi -e 's/"writable_fiom": false/"writable_fiom": true/' "${TARGET_CONFIG_DIR}/sail.json"
 perl -0pi -e 's/"count": 64/"count": 0/' "${TARGET_CONFIG_DIR}/sail.json"
