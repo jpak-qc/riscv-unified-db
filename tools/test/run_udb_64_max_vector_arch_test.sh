@@ -176,13 +176,20 @@ EOF
 # which is unrelated to this regression. Use the exact UDB-managed uv binary
 # directly, then force the Makefile's supported uv-only path.
 UV_VERSION="$(sed -nE 's/^[[:space:]]*uv[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' "${ROOT}/.mise.toml")"
+RUBY_VERSION="$(sed -nE 's/^[[:space:]]*ruby[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' "${ROOT}/.mise.toml")"
 MISE_DATA_ROOT="${MISE_DATA_DIR:-${XDG_DATA_HOME:-${HOME}/.local/share}/mise}"
 UV_INSTALL_DIR="${MISE_DATA_ROOT}/installs/uv/${UV_VERSION}"
 UV_BIN="$(find "${UV_INSTALL_DIR}" -type f -name uv -perm -u+x -print -quit)"
+RUBY_BIN_DIR="${MISE_DATA_ROOT}/installs/ruby/${RUBY_VERSION}/bin"
 if [ ! -x "${UV_BIN}" ]; then
   echo "Unable to locate the UDB-managed uv executable: ${UV_BIN}" >&2
   exit 2
 fi
+if [ ! -x "${RUBY_BIN_DIR}/bundle" ]; then
+  echo "Unable to locate the UDB-managed Bundler: ${RUBY_BIN_DIR}/bundle" >&2
+  exit 2
+fi
+export PATH="${RUBY_BIN_DIR}:${PATH}"
 
 make -C "${RISCV_ARCH_TEST_DIR}" udb-64-max \
   MISE= \
