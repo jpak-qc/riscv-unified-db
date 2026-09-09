@@ -73,9 +73,10 @@ perl -0pi -e 's/"count": 64/"count": 0/' "${TARGET_CONFIG_DIR}/sail.json"
 perl -0pi -e 's/"usable_count": 64/"usable_count": 0/' "${TARGET_CONFIG_DIR}/sail.json"
 perl -0pi -e 's/"arith": true/"arith": false/' "${TARGET_CONFIG_DIR}/sail.json"
 perl -0pi -e 's/"supported": false/"supported": true/' "${TARGET_CONFIG_DIR}/sail.json"
-# Zfinx uses integer registers for scalar floating-point state, so FS must
-# be read-only zero in Sail's mstatus model.
-perl -0pi -e 's/"fs_legal_states": "ExtContext_FourState"/"fs_legal_states": "ExtContext_Off"/' "${TARGET_CONFIG_DIR}/sail.json"
+# The selected Vx/Vls/Vf tests require F. Sail forbids F and Zfinx together;
+# Zfinx itself is outside this regression's extension selection, so retain
+# the source fixture's normal F-compatible mstatus FS configuration.
+perl -0pi -e 's/("Zfinx": \{\s*"supported": )true/$1false/' "${TARGET_CONFIG_DIR}/sail.json"
 
 cat > "${TARGET_CONFIG_DIR}/run_cmd.txt" <<EOF
 ${ISS} -m udb-64-max -c ${UDB_CONFIG} --uart-base 0x10000000 --clint-base 0x02000000
