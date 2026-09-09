@@ -1285,6 +1285,13 @@ function access_check {
       raise(fault_type, from_mode, vaddr);
     }
 
+    # The platform may implement only a subset of the architectural physical
+    # address space.  Convert an access outside that subset into the
+    # architectural access fault before attempting the host memory operation.
+    if (!physical_memory_accessible?(paddr, access_size, type)) {
+      raise(fault_type, from_mode, vaddr);
+    }
+
     # check PMP
     if (NUM_PMP_ENTRIES > 0) {
       if (!pmp_check(paddr[PHYS_ADDR_WIDTH-1:0], access_size, type)) {

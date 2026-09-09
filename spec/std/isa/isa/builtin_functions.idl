@@ -571,6 +571,17 @@ builtin function pma_applies? {
   }
 }
 
+builtin function physical_memory_accessible? {
+  returns Boolean
+  arguments
+    Bits<PHYS_ADDR_WIDTH> paddr,  #< Start of the physical access
+    U32                   len,    #< Size of the access, in bits
+    MemoryOperation       type    #< Access type
+  description {
+    Checks whether the complete physical access is implemented by the platform.
+  }
+}
+
 builtin function atomic_check_then_write_32 {
   returns Boolean
   arguments

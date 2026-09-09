@@ -114,6 +114,9 @@ namespace udb {
   <%- widening_vv_instruction = widening_instruction && inst.name.downcase.end_with?(".vv") -%>
   <%- narrowing_shift_instruction = inst.name.downcase.match?(/\Avn(?:clipu?|sra|srl)\.wv\z/) -%>
   <%- extension_match = inst.name.downcase.match(/\Av[sz]ext\.vf([248])\z/) -%>
+  <%- fault_only_first_match = inst.name.downcase.match(/\Avl(?:seg([2-8]))?e(8|16|32|64)ff\.v\z/) -%>
+  <%- fault_only_first_fields = fault_only_first_match && (fault_only_first_match[1] || "1") -%>
+  <%- fault_only_first_eew = fault_only_first_match && fault_only_first_match[2] -%>
   template <unsigned XLEN, SocModel SocType>
   class <%= name_of(:inst, cfg_arch, inst.name) %> : public InstWithKnownLength<XLEN, <%= inst.encoding_width %>> {
 
@@ -267,7 +270,80 @@ namespace udb {
       <%- elsif vector_state_instruction -%>
       m_parent->check_v_state_enabled(this->_encoding());
       <%- end -%>
-      <%- if !inst.base.nil? -%>
+      <%- if fault_only_first_match -%>
+      // Fault-only-first loads probe later elements before modifying a vector
+      // register. A later fault reduces vl to that element index; element 0
+      // follows the ordinary load-fault path.
+      PossiblyUnknownBits<64> virtual_address(__UDB_HART->_xreg(xs1()));
+      PossiblyUnknownBits<32> elems_per_reg(__UDB_STATIC_PARAM(VLEN) / _Bits<7, false>(<%= fault_only_first_eew %>_b));
+      <%- if fault_only_first_fields.to_i > 1 -%>
+      __UDB_STRUCT(VectorState) state(__UDB_FUNC_CALL vector_state());
+      PossiblyUnknownBits<64> le_emul;
+      PossiblyUnknownBits<64> le_emul_log2_lmul(state.log2_lmul);
+      PossiblyUnknownBits<64> le_emul_log2_sew(state.log2_sew);
+      if ((state.lmul_type == VectorLmulType{VectorLmulType::Multiply})) {
+        le_emul = ((le_emul_log2_lmul + _Bits<4, false>(<%= Math.log2(fault_only_first_eew.to_i).to_i %>_b)) - le_emul_log2_sew);
+      } else {
+        le_emul = ((_Bits<4, false>(<%= Math.log2(fault_only_first_eew.to_i).to_i %>_b) - le_emul_log2_sew) - le_emul_log2_lmul);
+      }
+      PossiblyUnknownBits<32> dat_emul;
+      if ((le_emul.make_signed() > _Bits<1, true>(0_b))) {
+        dat_emul = (_Bits<32, false>(1_b) << le_emul);
+      } else {
+        dat_emul = _Bits<1, false>(1_b);
+      }
+      <%- end -%>
+      for (PossiblyUnknownBits<32> i(__UDB_CSR_BY_NAME(vstart).VALUE()._hw_read());
+           (i < __UDB_CSR_BY_NAME(vl).VALUE()._hw_read()); i++) {
+        if (((vm() == _Bits<1, false>(1_b)) ||
+             (__UDB_HART->_vreg(_Bits<1, false>(0_b)).at(i) == _Bits<1, false>(1_b)))) {
+          PossiblyUnknownBits<32> reg_off(i / elems_per_reg);
+          PossiblyUnknownBits<32> start_bit((i % elems_per_reg) * _Bits<7, false>(<%= fault_only_first_eew %>_b));
+          PossiblyUnknownBits<32> end_bit(start_bit + _Bits<7, false>(<%= fault_only_first_eew.to_i - 1 %>_b));
+          bool probed = false;
+          if (i != _Bits<1, false>(0_b)) {
+            m_parent->begin_fault_only_first_reads();
+            bool all_fields_read = true;
+            for (PossiblyUnknownBits<32> f(_Bits<1, false>(0_b));
+                 (f < _Bits<4, false>(<%= fault_only_first_fields %>_b)); f++) {
+              if (!(m_parent->fault_only_first_read_Q_(
+                      _Bits<7, false>(<%= fault_only_first_eew %>_b),
+                      (virtual_address + (((i * _Bits<4, false>(<%= fault_only_first_fields %>_b)) + f) * _Bits<4, false>(<%= fault_only_first_eew.to_i / 8 %>_b))),
+                      __UDB_ENCODING))) {
+                all_fields_read = false;
+                break;
+              }
+            }
+            if (!all_fields_read) {
+              __UDB_CSR_BY_NAME(vl).VALUE()._hw_write(i);
+              break;
+            }
+            probed = true;
+          }
+          for (PossiblyUnknownBits<32> f(_Bits<1, false>(0_b));
+               (f < _Bits<4, false>(<%= fault_only_first_fields %>_b)); f++) {
+            <%- if fault_only_first_fields.to_i > 1 -%>
+            PossiblyUnknownBits<32> target_reg((vd() + (f * dat_emul)) + reg_off);
+            <%- else -%>
+            PossiblyUnknownBits<32> target_reg(vd() + reg_off);
+            <%- end -%>
+            PossiblyUnknownBits<64> value = probed
+                ? m_parent->fault_only_first_read_value(f)
+                : __UDB_FUNC_CALL read_memory(
+                      _Bits<7, false>(<%= fault_only_first_eew %>_b),
+                      (virtual_address + (((i * _Bits<4, false>(<%= fault_only_first_fields %>_b)) + f) * _Bits<4, false>(<%= fault_only_first_eew.to_i / 8 %>_b))),
+                      __UDB_ENCODING);
+            __UDB_HART->_set_vreg(target_reg, ([&]() {
+              auto __udb_reg_tmp = __UDB_HART->_vreg(target_reg);
+              bit_insert(__udb_reg_tmp, end_bit, start_bit,
+                         value.template extract<<%= fault_only_first_eew.to_i - 1 %>, 0>());
+              return __udb_reg_tmp;
+            }()));
+          }
+        }
+      }
+      __UDB_CSR_BY_NAME(vstart).VALUE()._hw_write(_Bits<1, false>(0_b));
+      <%- elsif !inst.base.nil? -%>
         <%- pruned_ast = inst.pruned_operation_ast(inst.base) -%>
         <%- symtab = inst.fill_symtab(inst.base, pruned_ast) -%>
         <%= pruned_ast.gen_cpp(symtab, 6) %>
