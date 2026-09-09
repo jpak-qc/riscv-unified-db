@@ -43,6 +43,21 @@ jobs:
             echo "No supported package manager found to install pkg-config." >&2
             exit 1
           fi
+      - name: Install pinned Sail reference model
+        shell: bash
+        run: |
+          set -euo pipefail
+          sail_archive=/tmp/sail-riscv-0.13.1-linux-x86_64.tar.gz
+          curl --fail --location --retry 3 \
+            https://github.com/riscv/sail-riscv/releases/download/0.13.1/sail-riscv-Linux-x86_64.tar.gz \
+            --output "${sail_archive}"
+          echo 'ee052f64494a2f5f071afd9c2cb4aa5eaae4ba84753e4f77e442b4f83f2e9469  /tmp/sail-riscv-0.13.1-linux-x86_64.tar.gz' \
+            | sha256sum --check
+          mkdir -p /opt/riscv
+          tar --extract --gzip --file "${sail_archive}" --directory /opt/riscv --strip-components=1
+          rm -f "${sail_archive}"
+          /opt/riscv/bin/sail_riscv_sim --version
+          echo /opt/riscv/bin >> "${GITHUB_PATH}"
       - name: Set up project dependencies with the container toolchain
         shell: bash
         run: |
