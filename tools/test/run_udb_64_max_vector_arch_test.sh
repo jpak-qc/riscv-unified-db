@@ -172,7 +172,8 @@ EOF
 # which is unrelated to this regression. Use the exact UDB-managed uv binary
 # directly, then force the Makefile's supported uv-only path.
 UV_VERSION="$(sed -nE 's/^[[:space:]]*uv[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' "${ROOT}/.mise.toml")"
-UV_INSTALL_DIR="${XDG_DATA_HOME:-${HOME}/.local/share}/mise/installs/uv/${UV_VERSION}"
+MISE_DATA_ROOT="${MISE_DATA_DIR:-${XDG_DATA_HOME:-${HOME}/.local/share}/mise}"
+UV_INSTALL_DIR="${MISE_DATA_ROOT}/installs/uv/${UV_VERSION}"
 UV_BIN="$(find "${UV_INSTALL_DIR}" -type f -name uv -perm -u+x -print -quit)"
 if [ ! -x "${UV_BIN}" ]; then
   echo "Unable to locate the UDB-managed uv executable: ${UV_BIN}" >&2

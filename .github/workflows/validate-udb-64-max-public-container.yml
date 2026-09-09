@@ -23,6 +23,9 @@ jobs:
       # .mise.toml's [hooks] table requires a post-2026.8 Mise release.
       MISE_VERSION: v2026.9.3
       MISE_RUBY_GITHUB_ATTESTATIONS: "false"
+      # GitHub's container actions change HOME between steps. Keep Mise's
+      # installed tools at a stable path that the test runner can reuse.
+      MISE_DATA_DIR: /tmp/udb-mise-data
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
