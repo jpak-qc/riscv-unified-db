@@ -190,6 +190,9 @@ if [ ! -x "${RUBY_BIN_DIR}/bundle" ]; then
   exit 2
 fi
 export PATH="${RUBY_BIN_DIR}:${PATH}"
+# ACT's bundled Gemfile supports this override specifically for running
+# against an uninstalled UDB checkout instead of the latest published gems.
+export UDB_LOCAL_PATH="${UDB_LOCAL_PATH:-${ROOT}}"
 
 make -C "${RISCV_ARCH_TEST_DIR}" udb-64-max \
   MISE= \
