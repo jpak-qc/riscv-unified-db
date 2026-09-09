@@ -94,3 +94,13 @@ jobs:
             BUILD_TYPE=debug \
             IGNOREUNDEFINED=YES \
             ./tools/test/run_udb_64_max_vector_arch_test.sh
+      - name: Archive udb-64-max regression logs
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: udb-64-max-vector-arch-test-logs
+          path: |
+            ext/riscv-arch-test/work/udb-64-max/summary.log
+            ext/riscv-arch-test/work/udb-64-max/logs/
+          if-no-files-found: ignore
+          retention-days: 7
