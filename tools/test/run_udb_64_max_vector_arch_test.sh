@@ -15,7 +15,11 @@ ACT_COMPILER_EXE="${ACT_COMPILER_EXE:-riscv64-unknown-elf-gcc}"
 ACT_OBJDUMP_EXE="${ACT_OBJDUMP_EXE:-riscv64-unknown-elf-objdump}"
 
 RISCV_ARCH_TEST_REPO="${RISCV_ARCH_TEST_REPO:-https://github.com/riscv-non-isa/riscv-arch-test.git}"
-RISCV_ARCH_TEST_REF="${RISCV_ARCH_TEST_REF:-ba53eb88ad021dd69419cacfcfc9a3f8c104f988}"
+# Keep the regression on the exact riscv-arch-test revision validated with
+# udb-64-max locally.  Later revisions generate a different Vls16 suite that
+# currently times out under the ISS, so advancing this pin must be an explicit
+# compatibility update rather than an accidental change to the CI workload.
+RISCV_ARCH_TEST_REF="${RISCV_ARCH_TEST_REF:-bdd226e16fe0f6749ca3b66de088c90f7ded4244}"
 RISCV_ARCH_TEST_DIR="${RISCV_ARCH_TEST_DIR:-${ROOT}/ext/riscv-arch-test}"
 
 case "${BUILD_TYPE,,}" in
@@ -39,11 +43,15 @@ fi
 if [ ! -e "${RISCV_ARCH_TEST_DIR}" ]; then
   mkdir -p "$(dirname "${RISCV_ARCH_TEST_DIR}")"
   git clone "${RISCV_ARCH_TEST_REPO}" "${RISCV_ARCH_TEST_DIR}"
-  git -C "${RISCV_ARCH_TEST_DIR}" checkout "${RISCV_ARCH_TEST_REF}"
 elif [ ! -d "${RISCV_ARCH_TEST_DIR}/.git" ]; then
   echo "${RISCV_ARCH_TEST_DIR} exists but is not a Git checkout." >&2
   exit 2
 fi
+
+# A pre-existing checkout must not silently select whatever revision happens
+# to be checked out locally.  CI and local reproductions need the same test
+# corpus.
+git -C "${RISCV_ARCH_TEST_DIR}" checkout --detach "${RISCV_ARCH_TEST_REF}"
 
 echo "Using riscv-arch-test at $(git -C "${RISCV_ARCH_TEST_DIR}" rev-parse --short HEAD)"
 
