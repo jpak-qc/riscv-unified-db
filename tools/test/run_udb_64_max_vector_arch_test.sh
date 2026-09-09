@@ -14,12 +14,11 @@ EXTENSIONS="${EXTENSIONS:-Vx8,Vx16,Vx32,Vx64,Vls8,Vls16,Vls32,Vls64,Vf16,Vf32,Vf
 ACT_COMPILER_EXE="${ACT_COMPILER_EXE:-riscv64-unknown-elf-gcc}"
 ACT_OBJDUMP_EXE="${ACT_OBJDUMP_EXE:-riscv64-unknown-elf-objdump}"
 
-RISCV_ARCH_TEST_REPO="${RISCV_ARCH_TEST_REPO:-https://github.com/riscv-non-isa/riscv-arch-test.git}"
-# Keep the regression on the exact riscv-arch-test revision validated with
-# udb-64-max locally.  Later revisions generate a different Vls16 suite that
-# currently times out under the ISS, so advancing this pin must be an explicit
-# compatibility update rather than an accidental change to the CI workload.
-RISCV_ARCH_TEST_REF="${RISCV_ARCH_TEST_REF:-bdd226e16fe0f6749ca3b66de088c90f7ded4244}"
+# Temporarily use the fork branch that fixes an RV32-only indexed-load
+# coverpoint being emitted for RV64.  Once the corresponding riscv-arch-test
+# PR merges, replace this with its upstream commit.
+RISCV_ARCH_TEST_REPO="${RISCV_ARCH_TEST_REPO:-https://github.com/jpak-qc/riscv-arch-test.git}"
+RISCV_ARCH_TEST_REF="${RISCV_ARCH_TEST_REF:-6033455c9c6f7573f2425c809c8a21beb01a5ee7}"
 RISCV_ARCH_TEST_DIR="${RISCV_ARCH_TEST_DIR:-${ROOT}/ext/riscv-arch-test}"
 
 case "${BUILD_TYPE,,}" in
