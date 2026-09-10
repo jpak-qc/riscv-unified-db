@@ -265,6 +265,20 @@ tests:
       - vector
     timeout_minutes: 120
     gh_pre:
+      - name: Configure native C++ toolchain
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install --yes g++-14 clang-format
+          native_bin="${RUNNER_TEMP}/udb-native-cxx/bin"
+          mkdir --parents "${native_bin}"
+          ln --symbolic --force "$(command -v g++-14)" "${native_bin}/g++"
+          echo "${native_bin}" >> "${GITHUB_PATH}"
+          printf 'UDB_TOOLCHAIN_CONTAINER=0\nUDB_TOOLCHAIN_NONE=0\n' > .toolchain-local
+          echo 'UDB_TOOLCHAIN_CONTAINER=0' >> "${GITHUB_ENV}"
+          echo 'UDB_TOOLCHAIN_NONE=0' >> "${GITHUB_ENV}"
+          g++-14 --version
+          clang-format --version
       - name: Install GCC 16 RISC-V toolchain
         run: |
           set -euo pipefail
