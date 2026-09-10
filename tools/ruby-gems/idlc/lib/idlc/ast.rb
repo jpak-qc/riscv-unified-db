@@ -4351,7 +4351,9 @@ module Idl
     include Rvalue
 
     sig { override.params(symtab: SymbolTable).returns(T::Boolean) }
-    def const_eval?(symtab) = true
+    def const_eval?(symtab)
+      expression.const_eval?(symtab)
+    end
 
     def expression = @children[0]
 
