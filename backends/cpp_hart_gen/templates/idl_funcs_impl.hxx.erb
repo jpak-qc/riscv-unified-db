@@ -28,7 +28,7 @@ namespace udb {
 
 <%# Vector state checks and updates are emitted by inst.hxx rather than IDL instruction bodies. -%>
 <%- functions = cfg_arch.reachable_functions.dup -%>
-<%- if cfg_arch.possible_instructions.any? { |inst| inst.name.downcase.start_with?("v") } -%>
+<%- if cfg_arch.cpp_hart_instructions.any? { |inst| inst.name.downcase.start_with?("v") } -%>
 <%- functions << cfg_arch.symtab.get("check_v_state_enabled").func_def_ast -%>
 <%- functions << cfg_arch.symtab.get("check_v_ok").func_def_ast -%>
 <%- functions << cfg_arch.symtab.get("check_masked_vector_register_overlap").func_def_ast -%>
