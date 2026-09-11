@@ -285,7 +285,20 @@ target_include_directories(test_softfloat_fp PUBLIC ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(test_softfloat_fp PRIVATE hart Catch2::Catch2WithMain libsoftfloat_static)
 target_compile_definitions(test_softfloat_fp PRIVATE
   UDB_FP_DIRECTED_JSONL="${UDB_ROOT}/tests/data/fp/directed/f32_fpgen_expanded.jsonl"
+  UDB_FP_TEST_CONFIG="${UDB_ROOT}/cfgs/rv64-riscv-tests.yaml"
 )
+
+if("rv64-vector" IN_LIST CONFIG_LIST)
+  add_executable(test_vector_altfmt
+    ${CMAKE_SOURCE_DIR}/test/test_vector_altfmt.cpp
+    ${CMAKE_SOURCE_DIR}/src/NotificationHandler.cpp
+  )
+  target_include_directories(test_vector_altfmt PUBLIC ${CMAKE_SOURCE_DIR}/include)
+  target_link_libraries(test_vector_altfmt PRIVATE hart Catch2::Catch2WithMain)
+  target_compile_definitions(test_vector_altfmt PRIVATE
+    UDB_VECTOR_ALTFMT_TEST_CONFIG="${UDB_ROOT}/cfgs/rv64-vector.yaml"
+  )
+endif()
 
 add_executable(test_regfile
   ${CMAKE_SOURCE_DIR}/test/test_regfile.cpp
@@ -310,6 +323,9 @@ foreach (random_test IN LISTS RANDOM_TESTS)
 endforeach()
 
 catch_discover_tests(test_softfloat_fp)
+if(TARGET test_vector_altfmt)
+  catch_discover_tests(test_vector_altfmt)
+endif()
 
 # catch_discover_tests(test_version)
 # catch_discover_tests(test_csr)

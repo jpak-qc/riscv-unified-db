@@ -1,0 +1,107 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+name: Validate udb-64-max with public UDB container
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  udb-64-max-vector-arch-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    container: ghcr.io/riscv/udb:0.46
+    # GitHub-hosted runners cannot currently reach Sigstore's TUF CDN. Mise
+    # still verifies the downloaded Ruby archive checksum.
+    env:
+      # .mise.toml's [hooks] table requires a post-2026.8 Mise release.
+      MISE_VERSION: v2026.9.3
+      MISE_RUBY_GITHUB_ATTESTATIONS: "false"
+      # GitHub's container actions change HOME between steps. Keep Mise's
+      # installed tools at a stable path that the test runner can reuse.
+      MISE_DATA_DIR: /tmp/udb-mise-data
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+      - name: Install native build dependency
+        shell: bash
+        run: |
+          set -euo pipefail
+          if command -v apt-get >/dev/null; then
+            apt-get update
+            apt-get install --yes pkg-config
+          elif command -v dnf >/dev/null; then
+            dnf install --assumeyes pkgconf-pkg-config
+          else
+            echo "No supported package manager found to install pkg-config." >&2
+            exit 1
+          fi
+      - name: Install pinned Sail reference model
+        shell: bash
+        run: |
+          set -euo pipefail
+          sail_archive=/tmp/sail-riscv-0.13.1-linux-x86_64.tar.gz
+          curl --fail --location --retry 3 \
+            https://github.com/riscv/sail-riscv/releases/download/0.13.1/sail-riscv-Linux-x86_64.tar.gz \
+            --output "${sail_archive}"
+          echo 'ee052f64494a2f5f071afd9c2cb4aa5eaae4ba84753e4f77e442b4f83f2e9469  /tmp/sail-riscv-0.13.1-linux-x86_64.tar.gz' \
+            | sha256sum --check
+          mkdir -p /opt/riscv
+          tar --extract --gzip --file "${sail_archive}" --directory /opt/riscv --strip-components=1
+          rm -f "${sail_archive}"
+          /opt/riscv/bin/sail_riscv_sim --version
+          echo /opt/riscv/bin >> "${GITHUB_PATH}"
+      - name: Install GCC 16 RISC-V toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcc_archive=/tmp/riscv64-elf-ubuntu-22.04-gcc.tar.xz
+          curl --fail --location --retry 3 \
+            https://github.com/riscv-collab/riscv-gnu-toolchain/releases/download/2026.08.25/riscv64-elf-ubuntu-22.04-gcc.tar.xz \
+            --output "${gcc_archive}"
+          echo 'f61c4ba69daeedb1e6081c49e4bed2860d1bae6ca7f8ac5f80fd4c8550a70872  /tmp/riscv64-elf-ubuntu-22.04-gcc.tar.xz' \
+            | sha256sum --check
+          mkdir --parents /opt/riscv
+          tar --extract --xz --file "${gcc_archive}" --directory /opt/riscv --strip-components=1
+          rm -f "${gcc_archive}"
+          /opt/riscv/bin/riscv64-unknown-elf-gcc --version
+          echo /opt/riscv/bin >> "${GITHUB_PATH}"
+      - name: Set up project dependencies with the container toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf 'UDB_TOOLCHAIN_CONTAINER=0\n' > .toolchain-local
+          # The public image ships an older Mise at the cache path used by
+          # bin/mise.  The bootstrap wrapper only checks for file existence,
+          # so remove that image-provided binary and install MISE_VERSION.
+          rm -f "${XDG_CACHE_HOME:-$HOME/.cache}/mise/mise-2026.7.5"
+          ./bin/setup
+          "${XDG_CACHE_HOME:-$HOME/.cache}/mise/mise-2026.7.5" version
+      - name: Run udb-64-max vector arch-tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          EXTENSIONS=Vx8,Vx16,Vx32,Vx64,Vls8,Vls16,Vls32,Vls64,Vf16,Vf32,Vf64 \
+            ACT_COMPILER_EXE=riscv64-unknown-elf-gcc \
+            ACT_OBJDUMP_EXE=riscv64-unknown-elf-objdump \
+            JOBS=4 \
+            BUILD_TYPE=debug \
+            IGNOREUNDEFINED=YES \
+            ./tools/test/run_udb_64_max_vector_arch_test.sh
+      - name: Archive udb-64-max regression logs
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: udb-64-max-vector-arch-test-logs
+          path: |
+            ext/riscv-arch-test/work/udb-64-max/summary.log
+            ext/riscv-arch-test/work/udb-64-max/logs/
+          if-no-files-found: ignore
+          retention-days: 7

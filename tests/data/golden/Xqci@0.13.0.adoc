@@ -39067,6 +39067,9 @@ h! `PrivilegeMode`
 if pass:[(]paddr > ((1 pass:[`]<< PHYS_ADDR_WIDTH) - access_size)) {
   xref:#udb-function-raise[raise]pass:[(]fault_type, from_mode, vaddr);
 }
+if pass:[(]!xref:#udb-function-physical_memory_accessible?[physical_memory_accessible?]pass:[(]paddr, access_size, type)) {
+  xref:#udb-function-raise[raise]pass:[(]fault_type, from_mode, vaddr);
+}
 if pass:[(]NUM_PMP_ENTRIES > 0) {
   if pass:[(]!xref:#udb-function-pmp_check[pmp_check]pass:[(]paddr[PHYS_ADDR_WIDTH - 1:0], access_size, type)) {
     xref:#udb-function-raise[raise]pass:[(]fault_type, from_mode, vaddr);
@@ -40055,6 +40058,35 @@ h! `PrivilegeMode`
 ! 1
 h! `PrivilegeMode`
 ! old_mode
+!===
+
+|===
+
+
+[#udb-function-physical_memory_accessible?]
+=== physical_memory_accessible? (builtin)
+Checks whether the complete physical access is implemented by the platform.
+  
+
+[cols="1,4"]
+|===
+h| Return Type h| `Boolean`
+h| Arguments
+a|
+
+[cols="1,4,4"]
+!===
+! Idx ! Type ! Name
+
+! 0
+h! `Bits<PHYS_ADDR_WIDTH>`
+! paddr
+! 1
+h! `U32`
+! len
+! 2
+h! `MemoryOperation`
+! type
 !===
 
 |===
