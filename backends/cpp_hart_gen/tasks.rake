@@ -474,6 +474,7 @@ namespace :test do
       sh "make -j #{$jobs} test_bits_directed"
       sh "make -j #{$jobs} test_bits_random"
       sh "make -j #{$jobs} test_softfloat_fp"
+      sh "make -j #{$jobs} test_vector_altfmt"
       sh "make -j #{$jobs} test_regfile"
       sh "make -j #{$jobs} test_util"
       sh "ctest -T coverage -T test"
