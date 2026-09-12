@@ -167,6 +167,11 @@ EOF
 "${ROOT}/do" build:iss "CONFIG=${CONFIG}" "BUILD_TYPE=${BUILD_TYPE}" \
   "IGNOREUNDEFINED=${IGNOREUNDEFINED}" "JOBS=${JOBS}"
 
+# ACT4 uses this checkout's unpublished UDB Ruby gems while validating and
+# deriving files from the configuration.  The released gems cannot represent
+# parameters introduced by the change under test.
+export UDB_LOCAL_PATH="${ROOT}"
+
 make -C "${RISCV_ARCH_TEST_DIR}" udb-64-max \
   "EXTENSIONS=${EXTENSIONS}" \
   "JOBS=${JOBS}"
