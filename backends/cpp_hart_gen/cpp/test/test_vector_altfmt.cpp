@@ -54,7 +54,9 @@ void enable_vector_fp_state(TestHart& hart, bool altfmt) {
   csrs.vstart.VALUE()._hw_write(Bits<64>{0}, xlen);
   csrs.vtype.VILL()._hw_write(Bits<1>{0}, xlen);
   csrs.vtype.ALTFMT()._hw_write(Bits<1>{altfmt ? 1 : 0});
-  csrs.vtype.VSEW()._hw_write(Bits<3>{1});
+  // Use SEW=32: this test checks ALTFMT instruction legality, while the
+  // fixture intentionally implements F/D but not standard vector FP16.
+  csrs.vtype.VSEW()._hw_write(Bits<3>{2});
   csrs.vtype.VLMUL()._hw_write(Bits<3>{0});
   csrs.vl.VALUE()._hw_write(Bits<64>{1}, xlen);
   hart.set_vreg(1, 0);
