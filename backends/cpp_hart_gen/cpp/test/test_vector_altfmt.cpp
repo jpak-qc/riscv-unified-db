@@ -75,8 +75,9 @@ TEST_CASE("vtype.ALTFMT reserves non-Zvfbfa vector floating-point instructions",
   IssSocModel soc(1024 * 1024, 0);
   TestHart hart(0, soc, make_zvfbfa_test_config());
 
+  // vfcvt.f.x.v fixes bits 19:15 (the otherwise-vs1 field) to 3.
   const uint32_t vfcvt_f_x_v = vector_op_instruction(
-      0b010010, 1, 3, 0, 0b001, 1);
+      0b010010, 1, 3, 3, 0b001, 1);
   const uint32_t vfadd_vv = vector_op_instruction(0b000000, 1, 3, 2, 0b001, 1);
 
   enable_vector_fp_state(hart, false);
