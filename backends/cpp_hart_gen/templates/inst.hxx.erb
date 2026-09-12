@@ -40,19 +40,6 @@
     ops
   end
 
-  def defined_by_extension_name?(node, extension_name)
-    case node
-    when Hash
-      return true if node["name"] == extension_name
-
-      node.any? { |_key, value| defined_by_extension_name?(value, extension_name) }
-    when Array
-      node.any? { |value| defined_by_extension_name?(value, extension_name) }
-    else
-      false
-    end
-  end
-
   def csr_field_exists?(cfg_arch, csr_name, field_name)
     csr = cfg_arch.not_prohibited_csrs.find { |c| c.name == csr_name }
     return false if csr.nil?
@@ -96,7 +83,7 @@ namespace udb {
   <%- reduction_instruction = inst.name.downcase.match?(/\Av(?:f|w|fw)?red/) -%>
   <%- vtype_altfmt_exists = csr_field_exists?(cfg_arch, "vtype", "ALTFMT") -%>
   <%- vector_altfmt_fp_instruction = vtype_altfmt_exists && (inst.name.downcase.start_with?("vf") || inst.name.downcase.start_with?("vmf")) && !inst.name.downcase.start_with?("vfirst") -%>
-  <%- vector_altfmt_allowed = vector_altfmt_fp_instruction && defined_by_extension_name?(inst.data["definedBy"], "Zvfbfa") -%>
+  <%- vector_altfmt_allowed = vector_altfmt_fp_instruction && inst.defined_by_condition.mentions?(cfg_arch.extension("Zvfbfa"), expand: false) -%>
   <%- vector_fp_instruction = (inst.name.downcase.start_with?("vf") || inst.name.downcase.start_with?("vmf")) && !inst.name.downcase.start_with?("vfirst") && !inst.name.downcase.match?(/\Avfwcvt\.f\.x(?:u)?\.v\z|\Avfncvt(?:\.rtz)?\.x(?:u)?\.f\.w\z/) -%>
   <%- segment_match = inst.name.downcase.match(/\Av(?:l(?:s|ux|ox)?|s(?:s|ux|ox)?)seg([2-8])e(i?)(8|16|32|64)(?:ff)?\.v\z/) -%>
   <%- segment_fields = segment_match && segment_match[1] -%>

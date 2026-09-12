@@ -68,8 +68,6 @@ perl -0pi -e 's/"writable_fiom": false/"writable_fiom": true/' "${TARGET_CONFIG_
 perl -0pi -e 's/"count": 64/"count": 0/' "${TARGET_CONFIG_DIR}/sail.json"
 perl -0pi -e 's/"usable_count": 64/"usable_count": 0/' "${TARGET_CONFIG_DIR}/sail.json"
 perl -0pi -e 's/"arith": true/"arith": false/' "${TARGET_CONFIG_DIR}/sail.json"
-perl -0pi -e 's/"supported": false/"supported": true/' "${TARGET_CONFIG_DIR}/sail.json"
-
 cat > "${TARGET_CONFIG_DIR}/run_cmd.txt" <<EOF
 ${ISS} -m udb-64-max -c ${UDB_CONFIG} --uart-base 0x10000000 --clint-base 0x02000000
 EOF
