@@ -185,14 +185,11 @@ module Idl
            var_type.sub_type.is_a?(Idl::RegFileElementType) &&
            var_type.qualifiers.include?(:global)
           rf_name = var_type.sub_type.name.downcase
-          value_result = value_try do
-            msb_val = msb.value(symtab)
-            lsb_val = lsb.value(symtab)
-            return "#{' ' * indent}__UDB_HART->_set_#{rf_name}reg( #{variable.index.gen_cpp(symtab, 0, indent_spaces:)}, ([&]() { auto __udb_reg_tmp = #{variable.gen_cpp(symtab)}; bit_insert<#{msb_val}, #{lsb_val}, #{variable.type(symtab).width}>(__udb_reg_tmp, #{write_value.gen_cpp(symtab)}); return __udb_reg_tmp; }()))"
-          end
-          value_else(value_result) do
-            return "#{' ' * indent}__UDB_HART->_set_#{rf_name}reg( #{variable.index.gen_cpp(symtab, 0, indent_spaces:)}, ([&]() { auto __udb_reg_tmp = #{variable.gen_cpp(symtab)}; bit_insert(__udb_reg_tmp, #{msb.gen_cpp(symtab)}, #{lsb.gen_cpp(symtab)}, #{write_value.gen_cpp(symtab)}); return __udb_reg_tmp; }()))"
-          end
+          # Always use the mutating overload, including when the bounds are
+          # compile-time constants. The constexpr overload only accepts native
+          # width Bits, whereas a register file can contain runtime-width
+          # vector registers (e.g. 65536 bits in the generic rv64 config).
+          return "#{' ' * indent}__UDB_HART->_set_#{rf_name}reg( #{variable.index.gen_cpp(symtab, 0, indent_spaces:)}, ([&]() { auto __udb_reg_tmp = #{variable.gen_cpp(symtab)}; bit_insert(__udb_reg_tmp, #{msb.gen_cpp(symtab)}, #{lsb.gen_cpp(symtab)}, #{write_value.gen_cpp(symtab)}); return __udb_reg_tmp; }()))"
         end
       end
 
@@ -578,17 +575,35 @@ module Idl
       t = type(symtab)
 
       if w == :unknown
+        lit_width = symtab.possible_xlens.max
         if t.known?
-          "#{' ' * indent}_RuntimeBits<#{symtab.possible_xlens.max}, #{t.signed?}>{#{v}_b, __UDB_XLEN}"
+          "#{' ' * indent}_RuntimeBits<#{lit_width}, #{t.signed?}>{#{bits_literal_text(v, lit_width)}_b, __UDB_XLEN}"
         else
-          "#{' ' * indent}_PossiblyUnknownRuntimeBits<#{symtab.possible_xlens.max}, #{t.signed?}>{\"#{v}\"_xb, __UDB_XLEN}"
+          "#{' ' * indent}_PossiblyUnknownRuntimeBits<#{lit_width}, #{t.signed?}>{\"#{v}\"_xb, __UDB_XLEN}"
         end
       else
         if t.known?
-          "#{' ' * indent}_Bits<#{t.width}, #{t.signed?}>(#{v}_b)"
+          "#{' ' * indent}_Bits<#{t.width}, #{t.signed?}>(#{bits_literal_text(v, t.width)}_b)"
         else
           "#{' ' * indent}_PossiblyUnknownBits<#{t.width}, #{t.signed?}>(\"#{v}\"_xb)"
         end
+      end
+    end
+
+    private
+
+    # Render +value+ as the unsigned decimal text of its +width+-bit two's-complement
+    # bit pattern. The C++ "_b" literal operator always produces an unsigned _Bits
+    # whose width is derived from the digit text itself (e.g. "1_b" is 1 bit wide), so
+    # emitting a negative value directly (e.g. "-1_b") relies on C++ unary minus over
+    # that undersized unsigned literal, which loses the sign (e.g. -15_b becomes +1,
+    # because "15_b" is only four bits and negation drops the sign bit). Pre-masking to
+    # the literal's real width avoids that and always yields the correct bit pattern.
+    def bits_literal_text(value, width)
+      if value.is_a?(Integer) && value.negative?
+        (value & ((1 << width) - 1)).to_s
+      else
+        value.to_s
       end
     end
   end
@@ -837,6 +852,18 @@ module Idl
     lt_sub == rt.sub_type.to_cxx_no_qualifiers ? rhs_cpp : "array_cast<#{lt_sub}>(#{rhs_cpp})"
   end
 
+  # Array literals infer their element type from the first literal.  That is
+  # too narrow for a declaration such as `Bits<8> values[256] = [0x63, ...]`:
+  # the first value is representable in seven bits, while later values are not.
+  # Emit the literal in the destination element type whenever one is known.
+  def self.array_rhs_cpp(lt, rhs, symtab, indent_spaces: 2)
+    if lt.kind == :array && rhs.is_a?(ArrayLiteralAst)
+      rhs.gen_cpp_as_element_type(symtab, lt.sub_type, indent_spaces:)
+    else
+      maybe_array_cast(lt, rhs.type(symtab), rhs.gen_cpp(symtab, 0, indent_spaces:))
+    end
+  end
+
   class VariableDeclarationWithInitializationAst < AstNode
     sig { override.params(symtab: SymbolTable, indent: Integer, indent_spaces: Integer).returns(String) }
     def gen_cpp(symtab, indent = 0, indent_spaces: 2)
@@ -850,8 +877,7 @@ module Idl
         end
       else
         lt = lhs_type(symtab)
-        rt = rhs.type(symtab)
-        rhs_cpp = Idl.maybe_array_cast(lt, rt, rhs.gen_cpp(symtab, 0, indent_spaces:))
+        rhs_cpp = Idl.array_rhs_cpp(lt, rhs, symtab, indent_spaces:)
         "#{' ' * indent}std::array<#{type_name.gen_cpp(symtab, 0, indent_spaces:)}, #{ary_size.gen_cpp(symtab, 0, indent_spaces:)}> #{lhs.gen_cpp(symtab, 0, indent_spaces:)} = #{rhs_cpp}"
       end
     end
@@ -914,8 +940,7 @@ module Idl
     sig { override.params(symtab: SymbolTable, indent: Integer, indent_spaces: Integer).returns(String) }
     def gen_cpp(symtab, indent = 0, indent_spaces: 2)
       lt = lhs.type(symtab)
-      rt = rhs.type(symtab)
-      rhs_cpp = Idl.maybe_array_cast(lt, rt, rhs.gen_cpp(symtab, 0, indent_spaces:))
+      rhs_cpp = Idl.array_rhs_cpp(lt, rhs, symtab, indent_spaces:)
       "#{' ' * indent}#{lhs.gen_cpp(symtab, 0, indent_spaces:)} = #{rhs_cpp}"
     end
   end
@@ -937,7 +962,30 @@ module Idl
         rf_name = lhs_type.sub_type.name.downcase
         "#{' ' * indent}__UDB_HART->_set_#{rf_name}reg( #{idx.gen_cpp(symtab, 0, indent_spaces:)}, #{rhs.gen_cpp(symtab, 0, indent_spaces:)})"
       elsif lhs.type(symtab).kind == :bits
-        "#{' ' * indent}#{lhs.gen_cpp(symtab, 0, indent_spaces:)}.setBit(#{idx.gen_cpp(symtab, 0, indent_spaces:)}, #{rhs.gen_cpp(symtab, 0, indent_spaces:)})"
+        lhs_cpp = lhs.gen_cpp(symtab, 0, indent_spaces:)
+        idx_cpp = idx.gen_cpp(symtab, 0, indent_spaces:)
+        rhs_cpp = rhs.gen_cpp(symtab, 0, indent_spaces:)
+        if lhs_cpp.include?("_vreg(")
+          # Vector register bit-indexed assignment: must use read-modify-write to avoid
+          # modifying a temporary copy returned by _vreg() by value.
+          # Extract the register index expression from the LHS. Use a balanced-paren
+          # match: find the outermost _vreg(...) argument accounting for nested parens.
+          vreg_idx = begin
+            inner = lhs_cpp.sub(/.*__UDB_HART->_vreg\(/, "")
+            depth = 0
+            result = ""
+            inner.each_char do |c|
+              break if depth == 0 && c == ")"
+              depth += 1 if c == "("
+              depth -= 1 if c == ")"
+              result += c
+            end
+            result.empty? ? "vd()" : result
+          end
+          "#{' ' * indent}{ auto __vreg_tmp = #{lhs_cpp}; __vreg_tmp.setBit(#{idx_cpp}, #{rhs_cpp}); __UDB_HART->_set_vreg(#{vreg_idx}, __vreg_tmp); }"
+        else
+          "#{' ' * indent}#{lhs_cpp}.setBit(#{idx_cpp}, #{rhs_cpp})"
+        end
       else
         # actually an array
         "#{' ' * indent}#{lhs.gen_cpp(symtab, 0, indent_spaces:)}.at(#{idx.gen_cpp(symtab, 0, indent_spaces:)}.get()) = #{rhs.gen_cpp(symtab, 0, indent_spaces:)}"
@@ -1006,7 +1054,11 @@ module Idl
   class ArrayLiteralAst < AstNode
     sig { override.params(symtab: SymbolTable, indent: Integer, indent_spaces: Integer).returns(String) }
     def gen_cpp(symtab, indent = 0, indent_spaces: 2)
-      "std::array<#{element_nodes.fetch(0).type(symtab).to_cxx_no_qualifiers}, #{element_nodes.size}>{#{element_nodes.map { |e| e.gen_cpp(symtab, 0) }.join(', ')}}"
+      gen_cpp_as_element_type(symtab, element_nodes.fetch(0).type(symtab), indent_spaces:)
+    end
+
+    def gen_cpp_as_element_type(symtab, element_type, indent_spaces: 2)
+      "std::array<#{element_type.to_cxx_no_qualifiers}, #{element_nodes.size}>{#{element_nodes.map { |e| e.gen_cpp(symtab, 0, indent_spaces:) }.join(', ')}}"
     end
   end
 

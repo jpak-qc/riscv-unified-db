@@ -15696,10 +15696,15 @@ Decode Variables::
 Included in::
 
 
-This instruction requires the following:
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
 
-xref:exts:Zbc.adoc#udb:doc:ext:Zbc[Zbc]
-xref:exts:Zbkc.adoc#udb:doc:ext:Zbkc[Zbkc]
+| *Zbkc*
+| any
+|===
+
+
 
 
 [#udb:doc:inst:clmulh]
@@ -15743,10 +15748,15 @@ Decode Variables::
 Included in::
 
 
-This instruction requires the following:
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
 
-xref:exts:Zbc.adoc#udb:doc:ext:Zbc[Zbc]
-xref:exts:Zbkc.adoc#udb:doc:ext:Zbkc[Zbkc]
+| *Zbkc*
+| any
+|===
+
+
 
 
 [#udb:doc:inst:clmulr]
@@ -45124,7 +45134,7 @@ Included in::
 == vfrec7.v
 
 Synopsis::
-No synopsis available
+Vector floating-point reciprocal estimate to 7 bits
 
 Base::
 
@@ -45146,7 +45156,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Returns an estimate of 1/x accurate to 7 bits.
 
 
 Decode Variables::
@@ -45388,7 +45398,7 @@ Included in::
 == vfrsqrt7.v
 
 Synopsis::
-No synopsis available
+Vector floating-point reciprocal square-root estimate to 7 bits
 
 Base::
 
@@ -45410,7 +45420,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Returns an estimate of 1/sqrt(x) accurate to 7 bits.
 
 
 Decode Variables::

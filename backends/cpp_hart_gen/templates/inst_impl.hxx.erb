@@ -2,7 +2,7 @@
 
 #include "udb/soc_model.hpp"
 
-<%- ilist = cfg_arch.possible_instructions -%>
+<%- ilist = cfg_arch.cpp_hart_instructions -%>
 
 <%- ilist.each do |inst| -%>
 template <unsigned XLEN, udb::SocModel SocType>
