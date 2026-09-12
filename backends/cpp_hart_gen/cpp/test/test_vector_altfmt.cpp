@@ -80,11 +80,17 @@ TEST_CASE("vtype.ALTFMT reserves non-Zvfbfa vector floating-point instructions",
   const uint32_t vfadd_vv = vector_op_instruction(0b000000, 1, 3, 2, 0b001, 1);
 
   enable_vector_fp_state(hart, false);
-  REQUIRE(execute_one(hart, soc, vfcvt_f_x_v) == StopReason::InstLimitReached);
+  const int vfcvt_without_altfmt = execute_one(hart, soc, vfcvt_f_x_v);
+  CAPTURE(vfcvt_without_altfmt);
+  REQUIRE(vfcvt_without_altfmt == StopReason::InstLimitReached);
 
   enable_vector_fp_state(hart, true);
-  REQUIRE(execute_one(hart, soc, vfcvt_f_x_v) == StopReason::Exception);
+  const int vfcvt_with_altfmt = execute_one(hart, soc, vfcvt_f_x_v);
+  CAPTURE(vfcvt_with_altfmt);
+  REQUIRE(vfcvt_with_altfmt == StopReason::Exception);
 
   enable_vector_fp_state(hart, true);
-  REQUIRE(execute_one(hart, soc, vfadd_vv) == StopReason::InstLimitReached);
+  const int zvfbfa_vfadd_with_altfmt = execute_one(hart, soc, vfadd_vv);
+  CAPTURE(zvfbfa_vfadd_with_altfmt);
+  REQUIRE(zvfbfa_vfadd_with_altfmt == StopReason::InstLimitReached);
 }
