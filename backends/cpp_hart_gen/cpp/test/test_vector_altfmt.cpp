@@ -2,7 +2,7 @@
 #include <yaml-cpp/yaml.h>
 
 #include <udb/bits.hpp>
-#include <udb/cfgs/rv64-vector/hart.hxx>
+#include <udb/cfgs/rv64-vector-zvfbfa-test/hart.hxx>
 #include <udb/config_validator.hpp>
 #include <udb/iss_soc_model.hpp>
 #include <udb/stop_reason.h>
@@ -11,24 +11,13 @@ using namespace udb;
 
 namespace {
 
-using TestHart = Rv64Vector_Hart<IssSocModel>;
+using TestHart = Rv64VectorZvfbfaTest_Hart<IssSocModel>;
 
 Config make_zvfbfa_test_config() {
 #ifndef UDB_VECTOR_ALTFMT_TEST_CONFIG
   throw std::runtime_error("UDB_VECTOR_ALTFMT_TEST_CONFIG compile definition is missing");
 #else
-  auto yaml = YAML::LoadFile(UDB_VECTOR_ALTFMT_TEST_CONFIG);
-  YAML::Node zfbfmin;
-  zfbfmin.push_back("Zfbfmin");
-  zfbfmin.push_back("1.0.0");
-  yaml["implemented_extensions"].push_back(zfbfmin);
-
-  YAML::Node zvfbfa;
-  zvfbfa.push_back("Zvfbfa");
-  zvfbfa.push_back("0.8.0");
-  yaml["implemented_extensions"].push_back(zvfbfa);
-
-  const auto json = ConfigValidator::validate(yaml);
+  const auto json = ConfigValidator::validate(YAML::LoadFile(UDB_VECTOR_ALTFMT_TEST_CONFIG));
   return Config(json.at("implemented_extensions"), json.at("params"));
 #endif
 }
@@ -46,7 +35,7 @@ uint32_t vector_op_instruction(uint8_t funct6, uint8_t vm, uint8_t vs2,
 void enable_vector_fp_state(TestHart& hart, bool altfmt) {
   hart.reset(0);
   auto& csrs = hart._csrContainer();
-  auto xlen = Bits<8>{64};
+  const auto xlen = Bits<8>{64};
 
   csrs.mstatus.VS()._hw_write(Bits<2>{3});
   csrs.mstatus.FS()._hw_write(Bits<2>{3});
