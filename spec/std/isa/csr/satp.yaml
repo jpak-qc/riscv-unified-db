@@ -63,7 +63,8 @@ fields:
           }
           return csr_value.MODE;
         } else {
-          return UNDEFINED_LEGAL_DETERMINISTIC;
+          # The entire write is ignored, so retain this field's current value.
+          return CSR[satp].MODE;
         }
       }
       else if (implemented?(ExtensionName::Sv32) && csr_value.MODE == 1) {
@@ -124,7 +125,8 @@ fields:
         return csr_value.MODE;
       }
       else {
-        return UNDEFINED_LEGAL_DETERMINISTIC;
+        # Unsupported MODE values cause the entire write to be ignored.
+        return CSR[satp].MODE;
       }
   ASID:
     location_rv32: 30-22
@@ -138,7 +140,8 @@ fields:
         if (csr_value.ASID == 0 && csr_value.PPN == 0) {
           return csr_value.ASID;
         } else {
-          return UNDEFINED_LEGAL_DETERMINISTIC;
+          # The entire write is ignored, so retain this field's current value.
+          return CSR[satp].ASID;
         }
       } else {
         XReg shamt = (xlen() == 32 || (CSR[mstatus].SXL == $bits(XRegWidth::XLEN32))) ? 9 : 16;
@@ -176,7 +179,8 @@ fields:
         if (csr_value.ASID == 0 && csr_value.PPN == 0) {
           return csr_value.PPN;
         } else {
-          return UNDEFINED_LEGAL_DETERMINISTIC;
+          # The entire write is ignored, so retain this field's current value.
+          return CSR[satp].PPN;
         }
       } else {
         # unrestricted

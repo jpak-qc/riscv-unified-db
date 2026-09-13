@@ -71,7 +71,8 @@ fields:
           if (csr_value.ASID == 0 && csr_value.PPN == 0) {
             return csr_value.MODE;
           } else {
-            return UNDEFINED_LEGAL_DETERMINISTIC;
+            # The entire write is ignored, so retain this field's current value.
+            return CSR[vsatp].MODE;
           }
         } else {
           return UNDEFINED_LEGAL_DETERMINISTIC;
@@ -96,7 +97,8 @@ fields:
           if (csr_value.ASID == 0 && csr_value.PPN == 0) {
             return csr_value.ASID;
           } else {
-            return UNDEFINED_LEGAL_DETERMINISTIC;
+            # The entire write is ignored, so retain this field's current value.
+            return CSR[vsatp].ASID;
           }
         } else {
           return UNDEFINED_LEGAL_DETERMINISTIC;
@@ -138,7 +140,8 @@ fields:
           if (csr_value.ASID == 0 && csr_value.PPN == 0) {
             return csr_value.PPN;
           } else {
-            return UNDEFINED_LEGAL_DETERMINISTIC;
+            # The entire write is ignored, so retain this field's current value.
+            return CSR[vsatp].PPN;
           }
         } else {
           return UNDEFINED_LEGAL_DETERMINISTIC;

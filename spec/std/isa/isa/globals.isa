@@ -1347,7 +1347,8 @@ function current_translation_mode {
       return SatpMode::Bare;
     }
 
-    if (CSR[misa].H == 1'b1) {
+    if (CSR[misa].H == 1'b1 &&
+        (effective_mode == PrivilegeMode::VS || effective_mode == PrivilegeMode::VU)) {
       if (effective_mode == PrivilegeMode::VS || effective_mode == PrivilegeMode::VU) {
         Bits<4> mode_val = CSR[vsatp].MODE;
         if (mode_val == $bits(SatpMode::Bare)) {
