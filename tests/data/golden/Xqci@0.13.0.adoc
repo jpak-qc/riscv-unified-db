@@ -39287,7 +39287,7 @@ PrivilegeMode effective_mode = xref:#udb-function-effective_ldst_mode[effective_
 if pass:[(]effective_mode == PrivilegeMode::M) {
   return SatpMode::Bare;
 }
-if pass:[(]CSR[xref:#udb-csr-misa[misa]].xref:#udb-csrfield-misa-H[H] == 1'b1) {
+if pass:[(]CSR[xref:#udb-csr-misa[misa]].xref:#udb-csrfield-misa-H[H] == 1'b1 && (effective_mode == PrivilegeMode::VS || effective_mode == PrivilegeMode::VU)) {
   if pass:[(]effective_mode == PrivilegeMode::VS || effective_mode == PrivilegeMode::VU) {
     Bits<4> mode_val = CSR[xref:#udb-csr-vsatp[vsatp]].xref:#udb-csrfield-vsatp-MODE[MODE];
     if pass:[(]mode_val == $bits(SatpMode::Bare)) {
