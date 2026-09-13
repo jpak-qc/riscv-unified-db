@@ -2,7 +2,7 @@
 #include <yaml-cpp/yaml.h>
 
 #include <udb/bits.hpp>
-#include <udb/cfgs/rv64/hart.hxx>
+#include <udb/cfgs/rv64-vector/hart.hxx>
 #include <udb/config_validator.hpp>
 #include <udb/iss_soc_model.hpp>
 #include <udb/stop_reason.h>
@@ -11,7 +11,7 @@ using namespace udb;
 
 namespace {
 
-using TestHart = Rv64_Hart<IssSocModel>;
+using TestHart = Rv64Vector_Hart<IssSocModel>;
 
 Config make_zvfbfa_test_config() {
 #ifndef UDB_VECTOR_ALTFMT_TEST_CONFIG
