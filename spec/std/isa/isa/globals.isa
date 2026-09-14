@@ -709,6 +709,10 @@ function raise_precise {
     Raise synchronous exception number `exception_code`.
   }
   body {
+    if (fault_only_first_trap_suppressed?()) {
+      abort_fault_only_first_read();
+    }
+
     PrivilegeMode handling_mode = exception_handling_mode(exception_code);
 
     if (handling_mode == PrivilegeMode::M) {
@@ -1282,6 +1286,11 @@ function access_check {
   body {
     # check if this is a valid physical address
     if (paddr > ((1 `<< PHYS_ADDR_WIDTH) - access_size)) {
+      raise(fault_type, from_mode, vaddr);
+    }
+
+    # check that the platform maps this physical access
+    if (!physical_memory_accessible?(paddr, access_size, type)) {
       raise(fault_type, from_mode, vaddr);
     }
 
