@@ -13,7 +13,7 @@ JOBS="${JOBS:-4}"
 EXTENSIONS="${EXTENSIONS:-Vx8,Vx16,Vx32,Vx64,Vls8,Vls16,Vls32,Vls64,Vf16,Vf32,Vf64}"
 
 RISCV_ARCH_TEST_REPO="${RISCV_ARCH_TEST_REPO:-https://github.com/riscv-non-isa/riscv-arch-test.git}"
-RISCV_ARCH_TEST_REF="${RISCV_ARCH_TEST_REF:-ba53eb88ad021dd69419cacfcfc9a3f8c104f988}"
+RISCV_ARCH_TEST_REF="${RISCV_ARCH_TEST_REF:-edfa48d307ecda3d83b033dcb80ef96cde866994}"
 RISCV_ARCH_TEST_DIR="${RISCV_ARCH_TEST_DIR:-${ROOT}/ext/riscv-arch-test}"
 
 case "${BUILD_TYPE,,}" in
@@ -42,6 +42,12 @@ elif [ ! -d "${RISCV_ARCH_TEST_DIR}/.git" ]; then
   echo "${RISCV_ARCH_TEST_DIR} exists but is not a Git checkout." >&2
   exit 2
 fi
+
+# Keep an existing checkout at the pinned revision as well.  This makes local
+# reruns reproduce CI instead of silently using whichever revision was cloned
+# first.
+git -C "${RISCV_ARCH_TEST_DIR}" fetch --quiet origin "${RISCV_ARCH_TEST_REF}"
+git -C "${RISCV_ARCH_TEST_DIR}" checkout --quiet --detach "${RISCV_ARCH_TEST_REF}"
 
 echo "Using riscv-arch-test at $(git -C "${RISCV_ARCH_TEST_DIR}" rev-parse --short HEAD)"
 
