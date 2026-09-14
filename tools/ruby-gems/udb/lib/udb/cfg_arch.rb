@@ -1510,6 +1510,28 @@ module Udb
 
     alias not_prohibited_instructions possible_instructions
 
+    # The C++ hart backend can only emit vector instructions when vector
+    # state is known to exist. Generic partial configurations keep V optional
+    # and therefore do not contain the required vector CSR/register state.
+    sig { returns(T::Boolean) }
+    def cpp_hart_vector_enabled?
+      extensions = if fully_configured?
+                     possible_extensions.map(&:name)
+                   elsif partially_configured?
+                     mandatory_extension_reqs.map(&:name)
+                   else
+                     []
+                   end
+      extensions.any? { |name| name == "V" || name.start_with?("Zv") }
+    end
+
+    sig { returns(T::Array[Instruction]) }
+    def cpp_hart_instructions
+      return possible_instructions if cpp_hart_vector_enabled?
+
+      possible_instructions.reject { |inst| inst.name.downcase.start_with?("v") }
+    end
+
     sig { params(show_progress: T::Boolean).returns(T::Array[Csr]) }
     def instructions_that_must_be_implemented(show_progress: false)
       @instructions_that_must_be_implemented ||=

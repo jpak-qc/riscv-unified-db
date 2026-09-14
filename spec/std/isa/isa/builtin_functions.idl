@@ -571,6 +571,57 @@ builtin function pma_applies? {
   }
 }
 
+builtin function physical_memory_accessible? {
+  returns Boolean
+  arguments
+    Bits<PHYS_ADDR_WIDTH> paddr,  #< Start of the region
+    U32                   len,    #< Size of the region, in bits
+    MemoryOperation       op      #< Access operation
+  description {
+    Checks whether the platform maps the entire physical address region
+    between [paddr, paddr + len) for _op_.
+  }
+}
+
+builtin function fault_only_first_trap_suppressed? {
+  returns Boolean
+  description {
+    Returns whether a fault-only-first vector load is handling an element access.
+  }
+}
+
+builtin function abort_fault_only_first_read {
+  description {
+    Stops the current fault-only-first element access without taking a guest trap.
+  }
+}
+
+builtin function begin_fault_only_first_reads {
+  description {
+    Starts collecting the fields of one fault-only-first vector element.
+  }
+}
+
+builtin function fault_only_first_read? {
+  returns Boolean
+  arguments
+    U32                    len,
+    XReg                   virtual_address,
+    Bits<INSTR_ENC_SIZE>   encoding
+  description {
+    Reads a field of a fault-only-first vector element, returning false if
+    the access faults after the first element.
+  }
+}
+
+builtin function fault_only_first_read_value {
+  returns XReg
+  arguments U32 index
+  description {
+    Returns a previously collected field of a fault-only-first vector element.
+  }
+}
+
 builtin function atomic_check_then_write_32 {
   returns Boolean
   arguments

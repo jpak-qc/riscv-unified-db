@@ -709,6 +709,10 @@ function raise_precise {
     Raise synchronous exception number `exception_code`.
   }
   body {
+    if (fault_only_first_trap_suppressed?()) {
+      abort_fault_only_first_read();
+    }
+
     PrivilegeMode handling_mode = exception_handling_mode(exception_code);
 
     if (handling_mode == PrivilegeMode::M) {
@@ -1285,6 +1289,11 @@ function access_check {
       raise(fault_type, from_mode, vaddr);
     }
 
+    # check that the platform maps this physical access
+    if (!physical_memory_accessible?(paddr, access_size, type)) {
+      raise(fault_type, from_mode, vaddr);
+    }
+
     # check PMP
     if (NUM_PMP_ENTRIES > 0) {
       if (!pmp_check(paddr[PHYS_ADDR_WIDTH-1:0], access_size, type)) {
@@ -1347,7 +1356,8 @@ function current_translation_mode {
       return SatpMode::Bare;
     }
 
-    if (CSR[misa].H == 1'b1) {
+    if (CSR[misa].H == 1'b1 &&
+        (effective_mode == PrivilegeMode::VS || effective_mode == PrivilegeMode::VU)) {
       if (effective_mode == PrivilegeMode::VS || effective_mode == PrivilegeMode::VU) {
         Bits<4> mode_val = CSR[vsatp].MODE;
         if (mode_val == $bits(SatpMode::Bare)) {
