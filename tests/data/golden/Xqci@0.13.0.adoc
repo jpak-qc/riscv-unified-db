@@ -39024,6 +39024,22 @@ None
 |===
 
 
+[#udb-function-abort_fault_only_first_read]
+=== abort_fault_only_first_read (builtin)
+Stops the current fault-only-first element access without taking a guest trap.
+  
+
+[cols="1,4"]
+|===
+h| Return Type h| `void`
+h| Arguments
+a|
+
+None
+
+|===
+
+
 [#udb-function-access_check]
 === access_check
 Checks if the physical address paddr is able to access memory, and raises
@@ -39065,6 +39081,9 @@ h! `PrivilegeMode`
 [source,idl,subs="specialchars,macros"]
 ----
 if pass:[(]paddr > ((1 pass:[`]<< PHYS_ADDR_WIDTH) - access_size)) {
+  xref:#udb-function-raise[raise]pass:[(]fault_type, from_mode, vaddr);
+}
+if pass:[(]!xref:#udb-function-physical_memory_accessible?[physical_memory_accessible?]pass:[(]paddr, access_size, type)) {
   xref:#udb-function-raise[raise]pass:[(]fault_type, from_mode, vaddr);
 }
 if pass:[(]NUM_PMP_ENTRIES > 0) {
@@ -39535,6 +39554,22 @@ if pass:[(]xref:#udb-function-mode[mode]pass:[(]) == PrivilegeMode::M) {
   xref:#udb-function-unreachable[unreachable]pass:[(]);
 }
 ----
+
+[#udb-function-fault_only_first_trap_suppressed?]
+=== fault_only_first_trap_suppressed? (builtin)
+Returns whether a fault-only-first vector load is handling an element access.
+  
+
+[cols="1,4"]
+|===
+h| Return Type h| `Boolean`
+h| Arguments
+a|
+
+None
+
+|===
+
 
 [#udb-function-fence_tso]
 === fence_tso (builtin)
@@ -40061,6 +40096,36 @@ h! `PrivilegeMode`
 |===
 
 
+[#udb-function-physical_memory_accessible?]
+=== physical_memory_accessible? (builtin)
+Checks whether the platform maps the entire physical address region
+between [paddr, paddr + len) for _op_.
+  
+
+[cols="1,4"]
+|===
+h| Return Type h| `Boolean`
+h| Arguments
+a|
+
+[cols="1,4,4"]
+!===
+! Idx ! Type ! Name
+
+! 0
+h! `Bits<PHYS_ADDR_WIDTH>`
+! paddr
+! 1
+h! `U32`
+! len
+! 2
+h! `MemoryOperation`
+! op
+!===
+
+|===
+
+
 [#udb-function-pma_applies?]
 === pma_applies? (builtin)
 Checks if _attr_ is applied to the entire physical address region
@@ -40326,6 +40391,9 @@ h! `XReg`
 
 [source,idl,subs="specialchars,macros"]
 ----
+if pass:[(]xref:#udb-function-fault_only_first_trap_suppressed?[fault_only_first_trap_suppressed?]pass:[(])) {
+  xref:#udb-function-abort_fault_only_first_read[abort_fault_only_first_read]pass:[(]);
+}
 PrivilegeMode handling_mode = xref:#udb-function-exception_handling_mode[exception_handling_mode]pass:[(]exception_code);
 if pass:[(]handling_mode == PrivilegeMode::M) {
   CSR[xref:#udb-csr-mepc[mepc]].xref:#udb-csrfield-mepc-PC[PC] = $pc;
