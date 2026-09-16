@@ -510,6 +510,24 @@ namespace udb {
     int run_n(uint64_t n) override { return _run_n(n); }
     int _run_n(uint64_t n);
 
+    void set_platform_software_interrupt(const PrivilegeMode& target_mode,
+                                         bool pending) override {
+      if (pending) set_software_interrupt(target_mode);
+      else clear_software_interrupt(target_mode);
+    }
+
+    void set_platform_timer_interrupt(const PrivilegeMode& target_mode,
+                                      bool pending) override {
+      if (pending) set_timer_interrupt(target_mode);
+      else clear_timer_interrupt(target_mode);
+    }
+
+    void set_platform_external_interrupt(const PrivilegeMode& target_mode,
+                                         bool pending) override {
+      if (pending) set_external_interrupt(target_mode);
+      else clear_external_interrupt(target_mode);
+    }
+
     // external interrupt interface
     void set_mmode_ext_int() {
       m_csrs.mip.MEIP()._hw_write(1_b);

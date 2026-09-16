@@ -128,6 +128,10 @@ namespace udb {
       throw WfiException();
     }
 
+    virtual void set_platform_software_interrupt(const PrivilegeMode&, bool) {}
+    virtual void set_platform_timer_interrupt(const PrivilegeMode&, bool) {}
+    virtual void set_platform_external_interrupt(const PrivilegeMode&, bool) {}
+
     void wrs_nto() {
       // no-op: a valid implementation per the Zawrs spec
     }
