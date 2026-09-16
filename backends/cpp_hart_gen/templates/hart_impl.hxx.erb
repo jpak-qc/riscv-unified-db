@@ -26,10 +26,15 @@ namespace udb {
     <%- rf_name = rf.name.downcase -%>
     <%- rf_width = rf.eval_register_length(cfg_arch) -%>
     <%- is_rt_width = rf_width.is_a?(String) -%>
+    <%- bits_width = rf_elem_width(rf) -%>
+    <%- is_wide_fixed_width = bits_width.match?(/\A\d+\z/) && bits_width.to_i > 64 -%>
+    <%- is_gmp_fixed_width = bits_width.match?(/\A\d+\z/) && bits_width.to_i > 128 -%>
     fmt::print(out, "<%= rf.name %> registers:\n");
     for (unsigned i = 0; i < <%= rf.registers.count %>; i++) {
-      <%- if is_rt_width -%>
+      <%- if is_rt_width || is_gmp_fixed_width -%>
       fmt::print(out, "<%= rf_name %>{}: {:#x}\n", i, static_cast<uint64_t>(_<%= rf_name %>reg(i).get().get_ui()));
+      <%- elsif is_wide_fixed_width -%>
+      fmt::print(out, "<%= rf_name %>{}: {:#x}\n", i, static_cast<uint64_t>(_<%= rf_name %>reg(i).get()));
       <%- else -%>
       fmt::print(out, "<%= rf_name %>{}: {:#x}\n", i, _<%= rf_name %>reg(i).get());
       <%- end -%>
@@ -60,12 +65,12 @@ namespace udb {
   ) {
     <%- if cfg_arch.multi_xlen? -%>
     if (xlen() == 32_b) {
-      <%= DecodeGen.new(cfg_arch).generate(cfg_arch.possible_instructions.select { |i| i.rv32? }, 32, indent: 4) %>
+      <%= DecodeGen.new(cfg_arch).generate(cfg_arch.possible_instructions.select { |i| i.exists_in_cfg?(cfg_arch) && i.defined_in_base?(32) }, 32, indent: 4) %>
     } else {
-      <%= DecodeGen.new(cfg_arch).generate(cfg_arch.possible_instructions.select { |i| i.rv64? }, 64, indent: 4) %>
+      <%= DecodeGen.new(cfg_arch).generate(cfg_arch.possible_instructions.select { |i| i.exists_in_cfg?(cfg_arch) && i.defined_in_base?(64) }, 64, indent: 4) %>
     }
     <%- else # just need a single decode -%>
-    <%= DecodeGen.new(cfg_arch).generate(cfg_arch.possible_instructions, cfg_arch.possible_xlens[0], indent: 2) %>
+    <%= DecodeGen.new(cfg_arch).generate(cfg_arch.possible_instructions.select { |i| i.exists_in_cfg?(cfg_arch) && i.defined_in_base?(cfg_arch.possible_xlens[0]) }, cfg_arch.possible_xlens[0], indent: 2) %>
     <%- end -%>
 
     // fall through: no instruction found

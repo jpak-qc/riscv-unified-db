@@ -2,7 +2,7 @@
 
 #include "udb/soc_model.hpp"
 
-<%- ilist = cfg_arch.possible_instructions -%>
+<%- ilist = cfg_arch.possible_instructions.select { |inst| inst.exists_in_cfg?(cfg_arch) && (inst.rv32? && cfg_arch.possible_xlens.include?(32) || inst.rv64? && cfg_arch.possible_xlens.include?(64)) } -%>
 
 <%- ilist.each do |inst| -%>
 template <unsigned XLEN, udb::SocModel SocType>
