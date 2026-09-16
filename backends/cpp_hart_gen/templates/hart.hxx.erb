@@ -343,6 +343,16 @@ namespace udb {
         m_pc = m_next_pc;
       }
 
+      void retire_instruction() {
+        ++this->m_num_inst_exec;
+        <%- if cfg_arch.not_prohibited_csrs.any? { |csr| csr.name == "minstret" } -%>
+        if (m_csrs.mcountinhibit.IR()._hw_read().get() == 0) {
+          auto& minstret = m_csrs.minstret.COUNT();
+          minstret._hw_write(minstret._hw_read() + Bits<64>{1});
+        }
+        <%- end -%>
+      }
+
       unsigned mxlen() override { return MXLEN; }
 
       <%- applicable_register_files.each do |rf| -%>
@@ -350,6 +360,8 @@ namespace udb {
       <%- bits_width = rf_elem_width(rf) -%>
       <%- rf_width = rf.eval_register_length(cfg_arch) -%>
       <%- is_runtime_width = rf_width.is_a?(String) -%>
+      <%- is_wide_fixed_width = bits_width.match?(/\A\d+\z/) && bits_width.to_i > 64 -%>
+      <%- is_gmp_fixed_width = bits_width.match?(/\A\d+\z/) && bits_width.to_i > 128 -%>
       <%- accessor_type = is_runtime_width ? "PossiblyUnknownRuntimeBits<#{rf.max_register_length}>" : "PossiblyUnknownBits<#{bits_width}>" -%>
       <%- setter_param_type = is_runtime_width ? "_PossiblyUnknownRuntimeBits<#{rf.max_register_length}, false>" : "_PossiblyUnknownBits<#{bits_width}, false>" -%>
       <%- entries_with_read = rf.registers.select { |r| r.arch_read } -%>
@@ -359,8 +371,10 @@ namespace udb {
         if (num >= <%= rf.registers.count %>) {
           throw std::out_of_range("<%= rf.name %> register indices are 0 - <%= rf.registers.count - 1 %>, inclusive");
         }
-        <%- if is_runtime_width -%>
+        <%- if is_runtime_width || is_gmp_fixed_width -%>
         return static_cast<uint64_t>(_<%= rf_name %>reg(num).get().get_ui());
+        <%- elsif is_wide_fixed_width -%>
+        return static_cast<uint64_t>(_<%= rf_name %>reg(num).get());
         <%- else -%>
         return _<%= rf_name %>reg(num).get();
         <%- end -%>
@@ -531,6 +545,18 @@ namespace udb {
         clear_timer_interrupt(target_mode);
       }
     }
+
+    <%- if cfg_arch.ext?(:Sstc) -%>
+    bool supervisor_timer_compare_enabled() override {
+      return m_csrs.menvcfg.STCE()._hw_read().get() == 1;
+    }
+    <%- end -%>
+
+    <%- if cfg_arch.ext?(:Sstc) && cfg_arch.ext?(:H) -%>
+    bool virtual_supervisor_timer_compare_enabled() override {
+      return supervisor_timer_compare_enabled() && m_csrs.henvcfg.STCE()._hw_read().get() == 1;
+    }
+    <%- end -%>
 
     void set_platform_external_interrupt(const PrivilegeMode& target_mode,
                                          bool pending) override {

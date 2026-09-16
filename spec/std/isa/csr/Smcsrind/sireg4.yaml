@@ -46,6 +46,15 @@ fields:
       The data read from or written to the register selected by the current `siselect` value.
     reset_value: UNDEFINED_LEGAL
     sw_write(csr_value): |
+      if ((mode() == PrivilegeMode::S || virtual_mode?()) && CSR[mstateen0].CSRIND == 1'b0) {
+        if (virtual_mode?()) {
+          raise(ExceptionCode::VirtualInstruction, mode(), $encoding);
+        }
+        unimplemented_csr($encoding);
+      }
+      if (virtual_mode?() && CSR[hstateen0].CSRIND == 1'b0) {
+        raise(ExceptionCode::VirtualInstruction, mode(), $encoding);
+      }
       Csr handle = indirect_csr_lookup(CSR[siselect].VALUE, 4);
       if (!handle.valid) {
         unimplemented_csr($encoding);
@@ -56,6 +65,15 @@ fields:
       csr_sw_write(handle, csr_value.VALUE);
       return csr_hw_read(handle);
 sw_read(): |
+  if ((mode() == PrivilegeMode::S || virtual_mode?()) && CSR[mstateen0].CSRIND == 1'b0) {
+    if (virtual_mode?()) {
+      raise(ExceptionCode::VirtualInstruction, mode(), $encoding);
+    }
+    unimplemented_csr($encoding);
+  }
+  if (virtual_mode?() && CSR[hstateen0].CSRIND == 1'b0) {
+    raise(ExceptionCode::VirtualInstruction, mode(), $encoding);
+  }
   Csr handle = indirect_csr_lookup(CSR[siselect].VALUE, 4);
   if (!handle.valid) {
     unimplemented_csr($encoding);

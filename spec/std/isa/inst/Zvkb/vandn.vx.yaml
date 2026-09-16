@@ -5,21 +5,23 @@
 
 $schema: "inst_schema.json#"
 kind: instruction
-name: vbrev8.v
-long_name: Vector byte reverse within elements
+name: vandn.vx
+long_name: Vector AND-NOT with scalar
 description: |
-  Reverses the byte order within each element of vector register vs2, storing results in vector register vd according to mask vm. Similar to vrev8.v but with different encoding.
+  Performs a bitwise AND operation between vector register vs2 and the bitwise NOT of scalar register xs1, storing results in vector register vd according to mask vm.
 definedBy:
   extension:
-    name: Zvbb
-assembly: vd, vs2, vm
+    name: Zvkb
+assembly: vd, vs2, xs1, vm
 encoding:
-  match: 010010------01000010-----1010111
+  match: 000001-----------100-----1010111
   variables:
     - name: vm
       location: 25-25
     - name: vs2
       location: 24-20
+    - name: xs1
+      location: 19-15
     - name: vd
       location: 11-7
 access:
@@ -37,14 +39,8 @@ operation(): |
       U32 reg_off = i / elems_per_reg;
       U32 start_bit = (i % elems_per_reg) * state.sew;
       U32 end_bit = start_bit + state.sew - 1;
-      XReg input = V[vs2 + reg_off][end_bit:start_bit];
-
-      for (U32 byte = 0; byte < state.sew / 8; byte++) {
-        U32 byte_bit = byte * 8;
-        for (U32 bit = 0; bit < 8; bit++) {
-          V[vd + reg_off][start_bit + byte_bit + bit] = input[byte_bit + 7 - bit];
-        }
-      }
+      V[vd + reg_off][end_bit:start_bit] =
+        V[vs2 + reg_off][end_bit:start_bit] & ~X[xs1][state.sew-1:0];
     }
   }
 

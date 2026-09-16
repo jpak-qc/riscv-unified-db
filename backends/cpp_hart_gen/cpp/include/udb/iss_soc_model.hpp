@@ -175,21 +175,32 @@ namespace udb {
     IssSocModel(uint64_t size, uint64_t base_addr,
                 std::optional<uint64_t> uart_base = std::nullopt,
                 std::optional<uint64_t> clint_base = std::nullopt,
-                uint64_t misaligned_max_atomicity_granule_size = 0)
+                uint64_t misaligned_max_atomicity_granule_size = 0,
+                uint64_t cache_block_size = 64)
         : m_memory(size, base_addr, this),
           m_uart_base(uart_base),
           m_clint_base(clint_base),
           m_misaligned_max_atomicity_granule_size(
-              misaligned_max_atomicity_granule_size) {}
+              misaligned_max_atomicity_granule_size),
+          m_cache_block_size(cache_block_size) {}
     IssSocModel() = delete;
     virtual ~IssSocModel() = default;
 
     uint64_t read_hpm_counter(uint64_t n) { return 0; }
-    uint64_t read_mcycle() { return 0; }
+    uint64_t read_mcycle() { return m_mcycle; }
     uint64_t read_mtime() { return m_clint_mtime; }
-    uint64_t sw_write_mcycle(uint64_t value) { return value; }
-    virtual UdbEntropySourceSample poll_entropy_source() { return {0b01, 0, 0}; }
-    void cache_block_zero(uint64_t cache_block_physical_address) {}
+    uint64_t sw_write_mcycle(uint64_t value) {
+      m_mcycle = value;
+      return m_mcycle;
+    }
+    void set_stimecmp(uint64_t value) { m_stimecmp = value; }
+    void set_vstimecmp(uint64_t value) { m_vstimecmp = value; }
+    virtual UdbEntropySourceSample poll_entropy_source() { return {0b10, 0, 0}; }
+    void cache_block_zero(uint64_t cache_block_physical_address) {
+      for (uint64_t offset = 0; offset < m_cache_block_size; ++offset) {
+        m_memory.write(cache_block_physical_address + offset, 0, 1);
+      }
+    }
     void eei_ecall_from_m() {}
     void eei_ecall_from_s() {}
     void eei_ecall_from_u() {}
@@ -213,6 +224,8 @@ namespace udb {
     // instructions. While WFI is blocked, its clock advances on each poll.
     // The ISS samples pending lines at the next instruction boundary.
     void tick(bool waiting_for_interrupt) {
+      ++m_mcycle;
+
       if (!m_clint_base.has_value()) {
         return;
       }
@@ -237,6 +250,12 @@ namespace udb {
     }
     bool machine_timer_interrupt_pending() const {
       return m_clint_base.has_value() && m_clint_mtime >= m_clint_mtimecmp;
+    }
+    bool supervisor_timer_interrupt_pending() const {
+      return m_clint_base.has_value() && m_clint_mtime >= m_stimecmp;
+    }
+    bool virtual_supervisor_timer_interrupt_pending() const {
+      return m_clint_base.has_value() && m_clint_mtime >= m_vstimecmp;
     }
     bool machine_external_interrupt_pending() const {
       return m_test_meip_pending;
@@ -738,9 +757,13 @@ namespace udb {
     std::optional<uint64_t> m_uart_base;
     std::optional<uint64_t> m_clint_base;
     uint64_t m_misaligned_max_atomicity_granule_size;
+    uint64_t m_cache_block_size;
     static constexpr uint64_t kClintInstructionsPerTick = 2;
     uint64_t m_clint_msip = 0;
     uint64_t m_clint_mtimecmp = ~uint64_t{0};
+    uint64_t m_stimecmp = ~uint64_t{0};
+    uint64_t m_vstimecmp = ~uint64_t{0};
+    uint64_t m_mcycle = 0;
     uint64_t m_clint_mtime = 0;
     uint64_t m_clint_instructions_since_tick = 0;
     bool m_test_meip_pending = false;

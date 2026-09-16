@@ -23,6 +23,8 @@ struct RenodeSocModel {
 
   uint64_t read_mcycle() { return 0; }
   uint64_t read_mtime() { return 0; }
+  void set_stimecmp(uint64_t) {}
+  void set_vstimecmp(uint64_t) {}
   udb::UdbEntropySourceSample poll_entropy_source() { return {0b01, 0, 0}; }
 
   // returns new value of mcycle (could be different than new_value)

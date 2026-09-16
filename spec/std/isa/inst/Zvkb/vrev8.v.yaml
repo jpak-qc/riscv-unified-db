@@ -5,23 +5,21 @@
 
 $schema: "inst_schema.json#"
 kind: instruction
-name: vror.vv
-long_name: Vector rotate right by vector
+name: vrev8.v
+long_name: Vector byte reverse
 description: |
-  Rotates each element in vector register vs2 right by the amount specified in vector register vs1, storing results in vector register vd according to mask vm. The rotation amount is taken modulo the element width.
+  Reverses the byte order within each element of vector register vs2, storing results in vector register vd according to mask vm. This is equivalent to a byte-level reversal of each element.
 definedBy:
   extension:
-    name: Zvbb
-assembly: vd, vs2, vs1, vm
+    name: Zvkb
+assembly: vd, vs2, vm
 encoding:
-  match: 010100-----------000-----1010111
+  match: 010010------01001010-----1010111
   variables:
     - name: vm
       location: 25-25
     - name: vs2
       location: 24-20
-    - name: vs1
-      location: 19-15
     - name: vd
       location: 11-7
 access:
@@ -40,10 +38,13 @@ operation(): |
       U32 start_bit = (i % elems_per_reg) * state.sew;
       U32 end_bit = start_bit + state.sew - 1;
       XReg input = V[vs2 + reg_off][end_bit:start_bit];
-      XReg amount = V[vs1 + reg_off][end_bit:start_bit] & (state.sew - 1);
-      XReg output = amount == 0 ? input :
-        (input >> amount) | (input << (state.sew - amount));
-      V[vd + reg_off][end_bit:start_bit] = output[state.sew-1:0];
+      for (U32 byte = 0; byte < state.sew / 8; byte++) {
+        U32 byte_bit = byte * 8;
+        U32 source_byte_bit = state.sew - 8 - byte_bit;
+        for (U32 bit = 0; bit < 8; bit++) {
+          V[vd + reg_off][start_bit + byte_bit + bit] = input[source_byte_bit + bit];
+        }
+      }
     }
   }
 

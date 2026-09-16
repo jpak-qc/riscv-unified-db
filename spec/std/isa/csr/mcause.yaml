@@ -30,10 +30,13 @@ fields:
       If `mcause` is written with an undefined cause (combination of `mcause.INT` and `mcause.CODE`), an `Illegal Instruction` exception occurs.
 
       [when,"TRAP_ON_ILLEGAL_WLRL == false"]
-      If `mcause` is written with an undefined cause (combination of `mcause.INT` and `mcause.CODE`), neither `mcause.INT` nor `mcause.CODE` are modified.
+      If `mcause` is written with an undefined cause (combination of `mcause.INT` and `mcause.CODE`), the result is unpredictable.
     type: RW-RH
     reset_value: 0
     sw_write(csr_value): |
+      if (!TRAP_ON_ILLEGAL_WLRL) {
+        return csr_value.INT;
+      }
       # the write only holds if the INT/CODE combination is valid
       if (csr_value.INT == 1) {
         if (valid_interrupt_code?(csr_value.CODE)) {
@@ -42,7 +45,7 @@ fields:
         return ILLEGAL_WLRL;
       } else {
         if (valid_exception_code?(csr_value.CODE)) {
-          return 1;
+          return 0;
         }
         return ILLEGAL_WLRL;
       }
@@ -60,7 +63,7 @@ fields:
       If `mcause` is written with an undefined cause (combination of `mcause.INT` and `mcause.CODE`), an `Illegal Instruction` exception occurs.
 
       [when,"TRAP_ON_ILLEGAL_WLRL == false"]
-      If `mcause` is written with an undefined cause (combination of `mcause.INT` and `mcause.CODE`), neither `mcause.INT` nor `mcause.CODE` are modified.
+      If `mcause` is written with an undefined cause (combination of `mcause.INT` and `mcause.CODE`), the result is unpredictable.
 
       Valid interrupt codes are:
       [separator="!"]
@@ -80,6 +83,9 @@ fields:
     type: RW-RH
     reset_value: 0
     sw_write(csr_value): |
+      if (!TRAP_ON_ILLEGAL_WLRL) {
+        return csr_value.CODE;
+      }
       # the write only holds if the INT/CODE combination is valid
       if (csr_value.INT == 1) {
         if (valid_interrupt_code?(csr_value.CODE)) {

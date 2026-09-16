@@ -189,6 +189,20 @@ builtin function sw_write_mcycle {
   }
 }
 
+builtin function set_stimecmp {
+  arguments Bits<64> value
+  description {
+    Update the platform's supervisor timer compare value.
+  }
+}
+
+builtin function set_vstimecmp {
+  arguments Bits<64> value
+  description {
+    Update the platform's virtual-supervisor timer compare value.
+  }
+}
+
 builtin function cache_block_zero {
   arguments
     XReg cache_block_physical_address

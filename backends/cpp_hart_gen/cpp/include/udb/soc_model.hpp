@@ -21,6 +21,8 @@ namespace udb {
     { s.read_mcycle() } -> std::same_as<uint64_t>;
     { s.read_mtime() } -> std::same_as<uint64_t>;
     { s.sw_write_mcycle(static_cast<uint64_t>(0)) } -> std::same_as<uint64_t>;
+    { s.set_stimecmp(static_cast<uint64_t>(0)) };
+    { s.set_vstimecmp(static_cast<uint64_t>(0)) };
     { s.cache_block_zero(static_cast<uint64_t>(0)) };
     { s.eei_ecall_from_m() };
     { s.eei_ecall_from_s() };

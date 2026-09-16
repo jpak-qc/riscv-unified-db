@@ -133,13 +133,16 @@ end
 
 # rule for generating when the thing being generated is not config-specific
 rule %r{#{CPP_HART_GEN_DST}/[^/]+/src/[^/]+\.cxx\.unformatted$} => proc { |tname|
-  # we just need one config for this, doesn't matter which one (enums are config-independent)
+  # These sources are emitted once per build, using the first configured architecture.
+  # Keep them dependent on the resolved specification just like the generated headers:
+  # db_data.cxx serializes configured parameters into Config's run-time map.
   parts = tname.split("/")
   fname = parts[-1].sub(/\.unformatted$/, "")
   [
     "#{CPP_HART_GEN_SRC}/templates/#{fname}.erb",
     __FILE__
-  ]
+  ] + Dir.glob(CPP_HART_GEN_SRC / "lib" / "**" / "*") \
+    + resolved_spec_inputs(configs_build_name[0][0])
 } do |t|
   configs, = configs_build_name
   config_name = configs[0]

@@ -66,6 +66,15 @@ fields:
     description: Data value
     type: RW
     sw_write(csr_value): |
+      if ((mode() == PrivilegeMode::S || virtual_mode?()) && CSR[mstateen2].SE0 == 0) {
+        if (virtual_mode?()) {
+          raise(ExceptionCode::VirtualInstruction, mode(), $encoding);
+        }
+        unimplemented_csr($encoding);
+      }
+      if (virtual_mode?() && CSR[hstateen2].SE0 == 0) {
+        raise(ExceptionCode::VirtualInstruction, mode(), $encoding);
+      }
       # For every bit in an mstateen CSR that is zero, the same bit
       # appears as read-only zero in the matching sstateen CSR.
       Bits<64> mstateen2_mask = $bits(CSR[mstateen2]);
@@ -81,6 +90,15 @@ fields:
       return data_value;
     reset_value: UNDEFINED_LEGAL
 sw_read(): |
+  if ((mode() == PrivilegeMode::S || virtual_mode?()) && CSR[mstateen2].SE0 == 0) {
+    if (virtual_mode?()) {
+      raise(ExceptionCode::VirtualInstruction, mode(), $encoding);
+    }
+    unimplemented_csr($encoding);
+  }
+  if (virtual_mode?() && CSR[hstateen2].SE0 == 0) {
+    raise(ExceptionCode::VirtualInstruction, mode(), $encoding);
+  }
   # For every bit in an mstateen CSR that is zero, the same bit
   # appears as read-only zero in the matching sstateen CSR.
   Bits<64> mstateen2_mask = $bits(CSR[mstateen2]);

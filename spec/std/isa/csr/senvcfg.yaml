@@ -20,6 +20,30 @@ definedBy:
         version: ">=1.12"
       - name: U
 fields:
+  PMM:
+    location: 33-32
+    description: |
+      *Pointer Masking Mode*
+
+      Enables or disables pointer masking for the next lower privilege mode
+      (U/VU-mode).
+
+        * `00`: Pointer masking is disabled (PMLEN = 0)
+        * `01`: _Reserved_
+        * `10`: Pointer masking is enabled with PMLEN = XLEN - 57
+        * `11`: Pointer masking is enabled with PMLEN = XLEN - 48
+
+      The field is read-only zero on RV32.
+    definedBy:
+      extension:
+        name: Ssnpm
+    type: RW-R
+    sw_write(csr_value): |
+      if (csr_value.PMM == 0 || csr_value.PMM == 2 || csr_value.PMM == 3) {
+        return csr_value.PMM;
+      }
+      return 0;
+    reset_value: 0
   CBZE:
     location: 7
     description: |
@@ -222,10 +246,10 @@ sw_read(): |
   Bits<64> value = $bits(CSR[senvcfg]);
   if (implemented?(ExtensionName::Zicfiss) && (CSR[menvcfg].SSE == 0 || CSR[henvcfg].SSE == 0)) {
     # senvcfg.SSE must read-as-zero
-    value = value & ~(1 `<< 3);
+    value[3] = 0;
   }
   if (implemented?(ExtensionName::Zicfilp) && CSR[menvcfg].LPE == 0) {
     # senvcfg.LPE must read-as-zero when menvcfg.LPE is 0
-    value = value & ~(1 `<< 2);
+    value[2] = 0;
   }
   return value;

@@ -13,7 +13,7 @@ priv_mode: S
 length: 64
 definedBy:
   extension:
-    name: Smctr
+    name: Ssctr
 description: The `sctrctl` register enables and configures the Control Transfer Records capability in S mode.
 fields:
   U:
@@ -161,6 +161,14 @@ fields:
     description: |
       WARL bits designated for custom use. The value 0 must correspond to standard behavior.
 sw_read(): |
+  if (implemented?(ExtensionName::Smstateen) && mode() != PrivilegeMode::M) {
+    if (CSR[mstateen0].CTR == 1'b0) {
+      raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
+    }
+    if (virtual_mode?() && CSR[hstateen0].CTR == 1'b0) {
+      raise(ExceptionCode::VirtualInstruction, mode(), $encoding);
+    }
+  }
   Bits<12> addr = 0x14E;
   Bits<64> mask = 0x00000000000803; # U, S, and BPFRZ are not optional
   Csr csr_handle = direct_csr_lookup(addr);

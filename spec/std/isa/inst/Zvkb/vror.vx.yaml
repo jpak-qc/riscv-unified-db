@@ -5,16 +5,16 @@
 
 $schema: "inst_schema.json#"
 kind: instruction
-name: vrol.vx
-long_name: Vector rotate left by scalar
+name: vror.vx
+long_name: Vector rotate right by scalar
 description: |
-  Rotates each element in vector register vs2 left by the amount specified in scalar register xs1, storing results in vector register vd according to mask vm. The rotation amount is taken modulo the element width.
+  Rotates each element in vector register vs2 right by the amount specified in scalar register xs1, storing results in vector register vd according to mask vm. The rotation amount is taken modulo the element width.
 definedBy:
   extension:
-    name: Zvbb
+    name: Zvkb
 assembly: vd, vs2, xs1, vm
 encoding:
-  match: 010101-----------100-----1010111
+  match: 010100-----------100-----1010111
   variables:
     - name: vm
       location: 25-25
@@ -42,7 +42,7 @@ operation(): |
       U32 end_bit = start_bit + state.sew - 1;
       XReg input = V[vs2 + reg_off][end_bit:start_bit];
       XReg output = amount == 0 ? input :
-        (input << amount) | (input >> (state.sew - amount));
+        (input >> amount) | (input << (state.sew - amount));
       V[vd + reg_off][end_bit:start_bit] = output[state.sew-1:0];
     }
   }

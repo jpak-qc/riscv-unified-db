@@ -48,8 +48,13 @@ namespace udb {
   >
   void bit_insert(BitsClass<T, Signed> &target, const MsbType &msb, const LsbType &lsb,
                   const ValueType &value) {
-    BitsClass<T, Signed> mask = ((BitsClass<T, Signed>{1_b} << (msb - lsb + _Bits<1, false>{1_b})) - 1_b) << lsb;
-    target = (target & ~mask) | ((BitsClass<T, Signed>{value} << lsb) & mask);
+    // Preserve the register width while ensuring the mask is known even when
+    // the destination register has not been initialized yet.
+    BitsClass<T, Signed> zero{_Bits<T, false>{0}};
+    BitsClass<T, Signed> one = zero | _Bits<1, false>{1_b};
+    BitsClass<T, Signed> field = zero | value;
+    BitsClass<T, Signed> mask = ((one << (msb - lsb + _Bits<1, false>{1_b})) - one) << lsb;
+    target = (target & ~mask) | ((field << lsb) & mask);
   }
 
   template <unsigned FirstExtendedBit, unsigned ResultWidth,

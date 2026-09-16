@@ -85,9 +85,9 @@ operation(): |
     #   for the misalignment, if the misaligned access should not be emulated.
 
     if (LRSC_MISALIGNED_BEHAVIOR == "always raise misaligned exception") {
-      raise(ExceptionCode::LoadAddressMisaligned, effective_ldst_mode(), virtual_address);
+      raise(ExceptionCode::LoadAddressMisaligned, mode(), virtual_address);
     } else if (LRSC_MISALIGNED_BEHAVIOR == "always raise access fault") {
-      raise(ExceptionCode::LoadAccessFault, effective_ldst_mode(), virtual_address);
+      raise(ExceptionCode::LoadAccessFault, mode(), virtual_address);
     } else {
       unpredictable("Implementations may raise either a LoadAddressMisaligned or a LoadAccessFault when an LR/SC address is misaligned");
     }

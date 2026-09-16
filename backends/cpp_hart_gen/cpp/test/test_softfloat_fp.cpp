@@ -29,6 +29,8 @@ struct NullSocModel {
   uint64_t read_hpm_counter(uint64_t) { return 0; }
   uint64_t read_mcycle() { return 0; }
   uint64_t read_mtime() { return 0; }
+  void set_stimecmp(uint64_t) {}
+  void set_vstimecmp(uint64_t) {}
   uint64_t sw_write_mcycle(uint64_t value) { return value; }
   UdbEntropySourceSample poll_entropy_source() { return {0b01, 0, 0}; }
   void cache_block_zero(uint64_t) {}

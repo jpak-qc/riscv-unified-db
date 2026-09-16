@@ -131,6 +131,8 @@ private:
   bool m_machineSoftwareInterruptPending = false;
   bool m_supervisorSoftwareInterruptPending = false;
   bool m_machineTimerInterruptPending = false;
+  bool m_supervisorTimerInterruptPending = false;
+  bool m_virtualSupervisorTimerInterruptPending = false;
   bool m_machineExternalInterruptPending = false;
   bool m_supervisorExternalInterruptPending = false;
   bool m_waitingForInterrupt = false;
@@ -206,13 +208,15 @@ InstructionSetSimulator::InstructionSetSimulator(Options& opts) :
   json config = udb::ConfigValidator::validate(yaml);
   const uint64_t misaligned_max_atomicity_granule_size =
       config.at("params").at("MISALIGNED_MAX_ATOMICITY_GRANULE_SIZE").get<uint64_t>();
+  const uint64_t cache_block_size =
+      config.at("params").value("CACHE_BLOCK_SIZE", uint64_t{64});
 
   CreateMemoryMap(opts.memoryMapPath, opts.elfFilePath);
   m_pSoC = new udb::IssSocModel(
       m_memMap.size, m_memMap.base,
       opts.uartEnabled ? std::optional<uint64_t>{opts.uartBase} : std::nullopt,
       opts.clintEnabled ? std::optional<uint64_t>{opts.clintBase} : std::nullopt,
-      misaligned_max_atomicity_granule_size);
+      misaligned_max_atomicity_granule_size, cache_block_size);
   if(m_pSoC)
   {
     //Create Hart with reference to SoC model
@@ -339,6 +343,24 @@ void InstructionSetSimulator::UpdatePlatformInterruptLines()
     m_machineTimerInterruptPending = machineTimerInterruptPending;
   }
 
+  const bool supervisorTimerInterruptPending =
+      m_pHart->supervisor_timer_compare_enabled() && m_pSoC->supervisor_timer_interrupt_pending();
+  if (supervisorTimerInterruptPending != m_supervisorTimerInterruptPending) {
+    m_pHart->set_platform_timer_interrupt(
+        udb::PrivilegeMode{udb::PrivilegeMode::S}, supervisorTimerInterruptPending);
+    m_supervisorTimerInterruptPending = supervisorTimerInterruptPending;
+  }
+
+  const bool virtualSupervisorTimerInterruptPending =
+      m_pHart->virtual_supervisor_timer_compare_enabled() &&
+      m_pSoC->virtual_supervisor_timer_interrupt_pending();
+  if (virtualSupervisorTimerInterruptPending !=
+      m_virtualSupervisorTimerInterruptPending) {
+    m_pHart->set_platform_timer_interrupt(
+        udb::PrivilegeMode{udb::PrivilegeMode::VS}, virtualSupervisorTimerInterruptPending);
+    m_virtualSupervisorTimerInterruptPending = virtualSupervisorTimerInterruptPending;
+  }
+
   const bool machineExternalInterruptPending = m_pSoC->machine_external_interrupt_pending();
   if (machineExternalInterruptPending != m_machineExternalInterruptPending) {
     m_pHart->set_platform_external_interrupt(
@@ -358,7 +380,8 @@ void InstructionSetSimulator::UpdatePlatformInterruptLines()
 bool InstructionSetSimulator::PlatformInterruptPending() const
 {
   return m_machineSoftwareInterruptPending || m_supervisorSoftwareInterruptPending ||
-         m_machineTimerInterruptPending || m_machineExternalInterruptPending ||
+         m_machineTimerInterruptPending || m_supervisorTimerInterruptPending ||
+         m_virtualSupervisorTimerInterruptPending || m_machineExternalInterruptPending ||
          m_supervisorExternalInterruptPending;
 }
 

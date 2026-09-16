@@ -70,6 +70,15 @@ fields:
     type: RW
     reset_value: UNDEFINED_LEGAL
     sw_write(csr_value): |
+      if ((mode() == PrivilegeMode::S || virtual_mode?()) && CSR[mstateen0].SE0 == 0) {
+        if (virtual_mode?()) {
+          raise(ExceptionCode::VirtualInstruction, mode(), $encoding);
+        }
+        unimplemented_csr($encoding);
+      }
+      if (virtual_mode?() && CSR[hstateen0].SE0 == 0) {
+        raise(ExceptionCode::VirtualInstruction, mode(), $encoding);
+      }
       if (CSR[mstateen0].JVT == 1'b0){
         return 0;
       }
@@ -94,6 +103,15 @@ fields:
     type: RW
     reset_value: UNDEFINED_LEGAL
     sw_write(csr_value): |
+      if ((mode() == PrivilegeMode::S || virtual_mode?()) && CSR[mstateen0].SE0 == 0) {
+        if (virtual_mode?()) {
+          raise(ExceptionCode::VirtualInstruction, mode(), $encoding);
+        }
+        unimplemented_csr($encoding);
+      }
+      if (virtual_mode?() && CSR[hstateen0].SE0 == 0) {
+        raise(ExceptionCode::VirtualInstruction, mode(), $encoding);
+      }
       if (CSR[mstateen0].FCSR == 1'b0){
         return 0;
       }
@@ -111,6 +129,15 @@ fields:
     type: RW
     reset_value: UNDEFINED_LEGAL
     sw_write(csr_value): |
+      if ((mode() == PrivilegeMode::S || virtual_mode?()) && CSR[mstateen0].SE0 == 0) {
+        if (virtual_mode?()) {
+          raise(ExceptionCode::VirtualInstruction, mode(), $encoding);
+        }
+        unimplemented_csr($encoding);
+      }
+      if (virtual_mode?() && CSR[hstateen0].SE0 == 0) {
+        raise(ExceptionCode::VirtualInstruction, mode(), $encoding);
+      }
       if (CSR[mstateen0].C == 1'b0){
         return 0;
       }
@@ -119,6 +146,15 @@ fields:
       }
       return csr_value.C;
 sw_read(): |
+  if ((mode() == PrivilegeMode::S || virtual_mode?()) && CSR[mstateen0].SE0 == 0) {
+    if (virtual_mode?()) {
+      raise(ExceptionCode::VirtualInstruction, mode(), $encoding);
+    }
+    unimplemented_csr($encoding);
+  }
+  if (virtual_mode?() && CSR[hstateen0].SE0 == 0) {
+    raise(ExceptionCode::VirtualInstruction, mode(), $encoding);
+  }
   # For every bit in an mstateen CSR that is zero, the same bit
   # appears as read-only zero in the matching sstateen CSR.
   Bits<64> mstateen0_mask = $bits(CSR[mstateen0]);

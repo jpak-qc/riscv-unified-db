@@ -5,23 +5,23 @@
 
 $schema: "inst_schema.json#"
 kind: instruction
-name: vrol.vv
-long_name: Vector rotate left by vector
+name: vror.vi
+long_name: Vector rotate right by immediate
 description: |
-  Rotates each element in vector register vs2 left by the amount specified in vector register vs1, storing results in vector register vd according to mask vm. The rotation amount is taken modulo the element width.
+  Rotates each element in vector register vs2 right by the immediate shift amount, storing results in vector register vd according to mask vm. The rotation amount is taken modulo the element width.
 definedBy:
   extension:
-    name: Zvbb
-assembly: vd, vs2, vs1, vm
+    name: Zvkb
+assembly: vd, vs2, imm, vm
 encoding:
-  match: 010101-----------000-----1010111
+  match: 01010------------011-----1010111
   variables:
+    - name: imm
+      location: 26|19-15
     - name: vm
       location: 25-25
     - name: vs2
       location: 24-20
-    - name: vs1
-      location: 19-15
     - name: vd
       location: 11-7
 access:
@@ -33,6 +33,7 @@ data_independent_timing: true
 operation(): |
   VectorState state = vector_state();
   U32 elems_per_reg = VLEN >> state.log2_sew;
+  XReg amount = imm & (state.sew - 1);
 
   for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
     if (vm == 1'b1 || V[0][i] == 1'b1) {
@@ -40,9 +41,8 @@ operation(): |
       U32 start_bit = (i % elems_per_reg) * state.sew;
       U32 end_bit = start_bit + state.sew - 1;
       XReg input = V[vs2 + reg_off][end_bit:start_bit];
-      XReg amount = V[vs1 + reg_off][end_bit:start_bit] & (state.sew - 1);
       XReg output = amount == 0 ? input :
-        (input << amount) | (input >> (state.sew - amount));
+        (input >> amount) | (input << (state.sew - amount));
       V[vd + reg_off][end_bit:start_bit] = output[state.sew-1:0];
     }
   }

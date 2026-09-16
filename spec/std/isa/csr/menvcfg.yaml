@@ -96,9 +96,8 @@ description: |
 
   The definitions of the CBCFE and CBIE fields are furnished by the Zicbom extension.
 
-  The definition of the PMM field will be furnished by the forthcoming
-  Smnpm extension. Its allocation within `menvcfg` may change prior to the
-  ratification of that extension.
+  The Smnpm extension adds the PMM field in `menvcfg`. The field controls
+  pointer masking for the next lower privilege mode.
 
   The Zicfilp extension adds the `LPE` field in `menvcfg`. When the `LPE` field is
   set to 1 and S-mode is implemented, the Zicfilp extension is enabled in S-mode.
@@ -153,7 +152,17 @@ fields:
       extension:
         name: Sstc
     type: RW
-    reset_value: UNDEFINED_LEGAL
+    # The architecture permits an implementation-defined reset value.  Choose
+    # zero so read-modify-write software can deterministically enable Sstc.
+    reset_value: 0
+    sw_write(csr_value): |
+      # Enabling Sstc transfers ownership of STIP from M-mode software to the
+      # stimecmp timer device. Discard a legacy software-injected STIP value;
+      # the platform will reassert it on the next update if mtime >= stimecmp.
+      if (CSR[menvcfg].STCE == 1'b0 && csr_value.STCE == 1'b1) {
+        clear_timer_interrupt(PrivilegeMode::S);
+      }
+      return csr_value.STCE;
   PBMTE:
     location: 62
     description: |
@@ -204,6 +213,30 @@ fields:
       return (implemented?(ExtensionName::Svadu)) ? CsrFieldType::RW : CsrFieldType::RO;
     reset_value(): |
       return (implemented?(ExtensionName::Svadu)) ? UNDEFINED_LEGAL : 0;
+  PMM:
+    location: 33-32
+    description: |
+      *Pointer Masking Mode*
+
+      Enables or disables pointer masking for the next lower privilege mode
+      (S/HS-mode when S-mode is implemented, otherwise U-mode).
+
+        * `00`: Pointer masking is disabled (PMLEN = 0)
+        * `01`: _Reserved_
+        * `10`: Pointer masking is enabled with PMLEN = XLEN - 57
+        * `11`: Pointer masking is enabled with PMLEN = XLEN - 48
+
+      The field is read-only zero on RV32.
+    definedBy:
+      extension:
+        name: Smnpm
+    type: RW-R
+    sw_write(csr_value): |
+      if (csr_value.PMM == 0 || csr_value.PMM == 2 || csr_value.PMM == 3) {
+        return csr_value.PMM;
+      }
+      return 0;
+    reset_value: 0
   CBZE:
     location: 7
     description: |

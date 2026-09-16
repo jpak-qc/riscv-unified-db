@@ -262,6 +262,13 @@ fields:
       <%- end -%>
 
     type: RW
+    sw_write(csr_value): |
+      # With Sstc enabled, STIP is driven exclusively by the timer device.
+      # Software can still inject it when STCE is clear.
+      if (implemented?(ExtensionName::Sstc) && CSR[menvcfg].STCE == 1'b1) {
+        return CSR[mip].STIP;
+      }
+      return csr_value.STIP;
     reset_value: 0
     definedBy:
       extension:

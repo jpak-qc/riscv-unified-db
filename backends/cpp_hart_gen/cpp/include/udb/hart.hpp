@@ -141,6 +141,11 @@ namespace udb {
     virtual void set_platform_timer_interrupt(const PrivilegeMode&, bool) {}
     virtual void set_platform_external_interrupt(const PrivilegeMode&, bool) {}
 
+    // Timer-compare devices are available by default. Generated harts with
+    // Sstc override these predicates to honor the architectural enable bits.
+    virtual bool supervisor_timer_compare_enabled() { return true; }
+    virtual bool virtual_supervisor_timer_compare_enabled() { return true; }
+
     void wrs_nto() {
       // no-op: a valid implementation per the Zawrs spec
     }
@@ -163,6 +168,12 @@ namespace udb {
     PossiblyUnknownBits<64> read_mtime() { return Bits<64>{m_soc.read_mtime()}; }
     PossiblyUnknownBits<64> sw_write_mcycle(const PossiblyUnknownBits<64>& value) {
       return Bits<64>(m_soc.sw_write_mcycle(value.get()));
+    }
+    void set_stimecmp(const PossiblyUnknownBits<64>& value) {
+      m_soc.set_stimecmp(value.get());
+    }
+    void set_vstimecmp(const PossiblyUnknownBits<64>& value) {
+      m_soc.set_vstimecmp(value.get());
     }
     void cache_block_zero(const PossiblyUnknownBits<64>& paddr) { m_soc.cache_block_zero(paddr.get()); }
     void eei_ecall_from_m() { m_soc.eei_ecall_from_m(); }

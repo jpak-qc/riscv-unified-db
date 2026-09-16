@@ -60,9 +60,8 @@ description: |
 
   The definitions of the CBCFE and CBIE fields are furnished by the Zicbom extension.
 
-  The definition of the PMM field will be furnished by the forthcoming
-  Ssnpm extension. Its allocation within `henvcfg` may change prior to the
-  ratification of that extension.
+  The Ssnpm extension adds the PMM field in `henvcfg`. The field controls
+  pointer masking for VS-mode.
 
   The Zicfilp extension adds the `LPE` field in `henvcfg`. When the `LPE` field
   is set to 1, the Zicfilp extension is enabled in VS-mode. When the `LPE` field
@@ -193,6 +192,29 @@ fields:
       return (implemented?(ExtensionName::Svadu)) ? CsrFieldType::RW : CsrFieldType::RO;
     reset_value(): |
       return (implemented?(ExtensionName::Svadu)) ? UNDEFINED_LEGAL : 0;
+  PMM:
+    location: 33-32
+    description: |
+      *Pointer Masking Mode*
+
+      Enables or disables pointer masking for VS-mode.
+
+        * `00`: Pointer masking is disabled (PMLEN = 0)
+        * `01`: _Reserved_
+        * `10`: Pointer masking is enabled with PMLEN = XLEN - 57
+        * `11`: Pointer masking is enabled with PMLEN = XLEN - 48
+
+      The field is read-only zero on RV32.
+    definedBy:
+      extension:
+        name: Ssnpm
+    type: RW-R
+    sw_write(csr_value): |
+      if (csr_value.PMM == 0 || csr_value.PMM == 2 || csr_value.PMM == 3) {
+        return csr_value.PMM;
+      }
+      return 0;
+    reset_value: 0
   CBZE:
     location: 7
     description: |
@@ -343,22 +365,22 @@ sw_read(): |
   Bits<64> value = $bits(CSR[henvcfg]);
   if (implemented?(ExtensionName::Sstc) && CSR[menvcfg].STCE == 0) {
     # henvcfg.STCE must read-as-zero
-    value = value & ~(1 `<< 63);
+    value[63] = 0;
   }
   if (implemented?(ExtensionName::Svpbmt) && CSR[menvcfg].PBMTE == 0) {
     # henvcfg.PBMTE must read-as-zero
-    value = value & ~(1 `<< 62);
+    value[62] = 0;
   }
   if (implemented?(ExtensionName::Svadu) && CSR[menvcfg].ADUE == 0) {
     # henvcfg.ADUE must read-as-zero
-    value = value & ~(1 `<< 61);
+    value[61] = 0;
   }
   if (implemented?(ExtensionName::Zicfiss) && CSR[menvcfg].SSE == 0) {
     # henvcfg.SSE must read-as-zero
-    value = value & ~(1 `<< 3);
+    value[3] = 0;
   }
   if (implemented?(ExtensionName::Zicfilp) && CSR[menvcfg].LPE == 0) {
     # henvcfg.LPE must read-as-zero
-    value = value & ~(1 `<< 2);
+    value[2] = 0;
   }
   return value;

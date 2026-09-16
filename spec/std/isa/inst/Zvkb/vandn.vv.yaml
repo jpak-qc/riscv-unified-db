@@ -5,22 +5,22 @@
 
 $schema: "inst_schema.json#"
 kind: instruction
-name: vror.vx
-long_name: Vector rotate right by scalar
+name: vandn.vv
+long_name: Vector AND-NOT
 description: |
-  Rotates each element in vector register vs2 right by the amount specified in scalar register xs1, storing results in vector register vd according to mask vm. The rotation amount is taken modulo the element width.
+  Performs a bitwise AND operation between vector register vs2 and the bitwise NOT of vector register vs1, storing results in vector register vd according to mask vm.
 definedBy:
   extension:
-    name: Zvbb
-assembly: vd, vs2, xs1, vm
+    name: Zvkb
+assembly: vd, vs2, vs1, vm
 encoding:
-  match: 010100-----------100-----1010111
+  match: 000001-----------000-----1010111
   variables:
     - name: vm
       location: 25-25
     - name: vs2
       location: 24-20
-    - name: xs1
+    - name: vs1
       location: 19-15
     - name: vd
       location: 11-7
@@ -33,17 +33,14 @@ data_independent_timing: true
 operation(): |
   VectorState state = vector_state();
   U32 elems_per_reg = VLEN >> state.log2_sew;
-  XReg amount = X[xs1] & (state.sew - 1);
 
   for (U32 i = CSR[vstart].VALUE; i < CSR[vl].VALUE; i++) {
     if (vm == 1'b1 || V[0][i] == 1'b1) {
       U32 reg_off = i / elems_per_reg;
       U32 start_bit = (i % elems_per_reg) * state.sew;
       U32 end_bit = start_bit + state.sew - 1;
-      XReg input = V[vs2 + reg_off][end_bit:start_bit];
-      XReg output = amount == 0 ? input :
-        (input >> amount) | (input << (state.sew - amount));
-      V[vd + reg_off][end_bit:start_bit] = output[state.sew-1:0];
+      V[vd + reg_off][end_bit:start_bit] =
+        V[vs2 + reg_off][end_bit:start_bit] & ~V[vs1 + reg_off][end_bit:start_bit];
     }
   }
 
