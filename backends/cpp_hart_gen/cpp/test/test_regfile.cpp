@@ -336,6 +336,16 @@ std::array<uint64_t, 2> read_doublewords(udb::IssSocModel& soc,
   return values;
 }
 
+unsigned __int128 carryless_product64(uint64_t lhs, uint64_t rhs) {
+  unsigned __int128 product = 0;
+  for (unsigned bit = 0; bit < 64; ++bit) {
+    if ((rhs & (uint64_t{1} << bit)) != 0) {
+      product ^= static_cast<unsigned __int128>(lhs) << bit;
+    }
+  }
+  return product;
+}
+
 void load_vector64(udb::HartBase<udb::IssSocModel>* hart,
                    udb::IssSocModel& soc, uint8_t vd, uint64_t address,
                    const std::array<uint64_t, 2>& values) {
@@ -1032,6 +1042,77 @@ TEST_CASE("vector crypto bit manipulation instructions match simple vectors",
   store_vector64(hart, soc, 8, kResultAddress);
   REQUIRE(read_doublewords(soc, kResultAddress) ==
           std::array<uint64_t, 2>{0xf, 0x6});
+
+  delete hart;
+}
+
+TEST_CASE("vector carry-less multiply matches an independent GF(2) oracle",
+          "[crypto][vector][zvbc]") {
+  if (!vector_crypto_config_available()) {
+    SKIP("requires the rv64-vector-crypto generated hart");
+  }
+
+  udb::IssSocModel soc(1024 * 1024, 0);
+  auto* hart = create_vector_crypto_hart(soc);
+  hart->reset(0);
+  enable_vector_state(hart, soc);
+  configure_vector(hart, soc, 2, 0b011000);
+
+  constexpr uint64_t kVs2Address = 0x1000;
+  constexpr uint64_t kVs1Address = 0x1020;
+  constexpr uint64_t kResultAddress = 0x1040;
+  const std::array<uint64_t, 2> vs2 = {0x0123456789abcdef,
+                                       0xfedcba9876543210};
+  const std::array<uint64_t, 2> vs1 = {0xf0e1d2c3b4a59687,
+                                       0x89abcdef01234567};
+  constexpr uint64_t scalar = 0xd4c3b2a190807060;
+
+  const auto expected = [](const std::array<uint64_t, 2>& lhs,
+                           const std::array<uint64_t, 2>& rhs,
+                           bool high) {
+    std::array<uint64_t, 2> result{};
+    for (size_t lane = 0; lane < result.size(); ++lane) {
+      const unsigned __int128 product = carryless_product64(lhs[lane], rhs[lane]);
+      result[lane] = high ? static_cast<uint64_t>(product >> 64)
+                          : static_cast<uint64_t>(product);
+    }
+    return result;
+  };
+
+  load_vector64(hart, soc, 12, kVs2Address, vs2);
+  load_vector64(hart, soc, 16, kVs1Address, vs1);
+  REQUIRE(execute_at_current_mode(hart, soc,
+                                  vector_r_instruction(0b001100, 8, 12, 16)) ==
+          StopReason::InstLimitReached);
+  store_vector64(hart, soc, 8, kResultAddress);
+  REQUIRE(read_doublewords(soc, kResultAddress) == expected(vs2, vs1, false));
+
+  load_vector64(hart, soc, 12, kVs2Address, vs2);
+  load_vector64(hart, soc, 16, kVs1Address, vs1);
+  REQUIRE(execute_at_current_mode(hart, soc,
+                                  vector_r_instruction(0b001101, 8, 12, 16)) ==
+          StopReason::InstLimitReached);
+  store_vector64(hart, soc, 8, kResultAddress);
+  REQUIRE(read_doublewords(soc, kResultAddress) == expected(vs2, vs1, true));
+
+  const std::array<uint64_t, 2> scalar_lanes = {scalar, scalar};
+  hart->set_xreg(16, scalar);
+  load_vector64(hart, soc, 12, kVs2Address, vs2);
+  REQUIRE(execute_at_current_mode(
+              hart, soc, vector_r_instruction(0b001100, 8, 12, 16, 0b110)) ==
+          StopReason::InstLimitReached);
+  store_vector64(hart, soc, 8, kResultAddress);
+  REQUIRE(read_doublewords(soc, kResultAddress) ==
+          expected(vs2, scalar_lanes, false));
+
+  hart->set_xreg(16, scalar);
+  load_vector64(hart, soc, 12, kVs2Address, vs2);
+  REQUIRE(execute_at_current_mode(
+              hart, soc, vector_r_instruction(0b001101, 8, 12, 16, 0b110)) ==
+          StopReason::InstLimitReached);
+  store_vector64(hart, soc, 8, kResultAddress);
+  REQUIRE(read_doublewords(soc, kResultAddress) ==
+          expected(vs2, scalar_lanes, true));
 
   delete hart;
 }
