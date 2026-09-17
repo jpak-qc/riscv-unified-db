@@ -1186,6 +1186,7 @@ TEST_CASE("vector carry-less multiply handles masks, empty VL, and LMUL groups",
   constexpr uint64_t kVs1Address = 0x1040;
   constexpr uint64_t kDestinationAddress = 0x1080;
   constexpr uint64_t kResultAddress = 0x10c0;
+  constexpr uint64_t kEmptyVlResultAddress = 0x1100;
   constexpr uint64_t kUntouched = 0xfeedfacecafebeef;
   const std::array<uint64_t, 2> vs2 = {0x8000000000000001,
                                        0x0123456789abcdef};
@@ -1221,8 +1222,9 @@ TEST_CASE("vector carry-less multiply handles masks, empty VL, and LMUL groups",
   REQUIRE(execute_at_current_mode(hart, soc,
                                   vector_r_instruction(0b001101, 8, 12, 16)) ==
           StopReason::InstLimitReached);
-  store_vector64(hart, soc, 8, kResultAddress);
-  REQUIRE(read_doublewords(soc, kResultAddress) ==
+  configure_vector(hart, soc, 2, 0b011000);
+  store_vector64(hart, soc, 8, kEmptyVlResultAddress);
+  REQUIRE(read_doublewords(soc, kEmptyVlResultAddress) ==
           std::array<uint64_t, 2>{kUntouched, kUntouched});
 
   configure_vector(hart, soc, 4, 0b011001);
