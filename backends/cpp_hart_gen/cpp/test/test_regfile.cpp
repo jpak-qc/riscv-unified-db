@@ -639,7 +639,6 @@ TEST_CASE("SM3 and SM4 instructions match known-answer vectors", "[crypto]") {
   REQUIRE(hart->xreg(5) == 0xffffffff9898dcdc);
 
   hart->set_xreg(1, 0);
-  load_vector64(hart, soc, 8, kDestinationAddress, {kUntouched, kUntouched});
   hart->set_xreg(2, 0);
   REQUIRE(execute_at_current_mode(hart, soc, r_instruction(0x18, 0, 5, 1, 2)) ==
           StopReason::InstLimitReached);
@@ -1206,6 +1205,8 @@ TEST_CASE("vector carry-less multiply handles masks, empty VL, and LMUL groups",
           std::array<uint64_t, 2>{kUntouched,
                                   static_cast<uint64_t>(carryless_product64(vs2[1], vs1[1]))});
 
+  load_vector64(hart, soc, 8, kDestinationAddress,
+                {kUntouched, kUntouched});
   hart->set_xreg(2, 0);
   REQUIRE(execute_at_current_mode(hart, soc,
                                   vector_setvli_instruction(3, 2, 0b011000)) ==
