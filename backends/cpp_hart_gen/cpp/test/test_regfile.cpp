@@ -1164,6 +1164,71 @@ TEST_CASE("vector carry-less multiply observes vstart and SEW legality",
   delete hart;
 }
 
+TEST_CASE("vector carry-less multiply handles masks, empty VL, and LMUL groups",
+          "[crypto][vector][zvbc]") {
+  if (!vector_crypto_config_available()) {
+    SKIP("requires the rv64-vector-crypto generated hart");
+  }
+
+  udb::IssSocModel soc(1024 * 1024, 0);
+  auto* hart = create_vector_crypto_hart(soc);
+  hart->reset(0);
+  enable_vector_state(hart, soc);
+
+  constexpr uint64_t kVs2Address = 0x1000;
+  constexpr uint64_t kVs1Address = 0x1040;
+  constexpr uint64_t kDestinationAddress = 0x1080;
+  constexpr uint64_t kResultAddress = 0x10c0;
+  constexpr uint64_t kUntouched = 0xfeedfacecafebeef;
+  const std::array<uint64_t, 2> vs2 = {0x8000000000000001,
+                                       0x0123456789abcdef};
+  const std::array<uint64_t, 2> vs1 = {0xffffffffffffffff,
+                                       0xfedcba9876543210};
+
+  configure_vector(hart, soc, 2, 0b011000);
+  load_vector64(hart, soc, 12, kVs2Address, vs2);
+  load_vector64(hart, soc, 16, kVs1Address, vs1);
+  load_vector64(hart, soc, 8, kDestinationAddress, {kUntouched, kUntouched});
+  load_vector64(hart, soc, 0, kDestinationAddress, {0x2, 0});
+  REQUIRE(execute_at_current_mode(
+              hart, soc,
+              vector_r_instruction(0b001100, 8, 12, 16) & ~(uint32_t{1} << 25)) ==
+          StopReason::InstLimitReached);
+  store_vector64(hart, soc, 8, kResultAddress);
+  REQUIRE(read_doublewords(soc, kResultAddress) ==
+          std::array<uint64_t, 2>{kUntouched,
+                                  static_cast<uint64_t>(carryless_product64(vs2[1], vs1[1]))});
+
+  configure_vector(hart, soc, 0, 0b011000);
+  load_vector64(hart, soc, 8, kDestinationAddress, {kUntouched, kUntouched});
+  REQUIRE(execute_at_current_mode(hart, soc,
+                                  vector_r_instruction(0b001101, 8, 12, 16)) ==
+          StopReason::InstLimitReached);
+  store_vector64(hart, soc, 8, kResultAddress);
+  REQUIRE(read_doublewords(soc, kResultAddress) ==
+          std::array<uint64_t, 2>{kUntouched, kUntouched});
+
+  configure_vector(hart, soc, 4, 0b011001);
+  const std::array<uint64_t, 4> group_vs2 = {0, 1, 0x8000000000000000,
+                                              0x0123456789abcdef};
+  const std::array<uint64_t, 4> group_vs1 = {0xffffffffffffffff, 0x3,
+                                              0x2, 0xfedcba9876543210};
+  std::array<uint64_t, 4> expected{};
+  for (size_t lane = 0; lane < expected.size(); ++lane) {
+    expected[lane] = static_cast<uint64_t>(
+        carryless_product64(group_vs2[lane], group_vs1[lane]));
+  }
+  load_vector64x4(hart, soc, 8, kVs2Address, group_vs2);
+  load_vector64x4(hart, soc, 12, kVs1Address, group_vs1);
+  REQUIRE(execute_at_current_mode(hart, soc,
+                                  vector_r_instruction(0b001100, 8, 8, 12)) ==
+          StopReason::InstLimitReached);
+  store_vector64x4(hart, soc, 8, kResultAddress);
+  REQUIRE(read_doublewords4(soc, kResultAddress) == expected);
+
+  delete hart;
+}
+
 TEST_CASE("vector SHA-2 compression instructions match FIPS 180-4",
           "[crypto][vector]") {
   if (!vector_crypto_config_available()) {
