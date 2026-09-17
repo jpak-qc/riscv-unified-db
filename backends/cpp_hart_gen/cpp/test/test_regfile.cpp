@@ -1206,6 +1206,11 @@ TEST_CASE("vector carry-less multiply handles masks, empty VL, and LMUL groups",
           std::array<uint64_t, 2>{kUntouched,
                                   static_cast<uint64_t>(carryless_product64(vs2[1], vs1[1]))});
 
+  // Start the empty-VL case from fresh vector state so its no-write guarantee
+  // does not depend on the preceding masked-operation setup.
+  hart->reset(0);
+  enable_vector_state(hart, soc);
+  configure_vector(hart, soc, 2, 0b011000);
   load_vector64(hart, soc, 8, kDestinationAddress,
                 {kUntouched, kUntouched});
   hart->set_xreg(2, 0);
