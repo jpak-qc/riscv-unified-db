@@ -228,6 +228,12 @@ uint32_t vector_setivli_instruction(uint8_t rd, uint8_t avl,
          (0b111u << 12) | (static_cast<uint32_t>(rd) << 7) | 0x57;
 }
 
+uint32_t vector_setvli_instruction(uint8_t rd, uint8_t rs1, uint16_t vtypei) {
+  return (static_cast<uint32_t>(vtypei) << 20) |
+         (static_cast<uint32_t>(rs1) << 15) | (0b111u << 12) |
+         (static_cast<uint32_t>(rd) << 7) | 0x57;
+}
+
 uint32_t vector_r_instruction(uint8_t funct6, uint8_t vd, uint8_t vs2,
                               uint8_t vs1, uint8_t funct3 = 0b010,
                               uint8_t opcode = 0x57) {
@@ -1199,7 +1205,11 @@ TEST_CASE("vector carry-less multiply handles masks, empty VL, and LMUL groups",
           std::array<uint64_t, 2>{kUntouched,
                                   static_cast<uint64_t>(carryless_product64(vs2[1], vs1[1]))});
 
-  configure_vector(hart, soc, 0, 0b011000);
+  hart->set_xreg(2, 0);
+  REQUIRE(execute_at_current_mode(hart, soc,
+                                  vector_setvli_instruction(3, 2, 0b011000)) ==
+          StopReason::InstLimitReached);
+  REQUIRE(read_csr(hart, soc, 0xc20) == 0);
   load_vector64(hart, soc, 8, kDestinationAddress, {kUntouched, kUntouched});
   REQUIRE(execute_at_current_mode(hart, soc,
                                   vector_r_instruction(0b001101, 8, 12, 16)) ==
