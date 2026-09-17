@@ -1073,7 +1073,8 @@ function crypto_sm3_compress {
     Bits<32> w5 = crypto_rev8_32(message[191:160]);
     Bits<32> x0 = w0 ^ w4;
     Bits<32> x1 = w1 ^ w5;
-    U32 j = round_group * 2;
+    U32 j = 2;
+    j = j * round_group;
 
     Bits<32> t = j <= 15 ? 0x79cc4519 : 0x7a879d8a;
     Bits<32> ss1 = crypto_rol32(crypto_rol32(a, 12) + e + crypto_rol32(t, j % 32), 7);
@@ -1222,7 +1223,8 @@ function crypto_sm4_key_schedule {
     Bits<32> rk1 = current[63:32];
     Bits<32> rk2 = current[95:64];
     Bits<32> rk3 = current[127:96];
-    U32 base = round * 4;
+    U32 base = 4;
+    base = base * round;
     Bits<32> rk4 = crypto_sm4_key_round_word(rk0,
       crypto_sm4_subword(rk1 ^ rk2 ^ rk3 ^ crypto_sm4_ck_table[base]));
     Bits<32> rk5 = crypto_sm4_key_round_word(rk1,
