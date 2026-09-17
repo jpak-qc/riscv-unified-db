@@ -1098,6 +1098,7 @@ TEST_CASE("vector carry-less multiply matches an independent GF(2) oracle",
   REQUIRE(execute_at_current_mode(hart, soc,
                                   vector_r_instruction(0b001101, 8, 12, 16)) ==
           StopReason::InstLimitReached);
+  configure_vector(hart, soc, 2, 0b011000);
   store_vector64(hart, soc, 8, kResultAddress);
   REQUIRE(read_doublewords(soc, kResultAddress) == expected(vs2, vs1, true));
 
