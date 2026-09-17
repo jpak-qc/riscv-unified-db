@@ -1117,6 +1117,53 @@ TEST_CASE("vector carry-less multiply matches an independent GF(2) oracle",
   delete hart;
 }
 
+TEST_CASE("vector carry-less multiply observes vstart and SEW legality",
+          "[crypto][vector][zvbc]") {
+  if (!vector_crypto_config_available()) {
+    SKIP("requires the rv64-vector-crypto generated hart");
+  }
+
+  udb::IssSocModel soc(1024 * 1024, 0);
+  auto* hart = create_vector_crypto_hart(soc);
+  hart->reset(0);
+  enable_vector_state(hart, soc);
+  configure_vector(hart, soc, 2, 0b011000);
+
+  constexpr uint64_t kVs2Address = 0x1000;
+  constexpr uint64_t kVs1Address = 0x1020;
+  constexpr uint64_t kDestinationAddress = 0x1040;
+  constexpr uint64_t kResultAddress = 0x1060;
+  const std::array<uint64_t, 2> vs2 = {0x0123456789abcdef,
+                                       0xfedcba9876543210};
+  const std::array<uint64_t, 2> vs1 = {0xf0e1d2c3b4a59687,
+                                       0x89abcdef01234567};
+  constexpr uint64_t kUntouched = 0xfeedfacecafebeef;
+
+  load_vector64(hart, soc, 12, kVs2Address, vs2);
+  load_vector64(hart, soc, 16, kVs1Address, vs1);
+  load_vector64(hart, soc, 8, kDestinationAddress, {kUntouched, kUntouched});
+  hart->set_xreg(1, 1);
+  REQUIRE(execute_at_current_mode(hart, soc,
+                                  csr_instruction(0x008, 0b001, 0, 1)) ==
+          StopReason::InstLimitReached);
+  REQUIRE(execute_at_current_mode(hart, soc,
+                                  vector_r_instruction(0b001100, 8, 12, 16)) ==
+          StopReason::InstLimitReached);
+  store_vector64(hart, soc, 8, kResultAddress);
+  const unsigned __int128 lane_one_product = carryless_product64(vs2[1], vs1[1]);
+  REQUIRE(read_doublewords(soc, kResultAddress) ==
+          std::array<uint64_t, 2>{kUntouched,
+                                  static_cast<uint64_t>(lane_one_product)});
+  REQUIRE(read_csr(hart, soc, 0x008) == 0);
+
+  configure_vector(hart, soc, 2, 0b010000);
+  REQUIRE(execute_at_current_mode(hart, soc,
+                                  vector_r_instruction(0b001100, 8, 12, 16)) ==
+          StopReason::Exception);
+
+  delete hart;
+}
+
 TEST_CASE("vector SHA-2 compression instructions match FIPS 180-4",
           "[crypto][vector]") {
   if (!vector_crypto_config_available()) {
