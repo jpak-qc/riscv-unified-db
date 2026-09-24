@@ -195,7 +195,13 @@ add_dependencies(libelf_static elfutils_libelf)
 add_library(hart
   ${CMAKE_SOURCE_DIR}/src/db_data.cxx
   ${CMAKE_SOURCE_DIR}/src/enum.cxx
+  ${CMAKE_SOURCE_DIR}/src/clint.cpp
+  ${CMAKE_SOURCE_DIR}/src/mem_mapped_device.cpp
   ${CMAKE_SOURCE_DIR}/src/memory.cpp
+  ${CMAKE_SOURCE_DIR}/src/ram.cpp
+  ${CMAKE_SOURCE_DIR}/src/system_memory.cpp
+  ${CMAKE_SOURCE_DIR}/src/test_interrupt_generator.cpp
+  ${CMAKE_SOURCE_DIR}/src/uart.cpp
   ${GENERATED_SRCS}
 #  ../gen/iss/oryon/src/types.cxx
 #  ../gen/iss/oryon/src/csr_types.cxx
@@ -266,6 +272,12 @@ add_executable(test_util
 target_include_directories(test_util PUBLIC ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(test_util PRIVATE hart Catch2::Catch2WithMain)
 
+add_executable(test_system_memory
+  ${CMAKE_SOURCE_DIR}/test/test_system_memory.cpp
+)
+target_include_directories(test_system_memory PUBLIC ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(test_system_memory PRIVATE hart Catch2::Catch2WithMain)
+
 add_executable(test_csr
   ${CMAKE_SOURCE_DIR}/test/test_csr.cpp
 )
@@ -317,6 +329,7 @@ include(Catch)
 catch_discover_tests(test_bits_directed)
 catch_discover_tests(test_regfile)
 catch_discover_tests(test_util)
+catch_discover_tests(test_system_memory)
 
 foreach (random_test IN LISTS RANDOM_TESTS)
   catch_discover_tests(${random_test})
