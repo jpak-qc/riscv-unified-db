@@ -138,6 +138,12 @@ params:
       false,
       false,
     ]
+  MEI_INTR_IMPL: true
+  MSI_INTR_IMPL: true
+  MTI_INTR_IMPL: true
+  SEI_INTR_IMPL: true
+  SSI_INTR_IMPL: true
+  STI_INTR_IMPL: true
   MCOUNTENABLE_EN:
     [
       false,
