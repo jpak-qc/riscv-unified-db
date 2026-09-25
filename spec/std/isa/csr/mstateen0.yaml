@@ -169,7 +169,8 @@ fields:
       controlling `stateen0` CSR is zero, all floating-point instructions cause an illegal
       instruction trap (or virtual instruction trap, if relevant), as though they all access
       `fcsr`, regardless of whether they really do.
-    type: RW
+    type(): |
+      return implemented?(ExtensionName::F) ? CsrFieldType::RO : CsrFieldType::RW;
     reset_value: 0
   C:
     long_name: custom state access control
