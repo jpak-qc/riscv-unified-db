@@ -7,6 +7,34 @@
 
 using namespace udb;
 
+namespace {
+
+  struct MemoryWriteObserver {
+    IssSocModel& soc;
+    uint64_t address;
+    uint64_t observed_value = 0;
+    bool observed = false;
+
+    static int on_notification(void* user_param, uint64_t, uint64_t event, void* data) {
+      auto& observer = *static_cast<MemoryWriteObserver*>(user_param);
+      if (event != MEMWRITE_EVENT) {
+        return 0;
+      }
+
+      auto& access = *static_cast<MemAccess*>(data);
+      if (access.GetAddress() != observer.address) {
+        return 0;
+      }
+
+      observer.soc.memcpy_to_host(reinterpret_cast<uint8_t*>(&observer.observed_value),
+                                  observer.address, sizeof(observer.observed_value));
+      observer.observed = true;
+      return 0;
+    }
+  };
+
+}  // namespace
+
 TEST_CASE("concat", "[util]") {
   Bits<4> a{0x1};
   Bits<4> b{0x2};
@@ -58,4 +86,19 @@ TEST_CASE("bit_insert supports runtime-width targets", "[util]") {
 
   REQUIRE(result.width() == 256);
   REQUIRE(result == 0xdeadbeef_b);
+}
+
+TEST_CASE("RAM write notifications observe the completed write", "[util]") {
+  constexpr uint64_t kRamBase = 0x80000000;
+  constexpr uint64_t kAddress = kRamBase + 0x80;
+  constexpr uint64_t kValue = 0x1122334455667788;
+
+  IssSocModel soc(0x1000, kRamBase);
+  MemoryWriteObserver observer{soc, kAddress};
+  soc.AttachHandler(MemoryWriteObserver::on_notification, 0, &observer);
+
+  soc.write_physical_memory_64(kAddress, kValue);
+
+  REQUIRE(observer.observed);
+  REQUIRE(observer.observed_value == kValue);
 }

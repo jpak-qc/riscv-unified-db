@@ -440,11 +440,12 @@ namespace udb {
 
     void write_physical_memory(uint64_t physical_address, uint64_t data,
                                size_t bytes) {
-      if (m_system_memory.is_main_memory(physical_address, bytes)) {
+      const bool is_main_memory = m_system_memory.is_main_memory(physical_address, bytes);
+      m_system_memory.write(physical_address, data, bytes);
+      if (is_main_memory) {
         MemAccess memory_access(physical_address, bytes, data);
         Notify(MEMWRITE_EVENT, &memory_access);
       }
-      m_system_memory.write(physical_address, data, bytes);
     }
 
     uint64_t read_main_memory(uint64_t physical_address, size_t bytes) {
