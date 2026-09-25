@@ -1,13 +1,20 @@
 #pragma once
 
-#include <fmt/core.h>
+#include <algorithm>
 
 #include <cstdint>
-#include <cstdio>
-#include <vector>
+#include <memory>
+#include <optional>
+#include <stdexcept>
+#include <type_traits>
 
-#include "udb/soc_model.hpp"
 #include "udb/NotificationHandler.hpp"
+#include "udb/clint.hpp"
+#include "udb/ram.hpp"
+#include "udb/soc_model.hpp"
+#include "udb/system_memory.hpp"
+#include "udb/test_interrupt_generator.hpp"
+#include "udb/uart.hpp"
 
 
 namespace udb {
@@ -49,102 +56,37 @@ namespace udb {
 
 
   class IssSocModel : public NotificationSource {
-    class DenseMemory {
-     public:
-      DenseMemory(uint64_t size, uint64_t base_addr, NotificationSource* pNotifier) : m_offset(base_addr) {
-        m_data.resize(size);
-        m_addend = &m_data[0] - base_addr;
-        m_pNotifier = pNotifier;
-      }
-      ~DenseMemory() = default;
-
-      // subclasses only need to override these functions:
-      virtual uint64_t read(uint64_t addr, size_t bytes) {
-        MemAccessRange memAccessData(addr, bytes);
-        this->Notify(MEMREAD_EVENT, &memAccessData);
-
-        switch (bytes) {
-          case 1:
-            return m_data[addr - m_offset];
-          case 2:
-            return *(uint16_t *)(addr + m_addend);
-          case 4:
-            return *(uint32_t *)(addr + m_addend);
-          case 8:
-            return *(uint64_t *)(addr + m_addend);
-          default:
-            __builtin_unreachable();
-        }
-      }
-
-      void write(uint64_t addr, uint64_t data, size_t bytes) {
-        MemAccess memAccess(addr, bytes, data);
-        switch (bytes) {
-          case 1:
-            m_data[addr - m_offset] = data;
-            break;
-          case 2:
-            *(uint16_t *)(addr + m_addend) = data;
-            break;
-          case 4:
-            *(uint32_t *)(addr + m_addend) = data;
-            break;
-          case 8:
-            *(uint64_t *)(addr + m_addend) = data;
-            break;
-          default:
-            __builtin_unreachable();
-        }
-        this->Notify(MEMWRITE_EVENT, &memAccess);
-      }
-
-      int memcpy_from_host(uint64_t guest_paddr, const uint8_t *host_ptr,
-                           std::size_t size) {
-        if(guest_paddr < m_offset || guest_paddr >= m_offset + m_data.size() ||
-            guest_paddr + size < m_offset || guest_paddr + size >= m_offset + m_data.size()) {
-          //out of bounds
-          return -1;
-        }
-        memcpy(&m_data[guest_paddr - m_offset], host_ptr, size);
-        return size;
-      }
-
-      int memcpy_to_host(uint8_t *host_ptr, uint64_t guest_paddr,
-                         std::size_t size) {
-        if(guest_paddr < m_offset || guest_paddr >= m_offset + m_data.size() ||
-            guest_paddr + size < m_offset || guest_paddr + size >= m_offset + m_data.size()) {
-          //out of bounds
-          return -1;
-        }
-
-        memcpy(host_ptr, &m_data[guest_paddr - m_offset], size);
-        return size;
-      }
-
-     private:
-      std::vector<uint8_t> m_data;
-      uint64_t m_offset;
-      uint8_t *m_addend = nullptr;
-      NotificationSource* m_pNotifier;
-
-      inline int Notify(uint64_t uiEvent, void* pData) {
-        if(m_pNotifier) {
-          return m_pNotifier->Notify(uiEvent, pData);
-        }
-        return 0;
-      }
-    };
-
    public:
-    IssSocModel(uint64_t size, uint64_t base_addr)
-        : m_memory(size, base_addr, this) {}
+    IssSocModel(uint64_t size, uint64_t base_addr,
+                std::optional<uint64_t> uart_base = std::nullopt,
+                std::optional<uint64_t> clint_base = std::nullopt,
+                uint64_t misaligned_max_atomicity_granule_size = 0)
+        : m_misaligned_max_atomicity_granule_size(
+              misaligned_max_atomicity_granule_size) {
+      m_system_memory.add_device(std::make_unique<Ram>(base_addr, size));
+      if (uart_base) {
+        m_system_memory.add_device(
+            std::make_unique<Uart>(*uart_base, Uart::kMinimumLength));
+      }
+      if (clint_base) {
+        m_system_memory.add_device(
+            std::make_unique<Clint>(*clint_base, Clint::kMinimumLength));
+      }
+      m_system_memory.add_device(std::make_unique<TestInterruptGenerator>(
+          TestInterruptGenerator::kDefaultBaseAddress,
+          TestInterruptGenerator::kMinimumLength));
+    }
     IssSocModel() = delete;
-    ~IssSocModel() = default;
+    virtual ~IssSocModel() = default;
 
     uint64_t read_hpm_counter(uint64_t n) { return 0; }
     uint64_t read_mcycle() { return 0; }
-    uint64_t read_mtime() { return 0; }
+    uint64_t read_mtime() {
+      const auto* clint = m_system_memory.clint();
+      return clint ? clint->mtime() : 0;
+    }
     uint64_t sw_write_mcycle(uint64_t value) { return value; }
+    virtual UdbEntropySourceSample poll_entropy_source() { return {0b01, 0, 0}; }
     void cache_block_zero(uint64_t cache_block_physical_address) {}
     void eei_ecall_from_m() {}
     void eei_ecall_from_s() {}
@@ -165,47 +107,93 @@ namespace udb {
     void order_pgtbl_writes_before_vmafence() {}
     void order_pgtbl_reads_after_vmafence() {}
 
+    // Sail's ACT platform advances mtime after every two executed
+    // instructions. While WFI is blocked, its clock advances on each poll.
+    // The ISS samples pending lines at the next instruction boundary.
+    void tick(bool waiting_for_interrupt) {
+      if (auto* clint = m_system_memory.clint()) {
+        clint->tick(waiting_for_interrupt);
+      }
+    }
+
+    bool machine_software_interrupt_pending() const {
+      const auto* clint = m_system_memory.clint();
+      return clint && clint->machine_software_interrupt_pending();
+    }
+    bool supervisor_software_interrupt_pending() const {
+      const auto* test_interrupt_generator = m_system_memory.test_interrupt_generator();
+      return test_interrupt_generator &&
+             test_interrupt_generator->supervisor_software_interrupt_pending();
+    }
+    bool machine_timer_interrupt_pending() const {
+      const auto* clint = m_system_memory.clint();
+      return clint && clint->machine_timer_interrupt_pending();
+    }
+    bool machine_external_interrupt_pending() const {
+      const auto* test_interrupt_generator = m_system_memory.test_interrupt_generator();
+      return test_interrupt_generator &&
+             test_interrupt_generator->machine_external_interrupt_pending();
+    }
+    bool supervisor_external_interrupt_pending() const {
+      const auto* test_interrupt_generator = m_system_memory.test_interrupt_generator();
+      return test_interrupt_generator &&
+             test_interrupt_generator->supervisor_external_interrupt_pending();
+    }
+
     uint64_t read_physical_memory_8(uint64_t paddr) {
-      return m_memory.read(paddr, 1);
+      return read_physical_memory(paddr, 1);
     }
     uint64_t read_physical_memory_16(uint64_t paddr) {
-      return m_memory.read(paddr, 2);
+      return read_physical_memory(paddr, 2);
     }
     uint64_t read_physical_memory_32(uint64_t paddr) {
-      return m_memory.read(paddr, 4);
+      return read_physical_memory(paddr, 4);
     }
     uint64_t read_physical_memory_64(uint64_t paddr) {
-      return m_memory.read(paddr, 8);
+      return read_physical_memory(paddr, 8);
+    }
+    uint8_t physical_memory_accessible_Q_(uint64_t paddr, uint64_t len,
+                                          MemoryOperation::ValueType op) const {
+      if (len == 0 || (len % 8) != 0) {
+        return 0;
+      }
+
+      const size_t bytes = len / 8;
+      if (op == MemoryOperation::Fetch) {
+        return m_system_memory.is_main_memory(paddr, bytes);
+      }
+
+      return m_system_memory.contains(paddr, bytes);
     }
     void write_physical_memory_8(uint64_t paddr, uint64_t value) {
-      m_memory.write(paddr, value, 1);
+      write_physical_memory(paddr, value, 1);
     }
     void write_physical_memory_16(uint64_t paddr, uint64_t value) {
-      m_memory.write(paddr, value, 2);
+      write_physical_memory(paddr, value, 2);
     }
     void write_physical_memory_32(uint64_t paddr, uint64_t value) {
-      m_memory.write(paddr, value, 4);
+      write_physical_memory(paddr, value, 4);
     }
     void write_physical_memory_64(uint64_t paddr, uint64_t value) {
-      m_memory.write(paddr, value, 8);
+      write_physical_memory(paddr, value, 8);
     }
 
     int memcpy_from_host(uint64_t guest_paddr, const uint8_t *host_ptr,
                          uint64_t size) {
-      return m_memory.memcpy_from_host(guest_paddr, host_ptr, size);
+      return m_system_memory.memcpy_from_host(guest_paddr, host_ptr, size);
     }
     int memcpy_to_host(uint8_t *host_ptr, uint64_t guest_paddr, uint64_t size) {
-      return m_memory.memcpy_to_host(host_ptr, guest_paddr, size);
+      return m_system_memory.memcpy_to_host(host_ptr, guest_paddr, size);
     }
 
     uint8_t atomic_check_then_write_32(uint64_t paddr, uint64_t compare_value,
                                        uint64_t write_value) {
-      m_memory.write(paddr, write_value, 4);
+      write_main_memory(paddr, write_value, 4);
       return true;
     }
     uint8_t atomic_check_then_write_64(uint64_t paddr, uint64_t compare_value,
                                        uint64_t write_value) {
-      m_memory.write(paddr, write_value, 8);
+      write_main_memory(paddr, write_value, 8);
       return true;
     }
     uint8_t atomically_set_pte_a(uint64_t pte_addr, uint64_t pte_value,
@@ -216,60 +204,68 @@ namespace udb {
                                    uint32_t pte_len) {
       return true;
     }
+    uint64_t atomic_read_modify_write_8(uint64_t phys_addr, uint64_t value,
+                                        AmoOperation op) {
+      return atomic_read_modify_write_small_<uint8_t>(phys_addr, value, op);
+    }
+    uint64_t atomic_read_modify_write_16(uint64_t phys_addr, uint64_t value,
+                                         AmoOperation op) {
+      return atomic_read_modify_write_small_<uint16_t>(phys_addr, value, op);
+    }
     uint64_t atomic_read_modify_write_32(uint64_t phys_addr, uint64_t value,
                                          AmoOperation op) {
       switch (op.value()) {
         case AmoOperation::Swap: {
-          uint32_t orig = m_memory.read(phys_addr, 4);
-          m_memory.write(phys_addr, value, 4);
+          uint32_t orig = read_main_memory(phys_addr, 4);
+          write_main_memory(phys_addr, value, 4);
           return orig;
         }
         case AmoOperation::Add: {
-          uint32_t orig = m_memory.read(phys_addr, 4);
-          m_memory.write(phys_addr, orig + value, 4);
+          uint32_t orig = read_main_memory(phys_addr, 4);
+          write_main_memory(phys_addr, orig + value, 4);
           return orig;
         }
         case AmoOperation::And: {
-          uint32_t orig = m_memory.read(phys_addr, 4);
-          m_memory.write(phys_addr, orig & value, 4);
+          uint32_t orig = read_main_memory(phys_addr, 4);
+          write_main_memory(phys_addr, orig & value, 4);
           return orig;
         }
         case AmoOperation::Or: {
-          uint32_t orig = m_memory.read(phys_addr, 4);
-          m_memory.write(phys_addr, orig | value, 4);
+          uint32_t orig = read_main_memory(phys_addr, 4);
+          write_main_memory(phys_addr, orig | value, 4);
           return orig;
         }
         case AmoOperation::Xor: {
-          uint32_t orig = m_memory.read(phys_addr, 4);
-          m_memory.write(phys_addr, orig ^ value, 4);
+          uint32_t orig = read_main_memory(phys_addr, 4);
+          write_main_memory(phys_addr, orig ^ value, 4);
           return orig;
         }
         case AmoOperation::Max: {
-          uint32_t orig = m_memory.read(phys_addr, 4);
-          m_memory.write(phys_addr,
+          uint32_t orig = read_main_memory(phys_addr, 4);
+          write_main_memory(phys_addr,
                          std::max(static_cast<int32_t>(orig),
                                   static_cast<int32_t>(value & 0xffffffff)),
                          4);
           return orig;
         }
         case AmoOperation::Maxu: {
-          uint32_t orig = m_memory.read(phys_addr, 4);
-          m_memory.write(
+          uint32_t orig = read_main_memory(phys_addr, 4);
+          write_main_memory(
               phys_addr,
               std::max(orig, static_cast<uint32_t>(value & 0xffffffff)), 4);
           return orig;
         }
         case AmoOperation::Min: {
-          uint32_t orig = m_memory.read(phys_addr, 4);
-          m_memory.write(phys_addr,
+          uint32_t orig = read_main_memory(phys_addr, 4);
+          write_main_memory(phys_addr,
                          std::min(static_cast<int32_t>(orig),
                                   static_cast<int32_t>(value & 0xffffffff)),
                          4);
           return orig;
         }
         case AmoOperation::Minu: {
-          uint32_t orig = m_memory.read(phys_addr, 4);
-          m_memory.write(
+          uint32_t orig = read_main_memory(phys_addr, 4);
+          write_main_memory(
               phys_addr,
               std::min(orig, static_cast<uint32_t>(value & 0xffffffff)), 4);
           return orig;
@@ -282,54 +278,54 @@ namespace udb {
                                          AmoOperation op) {
       switch (op.value()) {
         case AmoOperation::Swap: {
-          uint64_t orig = m_memory.read(phys_addr, 8);
-          m_memory.write(phys_addr, value, 8);
+          uint64_t orig = read_main_memory(phys_addr, 8);
+          write_main_memory(phys_addr, value, 8);
           return orig;
         }
         case AmoOperation::Add: {
-          uint64_t orig = m_memory.read(phys_addr, 8);
-          m_memory.write(phys_addr, orig + value, 8);
+          uint64_t orig = read_main_memory(phys_addr, 8);
+          write_main_memory(phys_addr, orig + value, 8);
           return orig;
         }
         case AmoOperation::And: {
-          uint64_t orig = m_memory.read(phys_addr, 8);
-          m_memory.write(phys_addr, orig & value, 8);
+          uint64_t orig = read_main_memory(phys_addr, 8);
+          write_main_memory(phys_addr, orig & value, 8);
           return orig;
         }
         case AmoOperation::Or: {
-          uint64_t orig = m_memory.read(phys_addr, 8);
-          m_memory.write(phys_addr, orig | value, 8);
+          uint64_t orig = read_main_memory(phys_addr, 8);
+          write_main_memory(phys_addr, orig | value, 8);
           return orig;
         }
         case AmoOperation::Xor: {
-          uint64_t orig = m_memory.read(phys_addr, 8);
-          m_memory.write(phys_addr, orig ^ value, 8);
+          uint64_t orig = read_main_memory(phys_addr, 8);
+          write_main_memory(phys_addr, orig ^ value, 8);
           return orig;
         }
         case AmoOperation::Max: {
-          uint64_t orig = m_memory.read(phys_addr, 8);
-          m_memory.write(
+          uint64_t orig = read_main_memory(phys_addr, 8);
+          write_main_memory(
               phys_addr,
               std::max(static_cast<int64_t>(orig), static_cast<int64_t>(value)),
-              4);
+              8);
           return orig;
         }
         case AmoOperation::Maxu: {
-          uint64_t orig = m_memory.read(phys_addr, 8);
-          m_memory.write(phys_addr, std::max(orig, value & 0xffffffff), 4);
+          uint64_t orig = read_main_memory(phys_addr, 8);
+          write_main_memory(phys_addr, std::max(orig, value), 8);
           return orig;
         }
         case AmoOperation::Min: {
-          uint64_t orig = m_memory.read(phys_addr, 8);
-          m_memory.write(
+          uint64_t orig = read_main_memory(phys_addr, 8);
+          write_main_memory(
               phys_addr,
               std::min(static_cast<int64_t>(orig), static_cast<int64_t>(value)),
-              4);
+              8);
           return orig;
         }
         case AmoOperation::Minu: {
-          uint64_t orig = m_memory.read(phys_addr, 8);
-          m_memory.write(phys_addr, std::min(orig, value), 4);
+          uint64_t orig = read_main_memory(phys_addr, 8);
+          write_main_memory(phys_addr, std::min(orig, value), 8);
           return orig;
         }
         default:
@@ -338,7 +334,39 @@ namespace udb {
     }
 
     uint8_t pma_applies_Q_(PmaAttribute attr, uint64_t paddr, uint32_t len) {
-      return true;
+      const size_t bytes = len / 8;
+      const bool is_io = m_system_memory.is_io(paddr, bytes);
+      const bool is_ram = m_system_memory.is_main_memory(paddr, bytes);
+
+      switch (attr.value()) {
+        case PmaAttribute::RsrvNone:
+        case PmaAttribute::RsrvNonEventual:
+        case PmaAttribute::AmoNone:
+          return false;
+        case PmaAttribute::MAG16:
+          return is_ram && m_misaligned_max_atomicity_granule_size >= 16;
+        case PmaAttribute::MAG8:
+          return is_ram && m_misaligned_max_atomicity_granule_size >= 8;
+        case PmaAttribute::MAG4:
+          return is_ram && m_misaligned_max_atomicity_granule_size >= 4;
+        case PmaAttribute::MAG2:
+          return is_ram && m_misaligned_max_atomicity_granule_size >= 2;
+        case PmaAttribute::RsrvEventual:
+        case PmaAttribute::AmoSwap:
+        case PmaAttribute::AmoLogical:
+        case PmaAttribute::AmoArithmetic:
+        case PmaAttribute::HardwarePageTableRead:
+        case PmaAttribute::HardwarePageTableWrite:
+        case PmaAttribute::MainMemory:
+        case PmaAttribute::Cacheable:
+        case PmaAttribute::Coherent:
+        case PmaAttribute::Idempotent:
+          return is_ram;
+        case PmaAttribute::IO:
+          return is_io;
+        default:
+          __builtin_unreachable();
+      }
     }
 
 
@@ -357,7 +385,86 @@ namespace udb {
     void sync_write_after_read_device(bool, uint32_t) {}
 
    private:
-    DenseMemory m_memory;
+    template <typename T>
+    uint64_t atomic_read_modify_write_small_(uint64_t phys_addr, uint64_t value,
+                                              AmoOperation op) {
+      const T orig = static_cast<T>(read_main_memory(phys_addr, sizeof(T)));
+      const T rhs = static_cast<T>(value);
+      T result;
+
+      switch (op.value()) {
+        case AmoOperation::Swap:
+          result = rhs;
+          break;
+        case AmoOperation::Add:
+          result = static_cast<T>(orig + rhs);
+          break;
+        case AmoOperation::And:
+          result = static_cast<T>(orig & rhs);
+          break;
+        case AmoOperation::Or:
+          result = static_cast<T>(orig | rhs);
+          break;
+        case AmoOperation::Xor:
+          result = static_cast<T>(orig ^ rhs);
+          break;
+        case AmoOperation::Max:
+          result = static_cast<T>(std::max(static_cast<std::make_signed_t<T>>(orig),
+                                            static_cast<std::make_signed_t<T>>(rhs)));
+          break;
+        case AmoOperation::Maxu:
+          result = std::max(orig, rhs);
+          break;
+        case AmoOperation::Min:
+          result = static_cast<T>(std::min(static_cast<std::make_signed_t<T>>(orig),
+                                            static_cast<std::make_signed_t<T>>(rhs)));
+          break;
+        case AmoOperation::Minu:
+          result = std::min(orig, rhs);
+          break;
+        default:
+          __builtin_unreachable();
+      }
+
+      write_main_memory(phys_addr, result, sizeof(T));
+      return orig;
+    }
+
+    uint64_t read_physical_memory(uint64_t physical_address, size_t bytes) {
+      if (m_system_memory.is_main_memory(physical_address, bytes)) {
+        MemAccessRange memory_access(physical_address, bytes);
+        Notify(MEMREAD_EVENT, &memory_access);
+      }
+      return m_system_memory.read(physical_address, bytes);
+    }
+
+    void write_physical_memory(uint64_t physical_address, uint64_t data,
+                               size_t bytes) {
+      const bool is_main_memory = m_system_memory.is_main_memory(physical_address, bytes);
+      m_system_memory.write(physical_address, data, bytes);
+      if (is_main_memory) {
+        MemAccess memory_access(physical_address, bytes, data);
+        Notify(MEMWRITE_EVENT, &memory_access);
+      }
+    }
+
+    uint64_t read_main_memory(uint64_t physical_address, size_t bytes) {
+      if (!m_system_memory.is_main_memory(physical_address, bytes)) {
+        throw std::out_of_range("Atomic access does not target RAM");
+      }
+      return read_physical_memory(physical_address, bytes);
+    }
+
+    void write_main_memory(uint64_t physical_address, uint64_t data,
+                           size_t bytes) {
+      if (!m_system_memory.is_main_memory(physical_address, bytes)) {
+        throw std::out_of_range("Atomic access does not target RAM");
+      }
+      write_physical_memory(physical_address, data, bytes);
+    }
+
+    SystemMemory m_system_memory;
+    uint64_t m_misaligned_max_atomicity_granule_size;
 
   };
 
