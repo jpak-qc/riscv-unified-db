@@ -48,6 +48,18 @@ function check_v_ok {
     if (CSR[vtype].VILL == 1'b1) {
       raise(ExceptionCode::IllegalInstruction, mode(), encoding);
     }
+
+    VectorState state = vector_state();
+    U32 vlmax = VLEN >> state.log2_sew;
+    if (state.lmul_type == VectorLmulType::Multiply) {
+      vlmax = vlmax << state.log2_lmul;
+    } else {
+      vlmax = vlmax >> state.log2_lmul;
+    }
+
+    if (CSR[vstart].VALUE >= vlmax) {
+      raise(ExceptionCode::IllegalInstruction, mode(), encoding);
+    }
   }
 }
 
