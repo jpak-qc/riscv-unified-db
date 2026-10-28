@@ -258,6 +258,7 @@ tests:
 
   regress-build-rv32-vector-iss:
     ci_stage: pr
+    toolchain_container: true
     test:
       - name: Build RV32 vector ISS
         run: ./do build:iss CONFIG=rv32-vector IGNOREUNDEFINED=YES JOBS=4 BUILD_TYPE=debug

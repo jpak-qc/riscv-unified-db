@@ -632,6 +632,8 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up mise environment
         uses: ./.github/actions/mise-setup
+        with:
+          toolchain: true
       - name: Build RV32 vector ISS
         run: ./do build:iss CONFIG=rv32-vector IGNOREUNDEFINED=YES JOBS=4 BUILD_TYPE=debug
 
